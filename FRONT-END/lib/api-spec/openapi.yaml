@@ -1,15 +1,19 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API specification for ERP Distribution
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication and User management
+  - name: erp
+    description: ERP Records management
+
 paths:
   /healthz:
     get:
@@ -24,6 +28,103 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current authenticated user and roles
+      responses:
+        "200":
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /roles:
+    get:
+      operationId: getRoles
+      tags: [auth]
+      summary: Get available roles
+      responses:
+        "200":
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleInfo"
+
+  /records:
+    get:
+      operationId: getErpRecords
+      tags: [erp]
+      summary: Get ERP records by module
+      parameters:
+        - name: module
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of ERP records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ErpRecordItem"
+    post:
+      operationId: createErpRecord
+      tags: [erp]
+      summary: Create new ERP record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateErpRecordInput"
+      responses:
+        "201":
+          description: Created ERP record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErpRecordItem"
+
+  /records/{ref}/status:
+    patch:
+      operationId: updateErpRecordStatus
+      tags: [erp]
+      summary: Update ERP record status
+      parameters:
+        - name: ref
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+              required:
+                - status
+      responses:
+        "200":
+          description: Updated ERP record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErpRecordItem"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +135,105 @@ components:
       required:
         - status
 
+    RoleInfo:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        modules:
+          type: array
+          items:
+            type: string
+      required:
+        - code
+        - name
+        - modules
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        roleCode:
+          type: string
+        roleName:
+          type: string
+        allowedModules:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - email
+        - roleCode
+        - roleName
+        - allowedModules
+
+    ErpRecordItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        module:
+          type: string
+        ref:
+          type: string
+        customer:
+          type: string
+        city:
+          type: string
+        date:
+          type: string
+        total:
+          type: string
+        status:
+          type: string
+        source:
+          type: string
+      required:
+        - ref
+        - module
+        - customer
+        - city
+        - date
+        - total
+        - status
+        - source
+
+    CreateErpRecordInput:
+      type: object
+      properties:
+        module:
+          type: string
+        ref:
+          type: string
+        customer:
+          type: string
+        city:
+          type: string
+        date:
+          type: string
+        total:
+          type: string
+        status:
+          type: string
+        source:
+          type: string
+      required:
+        - module
+        - ref
+        - customer
+        - city
+        - date
+        - total
+        - status
+        - source

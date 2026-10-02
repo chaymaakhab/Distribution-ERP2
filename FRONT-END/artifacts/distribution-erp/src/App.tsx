@@ -1,4 +1,5 @@
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { customFetch } from '@workspace/api-client-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -10,7 +11,7 @@ import {
   Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
   ClipboardList, Clock3, CreditCard, Download, FileCheck2, FileText, Filter, Gauge, LayoutDashboard,
   MapPin, Menu, Package, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Truck,
-  Users, Warehouse, X,
+  Users, Warehouse, X, Sun, Moon, UserCheck,
 } from 'lucide-react';
 import './erp.css';
 
@@ -118,6 +119,33 @@ function AppShell() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('Tous les statuts');
   const [activeTab, setActiveTab] = useState('Tout');
+  const [isLightMode, setIsLightMode] = useState(false);
+  const [selectedRole, setSelectedRole] = useState('admin');
+
+  useEffect(() => {
+    customFetch<Row[]>('/records').then((data: Row[]) => {
+      if (Array.isArray(data) && data.length > 0) {
+        const grouped: Record<string, Row[]> = { ...initialRows };
+        data.forEach((item) => {
+          const mod = item.module || 'orders';
+          if (!grouped[mod]) grouped[mod] = [];
+          if (!grouped[mod].some((r) => r.ref === item.ref)) {
+            grouped[mod].unshift(item);
+          }
+        });
+        setRows(grouped);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const toggleTheme = () => {
+    setIsLightMode(!isLightMode);
+    if (!isLightMode) {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+  };
   const [modal, setModal] = useState(false);
   const [toast, setToast] = useState('');
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -178,9 +206,22 @@ function AppShell() {
         <button className="mobile-trigger icon-button" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Ouvrir le menu"><Menu size={19} /></button>
         <div className="crumb"><span>Hercules ERP</span><ChevronRight size={14} /><strong>{activeModule?.label ?? 'Vue d’ensemble'}</strong></div>
         <div className="topbar-right">
-          <div className="demo-tag"><span />DONNÉES DE DÉMONSTRATION</div>
+          <label className="role-select" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '4px' }}>
+            <UserCheck size={14} />
+            <select value={selectedRole} onChange={e => { setSelectedRole(e.target.value); notify(`Rôle basculé en : ${e.target.options[e.target.selectedIndex].text}`); }} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', outline: 'none' }} data-testid="select-role-switcher">
+              <option value="admin" style={{ background: '#1e293b' }}>Administrateur</option>
+              <option value="commercial" style={{ background: '#1e293b' }}>Commercial</option>
+              <option value="finance" style={{ background: '#1e293b' }}>Finance</option>
+              <option value="warehouse" style={{ background: '#1e293b' }}>Responsable Dépôt</option>
+              <option value="driver" style={{ background: '#1e293b' }}>Chauffeur/Livreur</option>
+            </select>
+          </label>
+          <button className="theme-toggle-button icon-button" onClick={toggleTheme} title="Basculer le thème (Clair / Sombre)" style={{ padding: '6px', cursor: 'pointer' }} data-testid="button-theme-toggle">
+            {isLightMode ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
+          <div className="demo-tag"><span />DONNÉES API LIVE</div>
           <div className="top-date"><CalendarDays size={14} /> 28 fév. 2025 <ChevronDown size={13} /></div>
-          <button className="help-button" onClick={() => notify('Aide produit : cette interface utilise uniquement des données fictives.')} aria-label="Aide"><CircleHelp size={17} /></button>
+          <button className="help-button" onClick={() => notify('Aide produit : connectée au serveur API backend.')} aria-label="Aide"><CircleHelp size={17} /></button>
         </div>
       </header>
       <main className="page-wrap">

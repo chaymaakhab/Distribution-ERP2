@@ -6,6 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
+export interface CreateErpRecordInput {
+  module: string;
+  ref: string;
+  customer: string;
+  city: string;
+  date: string;
+  total: string;
   status: string;
+  source: string;
 }

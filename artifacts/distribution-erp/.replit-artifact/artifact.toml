@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Hercules ERP"
+description = "A French-first ERP administration frontend for a Moroccan distribution business, with interactive dashboards for sales, orders, stock, customers, deliveries, and finance."
+version = "1.0.0"
+id = "artifacts/distribution-erp"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21187
+
+[services.development]
+run = "pnpm --filter @workspace/distribution-erp run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/distribution-erp", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/distribution-erp/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21187"
+BASE_PATH = "/"

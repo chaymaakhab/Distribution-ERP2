@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface RoleInfo {
+  code: string;
+  name: string;
+  description?: string;
+  modules: string[];
 }

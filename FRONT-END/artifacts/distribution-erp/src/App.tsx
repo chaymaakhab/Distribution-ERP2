@@ -16,7 +16,7 @@ import {
   Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
   ClipboardList, Clock3, CreditCard, Download, FileCheck2, FileText, Filter, Gauge, LayoutDashboard,
   MapPin, Menu, Package, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Truck,
-  Users, Warehouse, X, UserCheck,
+  Users, Warehouse, X, UserCheck, Sun, Moon,
 } from 'lucide-react';
 import './erp.css';
 
@@ -124,7 +124,17 @@ function AppShell() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('Tous les statuts');
   const [activeTab, setActiveTab] = useState('Tout');
+  const [isLightMode, setIsLightMode] = useState(false);
   const [selectedRole, setSelectedRole] = useState('admin');
+
+  const toggleTheme = () => {
+    setIsLightMode(!isLightMode);
+    if (!isLightMode) {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+  };
 
   const rolePermissions: Record<string, string[]> = {
     admin: ['/', '/orders', '/products', '/inventory', '/customers', '/purchasing', '/deliveries', '/finance', '/reports', '/settings'],
@@ -226,7 +236,9 @@ function AppShell() {
               <option value="client" style={{ background: '#ffffff', color: '#0f172a' }}>Client</option>
             </select>
           </label>
-          <div className="demo-tag"><span />DONNÉES API LIVE</div>
+          <button className="theme-toggle-button icon-button" onClick={toggleTheme} title="Basculer le thème (Clair / Sombre)" style={{ padding: '6px', cursor: 'pointer' }} data-testid="button-theme-toggle">
+            {isLightMode ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
           <div className="top-date"><CalendarDays size={14} /> 28 fév. 2025 <ChevronDown size={13} /></div>
           <button className="help-button" onClick={() => notify('Aide produit : connectée au serveur API backend.')} aria-label="Aide"><CircleHelp size={17} /></button>
         </div>

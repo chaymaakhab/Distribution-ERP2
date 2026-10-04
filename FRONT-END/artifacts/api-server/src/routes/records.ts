@@ -36,7 +36,7 @@ let erpStore: Record<string, Array<{ id: number; module: string; ref: string; cu
     { id: 15, module: 'reports', ref: 'RPT-01', customer: 'Ventes par période', city: 'CA HT · comparatif mensuel', date: 'Fév. 2025', total: '1 284 650,00', status: 'Disponible', source: '32 jours de données' },
   ],
   settings: [
-    { id: 16, module: 'settings', ref: 'SOC-01', customer: 'Hercules Distribution SARL', city: 'Casablanca · Maroc', date: 'ICE 003147829000064', total: 'DH · MAD', status: 'Actif', source: 'Société de démonstration' },
+    { id: 16, module: 'settings', ref: 'SOC-01', customer: 'GestionERP Distribution SARL', city: 'Casablanca · Maroc', date: 'ICE 003147829000064', total: 'DH · MAD', status: 'Actif', source: 'Société de démonstration' },
   ],
 };
 

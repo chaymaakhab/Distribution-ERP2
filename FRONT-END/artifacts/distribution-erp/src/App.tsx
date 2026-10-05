@@ -142,6 +142,7 @@ function AppShell() {
     driver: ['/', '/deliveries', '/finance'],
     comptable: ['/', '/finance', '/reports', '/customers'],
     client: ['/', '/products', '/orders'],
+    finisseur: ['/', '/orders', '/inventory', '/deliveries'],
   };
 
   const allowedModulesList = rolePermissions[selectedRole] || rolePermissions.admin;
@@ -230,6 +231,7 @@ function AppShell() {
               <option value="commercial" style={{ background: '#ffffff', color: '#0f172a' }}>Commercial</option>
               <option value="preparateur" style={{ background: '#ffffff', color: '#0f172a' }}>Préparateur</option>
               <option value="driver" style={{ background: '#ffffff', color: '#0f172a' }}>Livreur / Chauffeur</option>
+              <option value="finisseur" style={{ background: '#ffffff', color: '#0f172a' }}>Finisseur / Contrôleur Qualité</option>
               <option value="comptable" style={{ background: '#ffffff', color: '#0f172a' }}>Comptable</option>
               <option value="client" style={{ background: '#ffffff', color: '#0f172a' }}>Client</option>
             </select>
@@ -408,6 +410,7 @@ function AppShellRouter() {
     <Route path="/login/commercial" component={() => <LoginPage roleKey="commercial" />} />
     <Route path="/login/livreur" component={() => <LoginPage roleKey="livreur" />} />
     <Route path="/login/preparateur" component={() => <LoginPage roleKey="preparateur" />} />
+    <Route path="/login/finisseur" component={() => <LoginPage roleKey="finisseur" />} />
     <Route path="/login/responsable-depot" component={() => <LoginPage roleKey="responsable-depot" />} />
     <Route path="/login/comptable" component={() => <LoginPage roleKey="comptable" />} />
     <Route path="/login/client" component={() => <LoginPage roleKey="client" />} />

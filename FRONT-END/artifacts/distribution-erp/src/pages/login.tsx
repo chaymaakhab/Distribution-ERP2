@@ -84,6 +84,16 @@ const portals: Record<string, RolePortal> = {
     accentBg: '#eef2ff',
     defaultEmail: 'client@gestionerp.ma',
   },
+  finisseur: {
+    slug: 'finisseur',
+    title: 'Portail Finisseur & Contrôle',
+    titleAr: 'بوابة الإنهاء ومراقبة الجودة',
+    subtitle: 'Contrôle Qualité, Finition & Emballage',
+    icon: ShieldCheck,
+    color: '#059669',
+    accentBg: '#ecfdf5',
+    defaultEmail: 'finisseur@gestionerp.ma',
+  },
   general: {
     slug: '',
     title: 'Espace Connexion Central ERP',
@@ -221,6 +231,9 @@ export function LoginPage({ roleKey }: { roleKey?: string }) {
               </button>
               <button onClick={() => setLocation('/login/preparateur')} className="text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-600 font-medium text-[11px]">
                 • Préparateur
+              </button>
+              <button onClick={() => setLocation('/login/finisseur')} className="text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-600 font-medium text-[11px]">
+                • Finisseur
               </button>
               <button onClick={() => setLocation('/login/responsable-depot')} className="text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-600 font-medium text-[11px]">
                 • Responsable Dépôt

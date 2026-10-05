@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import CustomerApp from '@/customer/CustomerApp';
+import StaffApp from '@/staff/StaffApp';
 import { Route, Switch, useLocation, Router as WouterRouter, Link } from 'wouter';
 import {
   Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BadgeDollarSign, BarChart3,
@@ -383,6 +384,9 @@ function AppShellRouter() {
     <Route path="/customer/order/:ref" component={CustomerApp} />
     <Route path="/customer/invoices" component={CustomerApp} />
     <Route path="/customer/profile" component={CustomerApp} />
+    <Route path="/login" component={StaffApp} />
+    <Route path="/:ws/dashboard" component={StaffApp} />
+    <Route path="/:ws/:module" component={StaffApp} />
     <Route path="/" component={AppShell} />
     <Route path="/orders" component={AppShell} />
     <Route path="/products" component={AppShell} />

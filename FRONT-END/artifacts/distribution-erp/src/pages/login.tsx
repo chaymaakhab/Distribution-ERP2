@@ -84,6 +84,16 @@ const portals: Record<string, RolePortal> = {
     accentBg: '#eef2ff',
     defaultEmail: 'client@gestionerp.ma',
   },
+  fournisseur: {
+    slug: 'fournisseur',
+    title: 'Portail Fournisseur',
+    titleAr: 'بوابة الموردين',
+    subtitle: 'Devis, Commandes Reçues & Facturation',
+    icon: ShoppingCart,
+    color: '#0d9488',
+    accentBg: '#f0fdfa',
+    defaultEmail: 'fournisseur@gestionerp.ma',
+  },
   finisseur: {
     slug: 'finisseur',
     title: 'Portail Finisseur & Contrôle',
@@ -243,6 +253,9 @@ export function LoginPage({ roleKey }: { roleKey?: string }) {
               </button>
               <button onClick={() => setLocation('/login/client')} className="text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-600 font-medium text-[11px]">
                 • Client B2B
+              </button>
+              <button onClick={() => setLocation('/login/fournisseur')} className="text-left px-2 py-1.5 rounded hover:bg-slate-50 text-slate-600 font-medium text-[11px]">
+                • Fournisseur
               </button>
             </div>
           </div>

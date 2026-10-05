@@ -135,13 +135,15 @@ function AppShell() {
   }
 
   const rolePermissions: Record<string, string[]> = {
+    super_admin: ['/', '/orders', '/products', '/inventory', '/customers', '/purchasing', '/deliveries', '/finance', '/reports', '/settings'],
     admin: ['/', '/orders', '/products', '/inventory', '/customers', '/purchasing', '/deliveries', '/finance', '/reports', '/settings'],
-    warehouse: ['/', '/inventory', '/deliveries', '/purchasing'],
+    depot_manager: ['/', '/inventory', '/deliveries', '/purchasing'],
     commercial: ['/', '/customers', '/orders', '/products', '/finance'],
-    preparateur: ['/', '/orders', '/inventory'],
+    preparer: ['/', '/orders', '/inventory'],
     driver: ['/', '/deliveries', '/finance'],
     comptable: ['/', '/finance', '/reports', '/customers'],
-    client: ['/', '/products', '/orders'],
+    customer: ['/', '/products', '/orders'],
+    supplier: ['/', '/purchasing', '/products', '/finance', '/reports'],
     finisseur: ['/', '/orders', '/inventory', '/deliveries'],
   };
 
@@ -226,14 +228,16 @@ function AppShell() {
           <label className="role-select" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '4px' }}>
             <UserCheck size={14} />
             <select value={selectedRole} onChange={e => { setSelectedRole(e.target.value); notify(`Rôle basculé en : ${e.target.options[e.target.selectedIndex].text}`); }} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', outline: 'none' }} data-testid="select-role-switcher">
-              <option value="admin" style={{ background: '#ffffff', color: '#0f172a' }}>Super Admin</option>
-              <option value="warehouse" style={{ background: '#ffffff', color: '#0f172a' }}>Responsable Dépôt</option>
+              <option value="super_admin" style={{ background: '#ffffff', color: '#0f172a' }}>Super Admin</option>
+              <option value="admin" style={{ background: '#ffffff', color: '#0f172a' }}>Administrateur</option>
+              <option value="depot_manager" style={{ background: '#ffffff', color: '#0f172a' }}>Responsable Dépôt</option>
               <option value="commercial" style={{ background: '#ffffff', color: '#0f172a' }}>Commercial</option>
-              <option value="preparateur" style={{ background: '#ffffff', color: '#0f172a' }}>Préparateur</option>
+              <option value="preparer" style={{ background: '#ffffff', color: '#0f172a' }}>Préparateur</option>
               <option value="driver" style={{ background: '#ffffff', color: '#0f172a' }}>Livreur / Chauffeur</option>
-              <option value="finisseur" style={{ background: '#ffffff', color: '#0f172a' }}>Finisseur / Contrôleur Qualité</option>
+              <option value="finisseur" style={{ background: '#ffffff', color: '#0f172a' }}>Finisseur / Contrôleur</option>
               <option value="comptable" style={{ background: '#ffffff', color: '#0f172a' }}>Comptable</option>
-              <option value="client" style={{ background: '#ffffff', color: '#0f172a' }}>Client</option>
+              <option value="customer" style={{ background: '#ffffff', color: '#0f172a' }}>Client B2B</option>
+              <option value="supplier" style={{ background: '#ffffff', color: '#0f172a' }}>Fournisseur</option>
             </select>
           </label>
           <button className="icon-button button-theme-toggle" onClick={toggleTheme} title={isLight ? 'Passer en mode sombre' : 'Passer en mode clair'} aria-label="Basculer le thème" data-testid="button-theme-toggle">
@@ -414,6 +418,7 @@ function AppShellRouter() {
     <Route path="/login/responsable-depot" component={() => <LoginPage roleKey="responsable-depot" />} />
     <Route path="/login/comptable" component={() => <LoginPage roleKey="comptable" />} />
     <Route path="/login/client" component={() => <LoginPage roleKey="client" />} />
+    <Route path="/login/fournisseur" component={() => <LoginPage roleKey="fournisseur" />} />
     <Route path="/" component={AppShell} />
     <Route path="/orders" component={AppShell} />
     <Route path="/products" component={AppShell} />

@@ -21,7 +21,8 @@ button, input, select { font: inherit; }
 button { color: inherit; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .erp-app { min-height: 100dvh; }
-.sidebar { width: 236px; position: fixed; z-index: 20; inset: 0 auto 0 0; display: flex; flex-direction: column; padding: 23px 14px 14px; background: #0d141e; border-right: 1px solid #202b3b; }
+.sidebar { width: 236px; position: fixed; z-index: 20; inset: 0 auto 0 0; display: flex; flex-direction: column; padding: 23px 14px 14px; background: #0d141e; border-right: 1px solid #202b3b; overflow-y: auto; max-height: 100vh; }
+.side-nav { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1; min-height: 0; }
 .brand { height: 42px; display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--text); padding: 0 8px; }
 .brand-mark { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(145deg, #60a3ff, #2c6fda); color: #f8fbff; display: grid; place-items: center; box-shadow: inset 0 1px rgba(255,255,255,.27), 0 4px 14px rgba(33,111,224,.2); font-size: 20px; font-weight: 800; transform: skew(-4deg); }
 .brand-mark span { transform: skew(4deg); }
@@ -186,9 +187,28 @@ body.light-theme .metric-number {
 body.light-theme .page-heading h1 {
   color: #0f172a;
 }
-body.light-theme .data-table th, body.light-theme .module-table th, body.light-theme .compact-table th {
+body.light-theme .data-table thead th,
+body.light-theme .module-table thead th,
+body.light-theme .compact-table thead th,
+body.light-theme .data-table th,
+body.light-theme .module-table th,
+body.light-theme .compact-table th {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+}
+body.light-theme .table-tools {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+body.light-theme .data-table tbody tr {
+  border-top-color: #e2e8f0 !important;
+}
+body.light-theme .data-table tbody tr:hover {
   background: #f8fafc !important;
-  color: #475569 !important;
+}
+body.light-theme .table-footer {
+  border-top-color: #e2e8f0 !important;
 }
 body.light-theme .data-table td {
   border-bottom-color: #f1f5f9;
@@ -204,4 +224,27 @@ body.light-theme .search-field, body.light-theme .filter-select, body.light-them
 }
 body.light-theme .search-field input, body.light-theme .filter-select select, body.light-theme .role-select select {
   color: #0f172a;
+}
+body.light-theme .record-modal {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  box-shadow: 0 20px 70px rgba(0,0,0,0.15);
+}
+body.light-theme .modal-top h2 {
+  color: #0f172a;
+}
+body.light-theme .field-label {
+  color: #475569;
+}
+body.light-theme .field-label input {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+body.light-theme .modal-note {
+  color: #64748b;
+}
+body.light-theme .modal-backdrop {
+  background: rgba(15,23,42,0.4);
 }

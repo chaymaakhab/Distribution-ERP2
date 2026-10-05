@@ -124,17 +124,15 @@ function AppShell() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('Tous les statuts');
   const [activeTab, setActiveTab] = useState('Tout');
-  const [isLightMode, setIsLightMode] = useState(false);
   const [selectedRole, setSelectedRole] = useState('admin');
+  const [isLight, setIsLight] = useState(false);
 
-  const toggleTheme = () => {
-    setIsLightMode(!isLightMode);
-    if (!isLightMode) {
-      document.body.classList.add('light-theme');
-    } else {
-      document.body.classList.remove('light-theme');
-    }
-  };
+  function toggleTheme() {
+    const nextTheme = !isLight;
+    setIsLight(nextTheme);
+    document.body.classList.toggle('light-theme', nextTheme);
+    notify(nextTheme ? 'Mode clair activé' : 'Mode sombre activé');
+  }
 
   const rolePermissions: Record<string, string[]> = {
     admin: ['/', '/orders', '/products', '/inventory', '/customers', '/purchasing', '/deliveries', '/finance', '/reports', '/settings'],
@@ -236,8 +234,8 @@ function AppShell() {
               <option value="client" style={{ background: '#ffffff', color: '#0f172a' }}>Client</option>
             </select>
           </label>
-          <button className="theme-toggle-button icon-button" onClick={toggleTheme} title="Basculer le thème (Clair / Sombre)" style={{ padding: '6px', cursor: 'pointer' }} data-testid="button-theme-toggle">
-            {isLightMode ? <Moon size={16} /> : <Sun size={16} />}
+          <button className="icon-button button-theme-toggle" onClick={toggleTheme} title={isLight ? 'Passer en mode sombre' : 'Passer en mode clair'} aria-label="Basculer le thème" data-testid="button-theme-toggle">
+            {isLight ? <Moon size={16} /> : <Sun size={16} />}
           </button>
           <div className="top-date"><CalendarDays size={14} /> 28 fév. 2025 <ChevronDown size={13} /></div>
           <button className="help-button" onClick={() => notify('Aide produit : connectée au serveur API backend.')} aria-label="Aide"><CircleHelp size={17} /></button>

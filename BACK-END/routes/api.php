@@ -12,16 +12,23 @@ use App\Http\Controllers\Api\v1\Customer\AccountController as CustomerAccountCon
 
 Route::prefix('v1')->group(function () {
     // ---------------------------------------------------------------------
-    // Staff (internal ERP) — placeholder endpoints kept intact.
+    // Staff (internal ERP).
     // ---------------------------------------------------------------------
-    Route::get('/auth/me', [AuthController::class, 'me']);
-    Route::get('/roles', [AuthController::class, 'roles']);
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
-    Route::get('/orders', [OrderController::class, 'index']);
-    Route::post('/orders', [OrderController::class, 'store']);
-    Route::patch('/orders/{ref}/status', [OrderController::class, 'updateStatus']);
+    Route::middleware('auth:staff')->group(function () {
+        Route::get('/auth/me', [AuthController::class, 'me']);
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::post('/auth/switch-role', [AuthController::class, 'switchRole']);
 
-    Route::post('/sync', [SyncController::class, 'sync']);
+        Route::get('/roles', [AuthController::class, 'roles'])->middleware('permission:roles.view');
+
+        Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:orders.view');
+        Route::post('/orders', [OrderController::class, 'store'])->middleware('permission:orders.create');
+        Route::patch('/orders/{ref}/status', [OrderController::class, 'updateStatus'])->middleware('permission:orders.update');
+
+        Route::post('/sync', [SyncController::class, 'sync']);
+    });
 
     // ---------------------------------------------------------------------
     // Customer shopping portal.

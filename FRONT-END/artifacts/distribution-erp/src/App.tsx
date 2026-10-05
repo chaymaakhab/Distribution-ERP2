@@ -16,8 +16,10 @@ import {
   Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
   ClipboardList, Clock3, CreditCard, Download, FileCheck2, FileText, Filter, Gauge, LayoutDashboard,
   MapPin, Menu, Package, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Truck,
-  Users, Warehouse, X, UserCheck, Sun, Moon,
+  Users, Warehouse, X, UserCheck,
 } from 'lucide-react';
+import { ThemeProvider } from '@/lib/theme';
+import { ThemeToggle } from '@/components/theme-toggle';
 import './erp.css';
 
 const queryClient = new QueryClient();
@@ -240,9 +242,7 @@ function AppShell() {
               <option value="supplier" style={{ background: '#ffffff', color: '#0f172a' }}>Fournisseur</option>
             </select>
           </label>
-          <button className="icon-button button-theme-toggle" onClick={toggleTheme} title={isLight ? 'Passer en mode sombre' : 'Passer en mode clair'} aria-label="Basculer le thème" data-testid="button-theme-toggle">
-            {isLight ? <Moon size={16} /> : <Sun size={16} />}
-          </button>
+          <ThemeToggle />
           <div className="top-date"><CalendarDays size={14} /> 28 fév. 2025 <ChevronDown size={13} /></div>
           <button className="help-button" onClick={() => notify('Aide produit : connectée au serveur API backend.')} aria-label="Aide"><CircleHelp size={17} /></button>
         </div>
@@ -437,6 +437,6 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
   return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
 }
 function App() {
-  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
+  return <ThemeProvider><QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider></ThemeProvider>;
 }
 export default App;

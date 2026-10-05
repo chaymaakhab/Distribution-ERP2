@@ -5,6 +5,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
+import CustomerApp from '@/customer/CustomerApp';
 import { Route, Switch, useLocation, Router as WouterRouter, Link } from 'wouter';
 import {
   Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BadgeDollarSign, BarChart3,
@@ -373,6 +374,15 @@ function Router() {
 }
 function AppShellRouter() {
   return <Switch>
+    <Route path="/customer/login" component={CustomerApp} />
+    <Route path="/customer/home" component={CustomerApp} />
+    <Route path="/customer/catalog" component={CustomerApp} />
+    <Route path="/customer/product/:code" component={CustomerApp} />
+    <Route path="/customer/cart" component={CustomerApp} />
+    <Route path="/customer/orders" component={CustomerApp} />
+    <Route path="/customer/order/:ref" component={CustomerApp} />
+    <Route path="/customer/invoices" component={CustomerApp} />
+    <Route path="/customer/profile" component={CustomerApp} />
     <Route path="/" component={AppShell} />
     <Route path="/orders" component={AppShell} />
     <Route path="/products" component={AppShell} />

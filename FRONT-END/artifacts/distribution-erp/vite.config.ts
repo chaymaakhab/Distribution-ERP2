@@ -72,6 +72,16 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    proxy: {
+      // Forward API calls to the Laravel backend during development so the
+      // browser talks same-origin (no CORS). Override the target with
+      // VITE_BACKEND_URL when the API runs on a different host/port.
+      '/api': {
+        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   preview: {
     port,

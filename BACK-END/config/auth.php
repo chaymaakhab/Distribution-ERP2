@@ -42,6 +42,19 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Internal staff (SuperAdmin, Administrateur, Responsable dépôt,
+        // Commercial, Préparateur, Livreur, Comptable). Token-based via Sanctum.
+        'staff' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+        ],
+
+        // External customers using the shopping portal. Token-based via Sanctum.
+        'customer' => [
+            'driver' => 'sanctum',
+            'provider' => 'customers',
+        ],
     ],
 
     /*
@@ -65,6 +78,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        'customers' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Customer::class,
         ],
 
         // 'users' => [

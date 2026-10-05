@@ -11,6 +11,7 @@ import {
 import { useStaffAuth } from '../auth';
 import { AreaChart, BarList, ColumnChart } from '../components/Charts';
 import { MapCanvas, MapLegend } from '../components/MapCanvas';
+import '../admin.css';
 
 type Tab = 'jour' | 'mois';
 
@@ -117,7 +118,14 @@ export default function AdminDashboard() {
             <button className="more-button" onClick={() => setLocation(`/${workspace}/warehouses`)}>Agrandir <ArrowRight size={14} /></button>
           </div>
           <div className="sx-map-wrap">
-            <MapCanvas warehouses={warehouses ?? []} compact onSelect={(id) => setLocation(`/${workspace}/warehouses?depot=${id}`)} />
+            <MapCanvas
+              warehouses={warehouses ?? []}
+              compact
+              onSelect={(id) => {
+                sessionStorage.setItem('hercules.staff.depot', String(id));
+                setLocation(`/${workspace}/warehouses`);
+              }}
+            />
             <MapLegend />
           </div>
         </section>

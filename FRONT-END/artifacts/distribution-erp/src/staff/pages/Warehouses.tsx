@@ -1,24 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'wouter';
 import {
   MapPin, Phone, User, Boxes, ClipboardList, Package, Wallet, AlertTriangle, ArrowRight,
 } from 'lucide-react';
 import { api, formatMoney, type WarehouseNode } from '../api';
 import { MapCanvas, MapLegend } from '../components/MapCanvas';
+import '../admin.css';
+
+const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const DEPOT_KEY = 'hercules.staff.depot';
 
 export default function Warehouses() {
-  const [location] = useLocation();
   const [warehouses, setWarehouses] = useState<WarehouseNode[] | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Honour ?depot=ID coming from the dashboard mini-map.
+  // Honour a depot pre-selected from the dashboard mini-map (passed via storage,
+  // not the URL, to keep the /:ws/:module route matcher clean).
   const initialId = useMemo(() => {
-    const q = location.split('?')[1];
-    if (!q) return null;
-    const v = new URLSearchParams(q).get('depot');
+    const v = sessionStorage.getItem(DEPOT_KEY);
+    sessionStorage.removeItem(DEPOT_KEY);
     return v ? Number(v) : null;
-  }, [location]);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -72,7 +74,7 @@ export default function Warehouses() {
                 className={`sx-depot-item ${selected?.id === w.id ? 'active' : ''}`}
                 onClick={() => setSelectedId(w.id)}
               >
-                <span className={`sx-depot-dot s-${w.status.toLowerCase()}`} />
+                <span className={`sx-depot-dot s-${slug(w.status)}`} />
                 <span className="sx-depot-meta">
                   <b>{w.name}</b>
                   <small>{w.city} · {w.code}</small>
@@ -96,7 +98,7 @@ function DepotSheet({ w }: { w: WarehouseNode }) {
         <div>
           <span className="eyebrow">FICHE DÉPÔT · {w.code}</span>
           <h2>{w.name}</h2>
-          <span className={`sx-status s-${w.status.toLowerCase()}`}>{w.status}</span>
+          <span className={`sx-status s-${slug(w.status)}`}>{w.status}</span>
         </div>
       </div>
 

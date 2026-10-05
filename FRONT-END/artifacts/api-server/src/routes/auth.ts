@@ -47,7 +47,7 @@ router.get("/auth/me", (_req, res) => {
   res.json({
     id: 1,
     name: "Utilisateur ERP",
-    email: "user@gestionerp.ma",
+    email: "user@hercules-erp.ma",
     roleCode: role.code,
     roleName: role.name,
     allowedModules: role.modules,
@@ -63,7 +63,7 @@ router.post("/auth/switch-role", (req, res) => {
   res.json({
     id: 1,
     name: "Utilisateur ERP",
-    email: "user@gestionerp.ma",
+    email: "user@hercules-erp.ma",
     roleCode: role.code,
     roleName: role.name,
     allowedModules: role.modules,

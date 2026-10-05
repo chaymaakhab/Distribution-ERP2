@@ -5,18 +5,13 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
-import { ReportsPage } from '@/pages/reports';
-import { LoginPage } from '@/pages/login';
-import { InvoicingPage } from '@/pages/invoicing';
-import { MoroccoMap } from '@/components/morocco-map';
-import { SalesCrud } from '@/components/crud/sales-crud';
 import { Route, Switch, useLocation, Router as WouterRouter, Link } from 'wouter';
 import {
   Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BadgeDollarSign, BarChart3,
   Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
   ClipboardList, Clock3, CreditCard, Download, FileCheck2, FileText, Filter, Gauge, LayoutDashboard,
   MapPin, Menu, Package, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Truck,
-  Users, Warehouse, X, UserCheck, Sun, Moon,
+  Users, Warehouse, X, Sun, Moon, UserCheck,
 } from 'lucide-react';
 import './erp.css';
 
@@ -84,7 +79,7 @@ const initialRows: Record<string, Row[]> = {
     { ref: 'RPT-04', customer: 'Balance clients', city: 'Créances · échéances', date: 'Au 28 fév. 2025', total: '428 560,00', status: 'À suivre', source: '11 factures échues' },
   ],
   settings: [
-    { ref: 'SOC-01', customer: 'GestionERP Distribution SARL', city: 'Casablanca · Maroc', date: 'ICE 003147829000064', total: 'DH · MAD', status: 'Actif', source: 'Société de démonstration' },
+    { ref: 'SOC-01', customer: 'Hercules Distribution SARL', city: 'Casablanca · Maroc', date: 'ICE 003147829000064', total: 'DH · MAD', status: 'Actif', source: 'Société de démonstration' },
     { ref: 'DEP-01', customer: 'Dépôt Casablanca', city: 'Zone industrielle · Aïn Sebaâ', date: 'Responsable · N. El Fassi', total: 'Principal', status: 'Actif', source: 'Stock multi-emplacements' },
     { ref: 'DEP-02', customer: 'Dépôt Rabat', city: 'Hay Nahda · Rabat', date: 'Responsable · S. Amrani', total: 'Secondaire', status: 'Actif', source: 'Dernière synchro démo : 16:42' },
     { ref: 'USR-01', customer: 'Équipe commerciale', city: '5 utilisateurs · 3 secteurs', date: 'Droits · commandes, clients', total: 'Commercial', status: 'Actif', source: 'Accès illustratif' },
@@ -127,28 +122,6 @@ function AppShell() {
   const [isLightMode, setIsLightMode] = useState(false);
   const [selectedRole, setSelectedRole] = useState('admin');
 
-  const toggleTheme = () => {
-    setIsLightMode(!isLightMode);
-    if (!isLightMode) {
-      document.body.classList.add('light-theme');
-    } else {
-      document.body.classList.remove('light-theme');
-    }
-  };
-
-  const rolePermissions: Record<string, string[]> = {
-    admin: ['/', '/orders', '/products', '/inventory', '/customers', '/purchasing', '/deliveries', '/finance', '/reports', '/settings'],
-    warehouse: ['/', '/inventory', '/deliveries', '/purchasing'],
-    commercial: ['/', '/customers', '/orders', '/products', '/finance'],
-    preparateur: ['/', '/orders', '/inventory'],
-    driver: ['/', '/deliveries', '/finance'],
-    comptable: ['/', '/finance', '/reports', '/customers'],
-    client: ['/', '/products', '/orders'],
-  };
-
-  const allowedModulesList = rolePermissions[selectedRole] || rolePermissions.admin;
-  const filteredNavModules = modules.filter(m => allowedModulesList.includes(m.id));
-
   useEffect(() => {
     customFetch<Row[]>('/records').then((data: Row[]) => {
       if (Array.isArray(data) && data.length > 0) {
@@ -164,6 +137,15 @@ function AppShell() {
       }
     }).catch(() => {});
   }, []);
+
+  const toggleTheme = () => {
+    setIsLightMode(!isLightMode);
+    if (!isLightMode) {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+  };
   const [modal, setModal] = useState(false);
   const [toast, setToast] = useState('');
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -191,7 +173,7 @@ function AppShell() {
     const csv = [Object.keys(currentRows[0] ?? {}).join(';'), ...currentRows.map(row => Object.values(row).join(';'))].join('\n');
     const link = document.createElement('a');
     link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    link.download = `gestionerp-${pageKey || 'rapport'}.csv`;
+    link.download = `hercules-${pageKey || 'rapport'}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
     notify('Export CSV préparé depuis les données de démonstration.');
@@ -201,11 +183,11 @@ function AppShell() {
   return <div className="erp-app">
     <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
       <Link href="/" className="brand" onClick={() => setMobileMenu(false)}>
-        <span className="brand-mark"><span>G</span></span><span className="brand-copy"><b>GestionERP</b><small>DISTRIBUTION</small></span>
+        <span className="brand-mark"><span>H</span></span><span className="brand-copy"><b>HERCULES</b><small>ERP · DISTRIBUTION</small></span>
       </Link>
       <div className="workspace-chip"><span className="workspace-dot" /> <span>Maroc · Démo locale</span><ChevronDown size={13} /></div>
       <p className="nav-caption">ESPACE DE TRAVAIL</p>
-      <nav className="side-nav">{filteredNavModules.map(item => {
+      <nav className="side-nav">{modules.map(item => {
         const Icon = item.icon;
         const selected = item.id === location;
         return <Link href={item.id} key={item.id} onClick={() => setMobileMenu(false)} className={`nav-link ${selected ? 'nav-selected' : ''}`} data-testid={`link-nav-${item.id === '/' ? 'dashboard' : item.id.slice(1)}`}>
@@ -222,41 +204,31 @@ function AppShell() {
     <div className="app-main">
       <header className="topbar">
         <button className="mobile-trigger icon-button" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Ouvrir le menu"><Menu size={19} /></button>
-        <div className="crumb"><span>GestionERP</span><ChevronRight size={14} /><strong>{activeModule?.label ?? 'Vue d’ensemble'}</strong></div>
+        <div className="crumb"><span>Hercules ERP</span><ChevronRight size={14} /><strong>{activeModule?.label ?? 'Vue d’ensemble'}</strong></div>
         <div className="topbar-right">
           <label className="role-select" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '4px' }}>
             <UserCheck size={14} />
             <select value={selectedRole} onChange={e => { setSelectedRole(e.target.value); notify(`Rôle basculé en : ${e.target.options[e.target.selectedIndex].text}`); }} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', outline: 'none' }} data-testid="select-role-switcher">
-              <option value="admin" style={{ background: '#ffffff', color: '#0f172a' }}>Super Admin</option>
-              <option value="warehouse" style={{ background: '#ffffff', color: '#0f172a' }}>Responsable Dépôt</option>
-              <option value="commercial" style={{ background: '#ffffff', color: '#0f172a' }}>Commercial</option>
-              <option value="preparateur" style={{ background: '#ffffff', color: '#0f172a' }}>Préparateur</option>
-              <option value="driver" style={{ background: '#ffffff', color: '#0f172a' }}>Livreur / Chauffeur</option>
-              <option value="comptable" style={{ background: '#ffffff', color: '#0f172a' }}>Comptable</option>
-              <option value="client" style={{ background: '#ffffff', color: '#0f172a' }}>Client</option>
+              <option value="admin" style={{ background: '#1e293b' }}>Administrateur</option>
+              <option value="commercial" style={{ background: '#1e293b' }}>Commercial</option>
+              <option value="finance" style={{ background: '#1e293b' }}>Finance</option>
+              <option value="warehouse" style={{ background: '#1e293b' }}>Responsable Dépôt</option>
+              <option value="driver" style={{ background: '#1e293b' }}>Chauffeur/Livreur</option>
             </select>
           </label>
           <button className="theme-toggle-button icon-button" onClick={toggleTheme} title="Basculer le thème (Clair / Sombre)" style={{ padding: '6px', cursor: 'pointer' }} data-testid="button-theme-toggle">
             {isLightMode ? <Moon size={16} /> : <Sun size={16} />}
           </button>
+          <div className="demo-tag"><span />DONNÉES API LIVE</div>
           <div className="top-date"><CalendarDays size={14} /> 28 fév. 2025 <ChevronDown size={13} /></div>
           <button className="help-button" onClick={() => notify('Aide produit : connectée au serveur API backend.')} aria-label="Aide"><CircleHelp size={17} /></button>
         </div>
       </header>
       <main className="page-wrap">
-        {!allowedModulesList.includes(location) ? (
-          <div className="p-8 text-center bg-white rounded-lg border border-red-200 my-8">
-            <h2 className="text-xl font-bold text-red-600">Accès Restreint / Permission Refusée</h2>
-            <p className="text-sm text-gray-600 mt-2">Votre rôle ({selectedRole}) n'a pas accès au module {location}.</p>
-            <p className="text-xs text-gray-500 mt-1 font-arabic dir-rtl">ليس لديك صلاحية الوصول إلى هذا القسم</p>
-            <button onClick={() => setLocation('/')} className="mt-4 px-4 py-2 bg-blue-600 text-white font-semibold text-xs rounded hover:bg-blue-700">
-              Retour au Tableau de Bord
-            </button>
-          </div>
-        ) : location === '/' ? <Dashboard onNavigate={setLocation} onNotify={notify} /> : location === '/reports' ? <ReportsPage /> : location === '/finance' ? <InvoicingPage /> : page ? <ModulePage
+        {location === '/' ? <Dashboard onNavigate={setLocation} onNotify={notify} /> : page ? <ModulePage
           page={page} rows={filtered} allRows={currentRows} query={query} setQuery={setQuery}
           filter={filter} setFilter={setFilter} statuses={statuses} activeTab={activeTab} setActiveTab={setActiveTab}
-          onAdd={() => setModal(true)} onExport={exportRows} onNotify={notify}
+          onAdd={() => pageKey === 'reports' ? exportRows() : setModal(true)} onExport={exportRows} onNotify={notify}
           onStatus={ref => pageKey === 'finance'
             ? notify(`Le statut de ${ref} est conservé ; les opérations financières ne sont pas modifiables en démo.`)
             : setRows(old => ({ ...old, [pageKey]: old[pageKey].map(row => row.ref === ref ? { ...row, status: row.status === 'Actif' ? 'Inactif' : 'Actif' } : row) }))}
@@ -369,11 +341,7 @@ function ModulePage({ page, rows, allRows, query, setQuery, filter, setFilter, s
       <div className="heading-actions"><button className="button-secondary" onClick={onExport} data-testid="button-export"><Download size={15} /> Exporter</button><button className="button-primary" onClick={onAdd} data-testid="button-primary-action"><Plus size={16} />{page.action}</button></div>
     </div>
     <div className="summary-strip">{summaries.map(([label, value, tone]) => <div className="summary-box" key={label}><span>{label}</span><strong className={tone}>{value}</strong></div>)}</div>
-    {isInventory && <>
-      <MoroccoMap />
-      <div className="inventory-note"><div className="note-symbol"><Boxes size={17} /></div><div><b>Disponibilité = physique − réservé</b><span>Les mouvements gardent leur sens : réception, sortie, transfert et réservation.</span></div><button onClick={() => onNotify('Mouvement enregistré uniquement dans les données de démonstration.')}>Voir les mouvements <ArrowRight size={14} /></button></div>
-    </>}
-    {page.title === 'Catalogue produits' && <SalesCrud />}
+    {isInventory && <div className="inventory-note"><div className="note-symbol"><Boxes size={17} /></div><div><b>Disponibilité = physique − réservé</b><span>Les mouvements gardent leur sens : réception, sortie, transfert et réservation.</span></div><button onClick={() => onNotify('Mouvement enregistré uniquement dans les données de démonstration.')}>Voir les mouvements <ArrowRight size={14} /></button></div>}
     {page.title === 'Approvisionnements' && <div className="suggestion-banner"><div className="suggest-icon"><ShoppingCart size={17} /></div><div><b>Suggestions de réapprovisionnement</b><span>4 références sous le seuil · priorisées par les ventes récentes</span></div><button onClick={() => onNotify('Suggestions : Pompe immergée, câble 3G2.5, raccords PVC et disque diamant.')}>Examiner les suggestions <ArrowRight size={14} /></button></div>}
     <section className="panel list-panel">
       <div className="list-panel-heading"><div><span className="eyebrow">REGISTRE OPÉRATIONNEL</span><h2>{isOrders ? 'Toutes les commandes' : isInventory ? 'Quantités par dépôt' : page.title === 'Finance' ? 'Factures, règlements & effets' : page.title}</h2></div><div className="table-count"><span className="count-pulse" />{rows.length} enregistrements <span>· démo</span></div></div>
@@ -405,14 +373,6 @@ function Router() {
 }
 function AppShellRouter() {
   return <Switch>
-    <Route path="/login" component={() => <LoginPage />} />
-    <Route path="/login/admin" component={() => <LoginPage roleKey="admin" />} />
-    <Route path="/login/commercial" component={() => <LoginPage roleKey="commercial" />} />
-    <Route path="/login/livreur" component={() => <LoginPage roleKey="livreur" />} />
-    <Route path="/login/preparateur" component={() => <LoginPage roleKey="preparateur" />} />
-    <Route path="/login/responsable-depot" component={() => <LoginPage roleKey="responsable-depot" />} />
-    <Route path="/login/comptable" component={() => <LoginPage roleKey="comptable" />} />
-    <Route path="/login/client" component={() => <LoginPage roleKey="client" />} />
     <Route path="/" component={AppShell} />
     <Route path="/orders" component={AppShell} />
     <Route path="/products" component={AppShell} />

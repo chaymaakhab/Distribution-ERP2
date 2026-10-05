@@ -113,4 +113,101 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ role }),
     }),
+
+  // SuperAdmin / Administrateur reporting.
+  adminOverview: () => request<{ data: OverviewKpis }>('/admin/overview'),
+  adminRevenue: () => request<{ data: RevenueData }>('/admin/revenue'),
+  adminWarehouses: () => request<{ data: WarehouseNode[] }>('/admin/warehouses'),
+  adminPerformance: () => request<{ data: PerformanceData }>('/admin/performance'),
 };
+
+export interface OverviewKpis {
+  ca_today: number;
+  ca_month: number;
+  ca_prev_month: number;
+  ca_month_delta: number | null;
+  orders_total: number;
+  orders_today: number;
+  orders_to_validate: number;
+  orders_in_delivery: number;
+  deliveries_in_progress: number;
+  deliveries_done: number;
+  payments_total: number;
+  payments_today: number;
+  receivables: number;
+  unpaid_invoices: number;
+  returns: number;
+  stock_ruptures: number;
+  stock_low: number;
+  customers_count: number;
+  products_count: number;
+  warehouses_count: number;
+}
+
+export interface SeriesPoint {
+  label: string;
+  value: number;
+  count?: number;
+  qty?: number;
+}
+
+export interface RevenueData {
+  by_day: SeriesPoint[];
+  by_month: SeriesPoint[];
+  by_warehouse: SeriesPoint[];
+  by_city: SeriesPoint[];
+  by_commercial: SeriesPoint[];
+  top_products: SeriesPoint[];
+  orders_evolution: SeriesPoint[];
+}
+
+export interface WarehouseNode {
+  id: number;
+  code: string;
+  name: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  phone: string | null;
+  manager_name: string | null;
+  status: string;
+  stock_on_hand: number;
+  stock_available: number;
+  products_count: number;
+  revenue: number;
+  orders_pending: number;
+  orders_in_progress: number;
+  orders_done: number;
+}
+
+export interface CommercialPerf {
+  id: number;
+  name: string;
+  orders_count: number;
+  revenue: number;
+  customers_count: number;
+}
+export interface WarehousePerf {
+  id: number;
+  name: string;
+  city: string | null;
+  orders_count: number;
+  revenue: number;
+  stock_available: number;
+}
+export interface DriverPerf {
+  name: string;
+  deliveries_count: number;
+  delivered: number;
+  amount: number;
+}
+export interface PerformanceData {
+  commercials: CommercialPerf[];
+  warehouses: WarehousePerf[];
+  drivers: DriverPerf[];
+}
+
+export function formatMoney(value: number): string {
+  return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value || 0);
+}

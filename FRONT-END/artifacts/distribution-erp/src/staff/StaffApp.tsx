@@ -8,6 +8,8 @@ import { StaffAuthProvider, useStaffAuth } from './auth';
 import { MODULES, NAV_GROUPS, findModule, type NavModule } from './nav';
 import type { StaffUser } from './api';
 import StaffLogin from './StaffLogin';
+import AdminDashboard from './pages/AdminDashboard';
+import Warehouses from './pages/Warehouses';
 import './staff.css';
 
 export default function StaffApp() {
@@ -204,7 +206,7 @@ function StaffShell({ user }: { user: StaffUser }) {
 
         <main className="page-wrap">
           <Switch>
-            <Route path="/:ws/dashboard" component={() => <WorkspaceHome user={user} onNavigate={go} />} />
+            <Route path="/:ws/dashboard" component={() => <RoleDashboard user={user} onNavigate={go} />} />
             <Route path="/:ws/:module" component={(p) => <GuardedModule segment={p.module} />} />
             <Route component={() => <NotFound onHome={() => setLocation(home)} />} />
           </Switch>
@@ -235,7 +237,18 @@ function GuardedModule({ segment }: { segment: string }) {
   if (!module) return <NotFoundInline />;
   // Front-end guard: the URL alone never grants access.
   if (!hasPermission(module.permission)) return <Denied permission={module.permission} />;
+  if (segment === 'warehouses') return <Warehouses />;
   return <ModulePlaceholder module={module} />;
+}
+
+// Each role gets its own dashboard. SuperAdmin/Administrateur use the global
+// consolidated cockpit; the others fall back to the permission-aware overview
+// until their dedicated workspace is implemented.
+function RoleDashboard({ user, onNavigate }: { user: StaffUser; onNavigate: (segment: string) => void }) {
+  if (user.primary_role === 'superadmin' || user.primary_role === 'admin') {
+    return <AdminDashboard />;
+  }
+  return <WorkspaceHome user={user} onNavigate={onNavigate} />;
 }
 
 function ModulePlaceholder({ module }: { module: NavModule }) {

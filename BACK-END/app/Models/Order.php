@@ -10,8 +10,9 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'ref', 'customer_id', 'city', 'date', 'desired_date', 'delivery_note',
-        'total', 'discount', 'status', 'source', 'client_generated_uuid',
+        'ref', 'customer_id', 'warehouse_id', 'commercial_id', 'city', 'date',
+        'desired_date', 'delivery_note', 'total', 'discount', 'status', 'source',
+        'client_generated_uuid',
     ];
 
     protected $casts = [
@@ -22,6 +23,16 @@ class Order extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    public function commercial()
+    {
+        return $this->belongsTo(User::class, 'commercial_id');
     }
 
     public function items()

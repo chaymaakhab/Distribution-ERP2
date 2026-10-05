@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\OrderController;
 use App\Http\Controllers\Api\v1\SyncController;
+use App\Http\Controllers\Api\v1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\v1\Customer\AuthController as CustomerAuthController;
 use App\Http\Controllers\Api\v1\Customer\CatalogController as CustomerCatalogController;
 use App\Http\Controllers\Api\v1\Customer\OrderController as CustomerOrderController;
@@ -22,6 +23,14 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/switch-role', [AuthController::class, 'switchRole']);
 
         Route::get('/roles', [AuthController::class, 'roles'])->middleware('permission:roles.view');
+
+        // SuperAdmin / Administrateur : global dashboard, charts, map, rankings.
+        Route::prefix('admin')->group(function () {
+            Route::get('/overview', [AdminDashboardController::class, 'overview'])->middleware('permission:dashboard.view');
+            Route::get('/revenue', [AdminDashboardController::class, 'revenue'])->middleware('permission:reports.view');
+            Route::get('/warehouses', [AdminDashboardController::class, 'warehouses'])->middleware('permission:warehouses.view');
+            Route::get('/performance', [AdminDashboardController::class, 'performance'])->middleware('permission:reports.view');
+        });
 
         Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:orders.view');
         Route::post('/orders', [OrderController::class, 'store'])->middleware('permission:orders.create');

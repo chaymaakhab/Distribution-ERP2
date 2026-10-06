@@ -121,7 +121,9 @@ function AppShell() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('Tous les statuts');
   const [activeTab, setActiveTab] = useState('Tout');
-  const [isLightMode, setIsLightMode] = useState(false);
+  const [isLightMode, setIsLightMode] = useState(
+    () => window.localStorage.getItem('gestion-erp-theme') === 'light',
+  );
   const [selectedRole, setSelectedRole] = useState('admin');
 
   useEffect(() => {
@@ -140,13 +142,13 @@ function AppShell() {
     }).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    document.body.classList.toggle('light-theme', isLightMode);
+    window.localStorage.setItem('gestion-erp-theme', isLightMode ? 'light' : 'dark');
+  }, [isLightMode]);
+
   const toggleTheme = () => {
-    setIsLightMode(!isLightMode);
-    if (!isLightMode) {
-      document.body.classList.add('light-theme');
-    } else {
-      document.body.classList.remove('light-theme');
-    }
+    setIsLightMode((light) => !light);
   };
   const [modal, setModal] = useState(false);
   const [toast, setToast] = useState('');
@@ -208,14 +210,14 @@ function AppShell() {
         <button className="mobile-trigger icon-button" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Ouvrir le menu"><Menu size={19} /></button>
         <div className="crumb"><span>Gestion ERP</span><ChevronRight size={14} /><strong>{activeModule?.label ?? 'Vue d’ensemble'}</strong></div>
         <div className="topbar-right">
-          <label className="role-select" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '4px' }}>
+          <label className="role-select">
             <UserCheck size={14} />
             <select value={selectedRole} onChange={e => { setSelectedRole(e.target.value); notify(`Rôle basculé en : ${e.target.options[e.target.selectedIndex].text}`); }} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', outline: 'none' }} data-testid="select-role-switcher">
-              <option value="admin" style={{ background: '#1e293b' }}>Administrateur</option>
-              <option value="commercial" style={{ background: '#1e293b' }}>Commercial</option>
-              <option value="finance" style={{ background: '#1e293b' }}>Finance</option>
-              <option value="warehouse" style={{ background: '#1e293b' }}>Responsable Dépôt</option>
-              <option value="driver" style={{ background: '#1e293b' }}>Chauffeur/Livreur</option>
+              <option value="admin">Administrateur</option>
+              <option value="commercial">Commercial</option>
+              <option value="finance">Finance</option>
+              <option value="warehouse">Responsable Dépôt</option>
+              <option value="driver">Chauffeur/Livreur</option>
             </select>
           </label>
           <button className="theme-toggle-button icon-button" onClick={toggleTheme} title="Basculer le thème (Clair / Sombre)" style={{ padding: '6px', cursor: 'pointer' }} data-testid="button-theme-toggle">

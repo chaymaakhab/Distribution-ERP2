@@ -106,7 +106,7 @@ export default function ProductDetail({ code }: { code: string }) {
 
           <ul className="cx-pd-assurance">
             <li><Truck size={15} /> Livraison suivie depuis nos dépôts</li>
-            <li><ShieldCheck size={15} /> Paiement sécurisé · conditions {product.price_tier}</li>
+            <li><ShieldCheck size={15} /> Paiement à la livraison · Tarif professionnel</li>
             <li><RotateCcw size={15} /> Retour possible selon conditions</li>
           </ul>
         </div>

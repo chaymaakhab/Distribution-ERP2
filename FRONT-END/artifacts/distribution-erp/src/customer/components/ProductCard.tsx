@@ -32,9 +32,9 @@ export default function ProductCard({
           <small>TTC · {product.unit}</small>
         </div>
         <div className="cx-card-meta">
-          <span>HT {formatMoney(product.price_ht)} · TVA {product.vat_rate}%</span>
+          <span>HT {formatMoney(product.price_ht)} · {product.packaging || product.unit}</span>
           <span className={out ? 'cx-stock-out' : 'cx-stock-in'}>
-            {out ? 'Indisponible' : `${product.available_qty} dispo`}
+            {out ? 'Rupture' : '✓ En Stock'}
           </span>
         </div>
         <button

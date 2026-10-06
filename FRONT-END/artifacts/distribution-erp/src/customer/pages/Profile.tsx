@@ -20,7 +20,7 @@ export default function Profile({ user, onUpdated }: { user: CustomerUser; onUpd
     setError(null);
     try {
       const res = await api.updateProfile(form);
-      onUpdated(res.user);
+      onUpdated(res.data);
       setSaved(true);
       setTimeout(() => setSaved(false), 1800);
     } catch (err) {

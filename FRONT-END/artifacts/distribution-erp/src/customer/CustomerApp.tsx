@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, Route, Switch, useLocation } from 'wouter';
 import {
-  ShoppingCart, Home, LayoutGrid, Package, Receipt, User as UserIcon,
-  LogOut, Menu, X, Search, Bell, ChevronRight, Store,
+  ShoppingCart, Home as HomeIcon, LayoutGrid, Package, Receipt, User as UserIcon,
+  LogOut, Menu, X, Search, Bell, ChevronRight, Store, Sun, Moon, LogIn,
 } from 'lucide-react';
+import { useTheme } from '../lib/theme';
 import { CartProvider, useCart } from './cart';
 import { api, clearSession, getStoredUser, getToken, type CustomerUser } from './api';
 import CustomerLogin from './pages/Login';
@@ -18,7 +19,7 @@ import Profile from './pages/Profile';
 import './customer.css';
 
 const NAV = [
-  { href: '/customer/home', label: 'Accueil', icon: Home },
+  { href: '/customer/home', label: 'Accueil', icon: HomeIcon },
   { href: '/customer/catalog', label: 'Catalogue', icon: LayoutGrid },
   { href: '/customer/orders', label: 'Mes commandes', icon: Package },
   { href: '/customer/invoices', label: 'Factures & solde', icon: Receipt },
@@ -73,13 +74,14 @@ function CustomerRoot() {
     return <Home user={user} />;
   }
 
-  return <CustomerShell user={user} onLogout={() => setUser(null)} />;
+  return <CustomerShell user={user} onLogout={() => setUser(null)} onUpdated={(u) => setUser(u)} />;
 }
 
-function CustomerShell({ user, onLogout }: { user: CustomerUser; onLogout: () => void }) {
+function CustomerShell({ user, onLogout, onUpdated }: { user: CustomerUser; onLogout: () => void; onUpdated: (u: CustomerUser) => void }) {
   const [location, setLocation] = useLocation();
   const [mobileNav, setMobileNav] = useState(false);
   const { count } = useCart();
+  const { theme, toggleTheme, isLight } = useTheme();
 
   async function handleLogout() {
     try {
@@ -101,7 +103,7 @@ function CustomerShell({ user, onLogout }: { user: CustomerUser; onLogout: () =>
         <Link href="/customer/home" className="cx-brand">
           <span className="cx-brand-mark"><Store size={16} /></span>
           <span className="cx-brand-copy">
-            <b>HERCULES</b>
+            <b>GESTION ERP</b>
             <small>Espace client · {user.company || user.name}</small>
           </span>
         </Link>
@@ -119,6 +121,14 @@ function CustomerShell({ user, onLogout }: { user: CustomerUser; onLogout: () =>
         </nav>
 
         <div className="cx-top-actions">
+          <button
+            className="cx-icon-btn"
+            onClick={toggleTheme}
+            title={isLight ? 'Activer le mode sombre' : 'Activer le mode clair'}
+            aria-label="Basculer le thème"
+          >
+            {isLight ? <Moon size={17} /> : <Sun size={17} />}
+          </button>
           <Link href="/customer/cart" className="cx-cart-btn" aria-label="Panier">
             <ShoppingCart size={19} />
             {count > 0 && <span className="cx-cart-badge">{count}</span>}
@@ -130,6 +140,9 @@ function CustomerShell({ user, onLogout }: { user: CustomerUser; onLogout: () =>
               <small>Tarif {user.price_tier}</small>
             </span>
           </div>
+          <Link href="/login" className="cx-icon-btn" title="Changer de rôle / Portail ERP" aria-label="Portail ERP">
+            <LogIn size={17} />
+          </Link>
           <button className="cx-icon-btn" onClick={handleLogout} title="Se déconnecter" aria-label="Se déconnecter">
             <LogOut size={18} />
           </button>
@@ -169,12 +182,18 @@ function CustomerShell({ user, onLogout }: { user: CustomerUser; onLogout: () =>
         <Switch>
           <Route path="/customer/home" component={() => <Home user={user} />} />
           <Route path="/customer/catalog" component={() => <Catalog />} />
-          <Route path="/customer/product/:code" component={(p) => <ProductDetail code={p.code} />} />
+          <Route path="/customer/product/:code">
+            {(params: { code: string }) => <ProductDetail code={params.code} />}
+          </Route>
           <Route path="/customer/cart" component={() => <Cart user={user} />} />
           <Route path="/customer/orders" component={() => <Orders />} />
-          <Route path="/customer/order/:ref" component={(p) => <OrderDetail ref_={p.ref} />} />
+          <Route path="/customer/order/:ref">
+            {(params: { ref: string }) => <OrderDetail ref_={params.ref} />}
+          </Route>
           <Route path="/customer/invoices" component={() => <Invoices />} />
-          <Route path="/customer/profile" component={() => <Profile user={user} onUpdated={setUser} />} />
+          <Route path="/customer/profile">
+            {() => <Profile user={user} onUpdated={onUpdated} />}
+          </Route>
           <Route component={() => <NotFound onHome={() => setLocation('/customer/home')} />} />
         </Switch>
       </main>

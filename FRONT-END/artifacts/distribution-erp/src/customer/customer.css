@@ -9,15 +9,44 @@
   --cx-border: #e4e8ef;
   --cx-text: #16202e;
   --cx-muted: #6b7789;
-  --cx-brand: #0f9d76;
-  --cx-brand-dark: #0b7c5d;
-  --cx-brand-soft: #e6f6f0;
-  --cx-blue: #2f6fed;
+  --cx-brand: #0284c7;
+  --cx-brand-dark: #0369a1;
+  --cx-brand-soft: #e0f2fe;
+  --cx-blue: #0284c7;
   --cx-amber: #d98613;
   --cx-red: #d9483b;
   --cx-radius: 12px;
   --cx-shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.05);
 }
+
+body.light-theme .cx-app,
+html.light .cx-app {
+  --cx-bg: #f5f7fa;
+  --cx-surface: #ffffff;
+  --cx-border: #e4e8ef;
+  --cx-text: #16202e;
+  --cx-muted: #6b7789;
+  --cx-brand-soft: #e0f2fe;
+}
+
+body:not(.light-theme) .cx-app,
+html.dark .cx-app {
+  --cx-bg: #0c121d;
+  --cx-surface: #111a28;
+  --cx-border: #1e2c3f;
+  --cx-text: #eaf1fb;
+  --cx-muted: #8493a8;
+  --cx-brand-soft: rgba(2, 132, 199, 0.18);
+}
+
+body:not(.light-theme) .cx-toplink:hover { background: #172435; }
+body:not(.light-theme) .cx-cart-btn:hover { background: #172435; }
+body:not(.light-theme) .cx-user-chip { background: #172435; }
+body:not(.light-theme) .cx-card-product { background: #111a28; border-color: #1e2c3f; }
+body:not(.light-theme) .cx-card-media { background: #162334; }
+body:not(.light-theme) .cx-field input,
+body:not(.light-theme) .cx-field textarea { background: #162334; border-color: #1e2c3f; color: #eaf1fb; }
+body:not(.light-theme) .cx-empty { background: #111a28; border-color: #1e2c3f; }
 
 .cx-app {
   min-height: 100vh;
@@ -115,14 +144,14 @@
 .cx-hero {
   display: flex; align-items: center; justify-content: space-between; gap: 24px;
   padding: 28px 30px; border-radius: var(--cx-radius);
-  background: linear-gradient(120deg, #0f9d76, #0b7c5d); color: #fff; box-shadow: var(--cx-shadow);
+  background: linear-gradient(120deg, var(--cx-brand), var(--cx-brand-dark)); color: #fff; box-shadow: var(--cx-shadow);
 }
 .cx-hero .cx-eyebrow { color: rgba(255, 255, 255, 0.8); }
 .cx-hero h1 { font-size: 26px; font-weight: 800; margin: 6px 0 8px; letter-spacing: -0.4px; }
 .cx-hero p { color: rgba(255, 255, 255, 0.85); font-size: 14px; margin: 0 0 16px; }
 .cx-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .cx-hero .cx-btn-primary { background: #fff; color: var(--cx-brand-dark); }
-.cx-hero .cx-btn-primary:hover { background: #eafff7; }
+.cx-hero .cx-btn-primary:hover { background: #eff8ff; }
 .cx-hero .cx-btn-ghost { background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.3); }
 .cx-hero .cx-btn-ghost:hover { background: rgba(255, 255, 255, 0.22); }
 .cx-hero-card {
@@ -340,7 +369,7 @@
 
 /* ---------- Login ---------- */
 .cx-login { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; font-family: 'Manrope', sans-serif; }
-.cx-login-visual { display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 54px; background: linear-gradient(140deg, #0f9d76, #08563f); color: #fff; }
+.cx-login-visual { display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 54px; background: linear-gradient(140deg, var(--cx-brand), #075985); color: #fff; }
 .cx-login-brand { display: flex; align-items: center; gap: 12px; }
 .cx-login-brand .cx-brand-mark { background: rgba(255, 255, 255, 0.16); }
 .cx-login-brand b { font-size: 18px; letter-spacing: 0.5px; display: block; }

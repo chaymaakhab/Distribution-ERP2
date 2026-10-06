@@ -7,13 +7,15 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import CustomerApp from '@/customer/CustomerApp';
 import StaffApp from '@/staff/StaffApp';
+import UnifiedLogin from '@/components/UnifiedLogin';
+import { useTheme } from '@/lib/theme';
 import { Route, Switch, useLocation, Router as WouterRouter, Link } from 'wouter';
 import {
   Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BadgeDollarSign, BarChart3,
   Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
   ClipboardList, Clock3, CreditCard, Download, FileCheck2, FileText, Filter, Gauge, LayoutDashboard,
   MapPin, Menu, Package, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Truck,
-  Users, Warehouse, X, Sun, Moon, UserCheck,
+  Users, Warehouse, X, Sun, Moon, UserCheck, LogIn, Store,
 } from 'lucide-react';
 import './erp.css';
 
@@ -121,7 +123,7 @@ function AppShell() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('Tous les statuts');
   const [activeTab, setActiveTab] = useState('Tout');
-  const [isLightMode, setIsLightMode] = useState(false);
+  const { theme, toggleTheme, isLight } = useTheme();
   const [selectedRole, setSelectedRole] = useState('admin');
 
   useEffect(() => {
@@ -139,15 +141,6 @@ function AppShell() {
       }
     }).catch(() => {});
   }, []);
-
-  const toggleTheme = () => {
-    setIsLightMode(!isLightMode);
-    if (!isLightMode) {
-      document.body.classList.add('light-theme');
-    } else {
-      document.body.classList.remove('light-theme');
-    }
-  };
   const [modal, setModal] = useState(false);
   const [toast, setToast] = useState('');
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -185,9 +178,8 @@ function AppShell() {
   return <div className="erp-app">
     <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
       <Link href="/" className="brand" onClick={() => setMobileMenu(false)}>
-        <span className="brand-mark"><span>H</span></span><span className="brand-copy"><b>HERCULES</b><small>ERP · DISTRIBUTION</small></span>
+        <span className="brand-mark"><span>G</span></span><span className="brand-copy"><b>GESTION ERP</b><small>ERP · DISTRIBUTION</small></span>
       </Link>
-      <div className="workspace-chip"><span className="workspace-dot" /> <span>Maroc · Démo locale</span><ChevronDown size={13} /></div>
       <p className="nav-caption">ESPACE DE TRAVAIL</p>
       <nav className="side-nav">{modules.map(item => {
         const Icon = item.icon;
@@ -206,22 +198,36 @@ function AppShell() {
     <div className="app-main">
       <header className="topbar">
         <button className="mobile-trigger icon-button" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Ouvrir le menu"><Menu size={19} /></button>
-        <div className="crumb"><span>Hercules ERP</span><ChevronRight size={14} /><strong>{activeModule?.label ?? 'Vue d’ensemble'}</strong></div>
+        <div className="crumb"><span>Gestion ERP</span><ChevronRight size={14} /><strong>{activeModule?.label ?? 'Vue d’ensemble'}</strong></div>
         <div className="topbar-right">
-          <label className="role-select" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '4px' }}>
+          <label className="role-select" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', padding: '2px 8px', borderRadius: '4px' }}>
             <UserCheck size={14} />
-            <select value={selectedRole} onChange={e => { setSelectedRole(e.target.value); notify(`Rôle basculé en : ${e.target.options[e.target.selectedIndex].text}`); }} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', outline: 'none' }} data-testid="select-role-switcher">
-              <option value="admin" style={{ background: '#1e293b' }}>Administrateur</option>
-              <option value="commercial" style={{ background: '#1e293b' }}>Commercial</option>
-              <option value="finance" style={{ background: '#1e293b' }}>Finance</option>
-              <option value="warehouse" style={{ background: '#1e293b' }}>Responsable Dépôt</option>
-              <option value="driver" style={{ background: '#1e293b' }}>Chauffeur/Livreur</option>
+            <select
+              value={location}
+              onChange={(e) => {
+                const dest = e.target.value;
+                if (dest) setLocation(dest);
+              }}
+              style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', outline: 'none' }}
+              data-testid="select-role-switcher"
+            >
+              <option value="/" style={{ color: '#0f172a' }}>Vue d’ensemble</option>
+              <option value="/admin/dashboard" style={{ color: '#0f172a' }}>Super Admin</option>
+              <option value="/administrator/dashboard" style={{ color: '#0f172a' }}>Administrateur</option>
+              <option value="/sales/dashboard" style={{ color: '#0f172a' }}>Commercial</option>
+              <option value="/warehouse/dashboard" style={{ color: '#0f172a' }}>Responsable Dépôt</option>
+              <option value="/preparation/dashboard" style={{ color: '#0f172a' }}>Préparateur</option>
+              <option value="/delivery/dashboard" style={{ color: '#0f172a' }}>Livreur</option>
+              <option value="/accounting/dashboard" style={{ color: '#0f172a' }}>Comptable</option>
+              <option value="/customer/home" style={{ color: '#0f172a' }}>Client</option>
             </select>
           </label>
+          <Link href="/login" className="icon-button" title="Portail Connexion (8 Rôles)" aria-label="Portail Connexion">
+            <LogIn size={16} />
+          </Link>
           <button className="theme-toggle-button icon-button" onClick={toggleTheme} title="Basculer le thème (Clair / Sombre)" style={{ padding: '6px', cursor: 'pointer' }} data-testid="button-theme-toggle">
-            {isLightMode ? <Moon size={16} /> : <Sun size={16} />}
+            {isLight ? <Moon size={16} /> : <Sun size={16} />}
           </button>
-          <div className="demo-tag"><span />DONNÉES API LIVE</div>
           <div className="top-date"><CalendarDays size={14} /> 28 fév. 2025 <ChevronDown size={13} /></div>
           <button className="help-button" onClick={() => notify('Aide produit : connectée au serveur API backend.')} aria-label="Aide"><CircleHelp size={17} /></button>
         </div>

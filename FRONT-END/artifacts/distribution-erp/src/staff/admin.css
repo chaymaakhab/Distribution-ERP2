@@ -123,3 +123,77 @@
 @media (max-width: 560px) {
   .sx-kpi-cards { grid-template-columns: 1fr; }
 }
+
+/* Light Theme Overrides for Admin Cockpit */
+body.light-theme .sx-range {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+body.light-theme .sx-range button {
+  color: #475569;
+}
+body.light-theme .sx-range button.active {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+body.light-theme .sx-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+body.light-theme .sx-card-top > span:first-child { color: #64748b; }
+body.light-theme .sx-card-value { color: #0f172a; }
+body.light-theme .sx-card-sub { color: #64748b; }
+
+body.light-theme .sx-panel .panel-heading h2 { color: #0f172a; }
+body.light-theme .sx-subhead { border-top-color: #e2e8f0; }
+body.light-theme .sx-chip {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+
+body.light-theme .sx-bar-label { color: #334155; }
+body.light-theme .sx-bar-track { background: #f1f5f9; }
+body.light-theme .sx-bar-value { color: #0f172a; }
+body.light-theme .sx-bar-meta { color: #64748b; }
+
+body.light-theme .sx-table th {
+  background: #f8fafc;
+  color: #475569;
+  border-bottom-color: #e2e8f0;
+}
+body.light-theme .sx-table td {
+  border-bottom-color: #f1f5f9;
+  color: #334155;
+}
+body.light-theme .sx-td-main { color: #0f172a; }
+body.light-theme .sx-td-num { color: #64748b; }
+
+body.light-theme .sx-depot-item {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+body.light-theme .sx-depot-item:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+body.light-theme .sx-depot-item.active {
+  background: #e0f2fe;
+  border-color: #0284c7;
+}
+body.light-theme .sx-depot-meta b { color: #0f172a; }
+body.light-theme .sx-depot-meta small { color: #64748b; }
+body.light-theme .sx-depot-fig { color: #0f172a; }
+
+body.light-theme .sx-sheet-head h2 { color: #0f172a; }
+body.light-theme .sx-sheet-info li { color: #334155; }
+body.light-theme .sx-sheet-stats > div {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+body.light-theme .sx-sheet-stats strong { color: #0f172a; }
+body.light-theme .sx-map-land { fill: rgba(2, 132, 199, 0.08); stroke: #94a3b8; }
+body.light-theme .sx-map-label { stroke: #ffffff; fill: #0f172a; }

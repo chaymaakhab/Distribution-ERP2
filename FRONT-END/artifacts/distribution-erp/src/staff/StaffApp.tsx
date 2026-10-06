@@ -2,14 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Route, Switch, useLocation } from 'wouter';
 import {
   Menu, X, ChevronDown, ChevronRight, Bell, LogOut, Search, Sun, Moon, Lock,
-  ArrowRight, ShieldCheck, Warehouse as WarehouseIcon, LayoutDashboard,
+  ArrowRight, ShieldCheck, Warehouse as WarehouseIcon, LayoutDashboard, LogIn,
 } from 'lucide-react';
+import { useTheme } from '@/lib/theme';
 import { StaffAuthProvider, useStaffAuth } from './auth';
 import { MODULES, NAV_GROUPS, findModule, type NavModule } from './nav';
 import type { StaffUser } from './api';
 import StaffLogin from './StaffLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import Warehouses from './pages/Warehouses';
+import SalesDashboard from './pages/SalesDashboard';
+import WarehouseDashboard from './pages/WarehouseDashboard';
+import PreparationDashboard from './pages/PreparationDashboard';
+import DeliveryDashboard from './pages/DeliveryDashboard';
+import AccountingDashboard from './pages/AccountingDashboard';
+import ClientsCrm from './pages/ClientsCrm';
 import './staff.css';
 
 export default function StaffApp() {
@@ -58,7 +65,7 @@ function StaffShell({ user }: { user: StaffUser }) {
   const [location, setLocation] = useLocation();
   const [mobileNav, setMobileNav] = useState(false);
   const [roleMenu, setRoleMenu] = useState(false);
-  const [light, setLight] = useState(false);
+  const { theme, toggleTheme, isLight } = useTheme();
   const roleRef = useRef<HTMLDivElement>(null);
 
   const primary = user.roles.find((r) => r.is_primary) ?? user.roles[0];
@@ -71,13 +78,6 @@ function StaffShell({ user }: { user: StaffUser }) {
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
-
-  function toggleTheme() {
-    setLight((v) => {
-      document.body.classList.toggle('light-theme', !v);
-      return !v;
-    });
-  }
 
   async function handleSwitch(code: string) {
     setRoleMenu(false);
@@ -105,8 +105,8 @@ function StaffShell({ user }: { user: StaffUser }) {
           <X size={18} />
         </button>
         <Link href={home} className="brand" onClick={() => setMobileNav(false)}>
-          <span className="brand-mark"><span>H</span></span>
-          <span className="brand-copy"><b>HERCULES</b><small>ERP · DISTRIBUTION</small></span>
+          <span className="brand-mark"><span>G</span></span>
+          <span className="brand-copy"><b>GESTION ERP</b><small>ERP · DISTRIBUTION</small></span>
         </Link>
 
         <div className="workspace-chip">
@@ -160,7 +160,7 @@ function StaffShell({ user }: { user: StaffUser }) {
           </button>
 
           <div className="crumb">
-            <span>Hercules ERP</span>
+            <span>Gestion ERP</span>
             <ChevronRight size={14} />
             <strong>{findModule(activeSegment)?.label ?? 'Tableau de bord'}</strong>
           </div>
@@ -198,8 +198,11 @@ function StaffShell({ user }: { user: StaffUser }) {
               </div>
             )}
 
+            <Link href="/login" className="icon-button" title="Changer de rôle / Portail Connexion" aria-label="Portail Connexion">
+              <LogIn size={16} />
+            </Link>
             <button className="icon-button" onClick={toggleTheme} title="Basculer le thème" data-testid="button-theme-toggle">
-              {light ? <Moon size={16} /> : <Sun size={16} />}
+              {isLight ? <Moon size={16} /> : <Sun size={16} />}
             </button>
           </div>
         </header>
@@ -207,7 +210,9 @@ function StaffShell({ user }: { user: StaffUser }) {
         <main className="page-wrap">
           <Switch>
             <Route path="/:ws/dashboard" component={() => <RoleDashboard user={user} onNavigate={go} />} />
-            <Route path="/:ws/:module" component={(p) => <GuardedModule segment={p.module} />} />
+            <Route path="/:ws/:module">
+              {(params: { ws: string; module: string }) => <GuardedModule segment={params.module} />}
+            </Route>
             <Route component={() => <NotFound onHome={() => setLocation(home)} />} />
           </Switch>
         </main>
@@ -238,15 +243,34 @@ function GuardedModule({ segment }: { segment: string }) {
   // Front-end guard: the URL alone never grants access.
   if (!hasPermission(module.permission)) return <Denied permission={module.permission} />;
   if (segment === 'warehouses') return <Warehouses />;
+  if (segment === 'customers') return <ClientsCrm />;
+  if (segment === 'inventory') return <WarehouseDashboard />;
+  if (segment === 'preparation') return <PreparationDashboard />;
+  if (segment === 'deliveries') return <DeliveryDashboard />;
+  if (segment === 'finance') return <AccountingDashboard />;
   return <ModulePlaceholder module={module} />;
 }
 
-// Each role gets its own dashboard. SuperAdmin/Administrateur use the global
-// consolidated cockpit; the others fall back to the permission-aware overview
-// until their dedicated workspace is implemented.
+// Each role gets its dedicated workspace matching Cahier des Charges.
 function RoleDashboard({ user, onNavigate }: { user: StaffUser; onNavigate: (segment: string) => void }) {
-  if (user.primary_role === 'superadmin' || user.primary_role === 'admin') {
+  const role = user.primary_role;
+  if (role === 'superadmin' || role === 'admin') {
     return <AdminDashboard />;
+  }
+  if (role === 'commercial') {
+    return <SalesDashboard onNavigate={onNavigate} />;
+  }
+  if (role === 'warehouse') {
+    return <WarehouseDashboard />;
+  }
+  if (role === 'preparation') {
+    return <PreparationDashboard />;
+  }
+  if (role === 'delivery') {
+    return <DeliveryDashboard />;
+  }
+  if (role === 'accounting') {
+    return <AccountingDashboard />;
   }
   return <WorkspaceHome user={user} onNavigate={onNavigate} />;
 }
@@ -283,7 +307,7 @@ function WorkspaceHome({ user, onNavigate }: { user: StaffUser; onNavigate: (seg
     <div className="dashboard-page">
       <div className="page-heading dash-heading">
         <div>
-          <span className="eyebrow">ESPACE {primary?.name.toUpperCase()} <span className="eyebrow-sep">/</span> HERCULES ERP</span>
+          <span className="eyebrow">ESPACE {primary?.name.toUpperCase()} <span className="eyebrow-sep">/</span> GESTION ERP</span>
           <h1>Bonjour, {user.name.split(' ')[0]}<span className="title-period">.</span></h1>
           <p>Voici les modules accessibles selon vos permissions.</p>
         </div>

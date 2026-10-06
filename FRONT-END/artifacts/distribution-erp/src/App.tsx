@@ -189,7 +189,6 @@ function AppShell() {
       <Link href="/" className="brand" onClick={() => setMobileMenu(false)}>
         <span className="brand-mark"><span>G</span></span><span className="brand-copy"><b>GESTION ERP</b><small>ERP · DISTRIBUTION</small></span>
       </Link>
-      <div className="workspace-chip"><span className="workspace-dot" /> <span>Maroc · Démo locale</span><ChevronDown size={13} /></div>
       <p className="nav-caption">ESPACE DE TRAVAIL</p>
       <nav className="side-nav">{modules.map(item => {
         const Icon = item.icon;
@@ -223,7 +222,6 @@ function AppShell() {
           <button className="theme-toggle-button icon-button" onClick={toggleTheme} title="Basculer le thème (Clair / Sombre)" style={{ padding: '6px', cursor: 'pointer' }} data-testid="button-theme-toggle">
             {isLightMode ? <Moon size={16} /> : <Sun size={16} />}
           </button>
-          <div className="demo-tag"><span />DONNÉES API LIVE</div>
           <div className="top-date"><CalendarDays size={14} /> 28 fév. 2025 <ChevronDown size={13} /></div>
           <button className="help-button" onClick={() => notify('Aide produit : connectée au serveur API backend.')} aria-label="Aide"><CircleHelp size={17} /></button>
         </div>

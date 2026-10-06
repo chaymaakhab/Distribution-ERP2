@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import {
-  ShieldCheck, Store, Lock, Mail, Eye, EyeOff, Loader2,
+  Building2, Store, Lock, Mail, Eye, EyeOff, Loader2,
   AlertCircle, CheckCircle2, ChevronRight, Sun, Moon,
-  Crown, Building2, Boxes, Briefcase, PackageCheck, Truck,
-  BadgeDollarSign, ShoppingCart, UserCheck, ArrowRight,
+  Crown, Boxes, Briefcase, PackageCheck, Truck,
+  BadgeDollarSign, ShoppingCart, ArrowRight, ShieldCheck, LogIn,
 } from 'lucide-react';
 import { useTheme } from '../lib/theme';
 import { api as staffApi, setSession as setStaffSession, type StaffUser } from '../staff/api';
@@ -14,6 +14,7 @@ import './unified-login.css';
 export interface RoleDef {
   id: string;
   name: string;
+  shortName: string;
   category: 'staff' | 'customer';
   badge: string;
   user_name: string;
@@ -21,7 +22,7 @@ export interface RoleDef {
   phone?: string;
   password: string;
   home: string;
-  icon: any;
+  icon: typeof Crown;
   color: string;
   scope: string;
   role_code: string;
@@ -33,6 +34,7 @@ export const ALL_ROLES: RoleDef[] = [
   {
     id: 'superadmin',
     name: 'Super Admin',
+    shortName: 'Super Admin',
     category: 'staff',
     badge: 'Accès Intégral',
     user_name: 'Super Admin',
@@ -41,12 +43,13 @@ export const ALL_ROLES: RoleDef[] = [
     home: '/admin/dashboard',
     icon: Crown,
     color: ROLE_BLUE,
-    scope: 'Accès complet : multi-dépôt, CRM clients, tous modules, audit, utilisateurs et configuration.',
+    scope: 'Supervision multi-dépôts, audit global, gestion des rôles et configuration.',
     role_code: 'superadmin',
   },
   {
     id: 'admin',
     name: 'Administrateur',
+    shortName: 'Admin',
     category: 'staff',
     badge: 'Gestion Globale',
     user_name: 'Amine El Fassi',
@@ -55,26 +58,13 @@ export const ALL_ROLES: RoleDef[] = [
     home: '/administrator/dashboard',
     icon: Building2,
     color: ROLE_BLUE,
-    scope: 'Gestion globale selon permissions : dépôts, CRM clients, catalogue, approvisionnements, factures.',
+    scope: 'Gestion opérationnelle : catalogue, clients, stocks, achats et factures.',
     role_code: 'admin',
-  },
-  {
-    id: 'warehouse',
-    name: 'Responsable Dépôt',
-    category: 'staff',
-    badge: 'Entrepôt & Stocks',
-    user_name: 'Nadia El Amrani',
-    email: 'depot@hercules-erp.ma',
-    password: 'password',
-    home: '/warehouse/dashboard',
-    icon: Boxes,
-    color: ROLE_BLUE,
-    scope: 'Stock physique/réservé/disponible, transferts 2 étapes, réceptions, lots et clôture caisse dépôt.',
-    role_code: 'warehouse',
   },
   {
     id: 'commercial',
     name: 'Commercial',
+    shortName: 'Commercial',
     category: 'staff',
     badge: 'Ventes & CRM',
     user_name: 'Youssef Bennani',
@@ -83,40 +73,58 @@ export const ALL_ROLES: RoleDef[] = [
     home: '/sales/dashboard',
     icon: Briefcase,
     color: ROLE_BLUE,
-    scope: 'Mes clients, commandes à valider en 1 clic, relance clients inactifs (>15j) et contact WhatsApp direct.',
+    scope: 'Portefeuille clients, validation des commandes et relance clients.',
     role_code: 'commercial',
+  },
+  {
+    id: 'warehouse',
+    name: 'Responsable Dépôt',
+    shortName: 'Dépôt',
+    category: 'staff',
+    badge: 'Stocks & Entrepôt',
+    user_name: 'Nadia El Amrani',
+    email: 'depot@hercules-erp.ma',
+    password: 'password',
+    home: '/warehouse/dashboard',
+    icon: Boxes,
+    color: ROLE_BLUE,
+    scope: 'Stock physique/réservé/disponible, transferts 2 étapes et réceptions.',
+    role_code: 'warehouse',
   },
   {
     id: 'preparation',
     name: 'Préparateur',
+    shortName: 'Préparation',
     category: 'staff',
-    badge: 'Préparation & Scan',
+    badge: 'Scan & Préparation',
     user_name: 'Karim Ouazzani',
     email: 'preparation@hercules-erp.ma',
     password: 'password',
     home: '/preparation/dashboard',
     icon: PackageCheck,
     color: ROLE_BLUE,
-    scope: 'Bons de préparation groupés par tournée, scan code-barres et contrôle des quantités manquantes.',
+    scope: 'Bons de préparation groupés par tournée et scan code-barres.',
     role_code: 'preparation',
   },
   {
     id: 'delivery',
     name: 'Livreur',
+    shortName: 'Livreur',
     category: 'staff',
-    badge: 'Distribution & POD',
+    badge: 'Tournée & POD',
     user_name: 'Mehdi Lahlou',
     email: 'livreur@hercules-erp.ma',
     password: 'password',
     home: '/delivery/dashboard',
     icon: Truck,
     color: ROLE_BLUE,
-    scope: 'Tournée ordonnée, arrêt en direct, signature tactile, photo preuve, encaissement et clôture avec écart.',
+    scope: 'Tournée ordonnée, signature client (POD) et encaissement.',
     role_code: 'delivery',
   },
   {
     id: 'accounting',
     name: 'Comptable',
+    shortName: 'Comptable',
     category: 'staff',
     badge: 'Finance & Effets',
     user_name: 'Sofia Cherkaoui',
@@ -125,14 +133,15 @@ export const ALL_ROLES: RoleDef[] = [
     home: '/accounting/dashboard',
     icon: BadgeDollarSign,
     color: ROLE_BLUE,
-    scope: 'Facturation légale marocaine (ICE/IF/RC), registre chèques/traites, bordereau remise et relances.',
+    scope: 'Facturation marocaine (ICE/IF), chèques/traites et bordereaux banque.',
     role_code: 'accounting',
   },
   {
     id: 'client',
-    name: 'Client',
+    name: 'Portail Client',
+    shortName: 'Client B2B',
     category: 'customer',
-    badge: 'Portail Client',
+    badge: 'Portail Revendeur',
     user_name: 'Atlas Équipements',
     email: 'contact@atlas-equipements.ma',
     phone: '+212 522 34 78 90',
@@ -140,7 +149,7 @@ export const ALL_ROLES: RoleDef[] = [
     home: '/customer/home',
     icon: ShoppingCart,
     color: ROLE_BLUE,
-    scope: 'Catalogue revendeur, panier, commandes, factures et suivi du solde.',
+    scope: 'Catalogue aux tarifs négociés, panier, commandes et suivi solde.',
     role_code: 'client',
   },
 ];
@@ -153,19 +162,22 @@ export default function UnifiedLogin({
   onSuccess?: () => void;
 }) {
   const [, setLocation] = useLocation();
-  const { theme, toggleTheme, isLight } = useTheme();
+  const { toggleTheme, isLight } = useTheme();
 
   const [portalMode, setPortalMode] = useState<'staff' | 'customer'>(defaultTab);
+  const [selectedRoleId, setSelectedRoleId] = useState<string>('superadmin');
   const [identifier, setIdentifier] = useState('superadmin@hercules-erp.ma');
   const [password, setPassword] = useState('password');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeRoleCard, setActiveRoleCard] = useState<string>('superadmin');
+
+  const activeRole = ALL_ROLES.find((r) => r.id === selectedRoleId) || ALL_ROLES[0];
+  const staffRoles = ALL_ROLES.filter((r) => r.category === 'staff');
 
   function handleSelectRole(role: RoleDef, autoLogin = false) {
-    setActiveRoleCard(role.id);
+    setSelectedRoleId(role.id);
     setPortalMode(role.category);
     setIdentifier(role.email);
     setPassword(role.password);
@@ -175,11 +187,27 @@ export default function UnifiedLogin({
     }
   }
 
+  function handleSwitchPortal(mode: 'staff' | 'customer') {
+    setPortalMode(mode);
+    setError(null);
+    if (mode === 'customer') {
+      const clientRole = ALL_ROLES.find((r) => r.id === 'client')!;
+      setSelectedRoleId(clientRole.id);
+      setIdentifier(clientRole.email);
+      setPassword(clientRole.password);
+    } else {
+      const defaultStaff = ALL_ROLES[0];
+      setSelectedRoleId(defaultStaff.id);
+      setIdentifier(defaultStaff.email);
+      setPassword(defaultStaff.password);
+    }
+  }
+
   async function executeLogin(
     loginId: string,
     loginPass: string,
     mode: 'staff' | 'customer',
-    forcedRole?: RoleDef,
+    forcedRole?: RoleDef
   ) {
     setError(null);
     setLoading(true);
@@ -192,9 +220,7 @@ export default function UnifiedLogin({
           if (onSuccess) onSuccess();
           setLocation(res.home || '/customer/home');
           return;
-        } catch (apiErr) {
-          // If API unreachable or mock mode, fall back to seeded user
-          const clientRole = forcedRole || ALL_ROLES.find((r) => r.id === 'client')!;
+        } catch {
           const mockUser: CustomerUser = {
             id: 1,
             code: 'CLI-0084',
@@ -216,15 +242,13 @@ export default function UnifiedLogin({
           return;
         }
       } else {
-        // Staff login
         try {
           const res = await staffApi.login(loginId.trim(), loginPass);
           setStaffSession(res.token, res.user, remember);
           if (onSuccess) onSuccess();
           setLocation(res.user.home || '/admin/dashboard');
           return;
-        } catch (apiErr) {
-          // Fallback to local session matching selected role
+        } catch {
           const targetRole = forcedRole || ALL_ROLES.find((r) => r.email === loginId) || ALL_ROLES[0];
           const mockStaff: StaffUser = {
             id: targetRole.id === 'superadmin' ? 1 : 2,
@@ -259,145 +283,127 @@ export default function UnifiedLogin({
 
   return (
     <div className="unified-login-wrapper">
-      {/* Top Navbar on Login Screen */}
+      {/* Top bar */}
       <header className="unified-login-topbar">
         <div className="unified-brand">
-          <div className="unified-brand-badge">H</div>
-          <div>
+          <div className="unified-brand-badge">G</div>
+          <div className="unified-brand-text">
             <b>GESTION ERP</b>
-            <small>ERP Maroc · Plateforme Vente, Stock & Livraison</small>
+            <small>DISTRIBUTION B2B · MAROC</small>
           </div>
         </div>
 
-        <div className="unified-top-actions">
-          <div className="portal-switcher">
-            <button
-              className={`switcher-tab ${portalMode === 'staff' ? 'active' : ''}`}
-              onClick={() => {
-                setPortalMode('staff');
-                const firstStaff = ALL_ROLES[0];
-                handleSelectRole(firstStaff, false);
-              }}
-            >
-              <Building2 size={14} /> Équipe ERP (7 Rôles)
-            </button>
-            <button
-              className={`switcher-tab ${portalMode === 'customer' ? 'active' : ''}`}
-              onClick={() => {
-                setPortalMode('customer');
-                const clientRole = ALL_ROLES.find((r) => r.id === 'client')!;
-                handleSelectRole(clientRole, false);
-              }}
-            >
-              <Store size={14} /> Espace Client
-            </button>
-          </div>
-
-          <button
-            className="theme-toggle-btn icon-button"
-            onClick={toggleTheme}
-            title={isLight ? 'Activer le mode sombre' : 'Activer le mode clair'}
-            aria-label="Basculer le thème"
-          >
-            {isLight ? <Moon size={16} /> : <Sun size={16} />}
-          </button>
-        </div>
+        <button
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+          title={isLight ? 'Activer le mode sombre' : 'Activer le mode clair'}
+          aria-label="Basculer le thème"
+        >
+          {isLight ? <Moon size={15} /> : <Sun size={15} />}
+        </button>
       </header>
 
-      {/* Main Content: Showcase Grid + Login Form */}
-      <div className="unified-login-body">
-        {/* Left Side: 8-Role Interactive Selector Grid */}
-        <div className="roles-showcase-panel">
-          <div className="showcase-header">
-            <h2>Choisissez votre espace</h2>
-            <p>
-              Accédez à un espace adapté à votre rôle et à vos responsabilités.
-            </p>
+      {/* Centered Login Card */}
+      <div className="unified-login-container">
+        <div className="login-card">
+          {/* Segmented Switcher */}
+          <div className="portal-tabs">
+            <button
+              type="button"
+              className={`portal-tab ${portalMode === 'staff' ? 'active' : ''}`}
+              onClick={() => handleSwitchPortal('staff')}
+            >
+              <Building2 size={14} />
+              <span>Équipe ERP (7 Rôles)</span>
+            </button>
+            <button
+              type="button"
+              className={`portal-tab ${portalMode === 'customer' ? 'active' : ''}`}
+              onClick={() => handleSwitchPortal('customer')}
+            >
+              <Store size={14} />
+              <span>Espace Client B2B</span>
+            </button>
           </div>
 
-          <div className="roles-grid">
-            {ALL_ROLES.map((r) => {
-              const Icon = r.icon;
-              const isSelected = activeRoleCard === r.id;
-              return (
-                <div
-                  key={r.id}
-                  className={`role-card ${isSelected ? 'selected' : ''}`}
-                  onClick={() => handleSelectRole(r, false)}
-                >
-                  <div className="role-card-top">
-                    <div className="role-icon-box" style={{ background: `${r.color}20`, color: r.color }}>
-                      <Icon size={18} />
-                    </div>
-                    <span className="role-badge" style={{ color: r.color, borderColor: `${r.color}40`, background: `${r.color}10` }}>
-                      {r.badge}
-                    </span>
-                  </div>
-
-                  <b className="role-title">{r.name}</b>
-                  <div className="role-user">{r.user_name}</div>
-                  <p className="role-scope">{r.scope}</p>
-
-                  <div className="role-card-actions">
+          {/* Role quick switcher (Staff mode) */}
+          {portalMode === 'staff' && (
+            <div className="role-selector-section">
+              <div className="role-chips-label">
+                <span>Sélection rapide du profil métier :</span>
+              </div>
+              <div className="role-chips-grid">
+                {staffRoles.map((r) => {
+                  const Icon = r.icon;
+                  const isSelected = selectedRoleId === r.id;
+                  return (
                     <button
                       type="button"
-                      className="quick-enter-btn"
-                      style={{ background: r.color }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectRole(r, true);
-                      }}
-                      title={`Accéder à l’espace ${r.name}`}
+                      key={r.id}
+                      className={`role-chip ${isSelected ? 'active' : ''}`}
+                      onClick={() => handleSelectRole(r, false)}
+                      title={`${r.name} · ${r.badge}`}
                     >
-                      <span>Accéder comme {r.name}</span>
-                      <ArrowRight size={13} />
+                      <Icon size={13} />
+                      <span>{r.shortName}</span>
                     </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+                  );
+                })}
+              </div>
 
-        {/* Right Side: Authentication Form Card */}
-        <div className="login-form-container">
-          <form className="login-card-form" onSubmit={handleSubmit}>
-            <div className="form-header">
-              <span className="form-eyebrow">
-                {portalMode === 'customer' ? 'PORTAIL CLIENT' : 'ESPACE COLLABORATEUR ERP'}
-              </span>
-              <h1>Connexion Sécurisée</h1>
-              <p>
-                {portalMode === 'customer'
-                  ? 'Connectez-vous pour passer vos commandes au tarif revendeur et suivre vos livraisons.'
-                  : 'Saisissez vos identifiants ou sélectionnez votre espace.'}
+              {/* Active role badge & scope info */}
+              <div className="role-active-banner">
+                <div className="role-active-top">
+                  <span className="role-name">{activeRole.name}</span>
+                  <span className="role-scope-badge">{activeRole.badge}</span>
+                </div>
+                <p className="role-scope-desc">{activeRole.scope}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Customer mode info */}
+          {portalMode === 'customer' && (
+            <div className="customer-info-banner">
+              <div className="role-active-top">
+                <span className="role-name">Atlas Équipements SARL</span>
+                <span className="role-scope-badge">Client Revendeur</span>
+              </div>
+              <p className="role-scope-desc">
+                Accès au catalogue avec vos prix négociés, passation de commandes, suivi de factures et encours.
               </p>
             </div>
+          )}
 
+          {/* Form */}
+          <form className="login-form" onSubmit={handleSubmit}>
             {error && (
               <div className="login-alert-error" role="alert">
-                <AlertCircle size={16} /> <span>{error}</span>
+                <AlertCircle size={15} />
+                <span>{error}</span>
               </div>
             )}
 
-            <label className="field-group">
-              <span>{portalMode === 'customer' ? 'Téléphone ou Email Client' : 'Email Collaborateur ou Téléphone'}</span>
-              <div className="field-input-box">
-                <Mail size={16} />
+            <div className="field-block">
+              <label className="field-label-text">
+                {portalMode === 'customer' ? 'Email ou Téléphone Client' : 'Identifiant professionnel'}
+              </label>
+              <div className="field-input-wrap">
+                <Mail size={15} className="input-icon" />
                 <input
                   type="text"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="nom@entreprise.ma ou 06…"
+                  placeholder="nom@hercules-erp.ma"
                   required
                 />
               </div>
-            </label>
+            </div>
 
-            <label className="field-group">
-              <span>Mot de passe ou Code PIN</span>
-              <div className="field-input-box">
-                <Lock size={16} />
+            <div className="field-block">
+              <label className="field-label-text">Mot de passe</label>
+              <div className="field-input-wrap">
+                <Lock size={15} className="input-icon" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
@@ -407,67 +413,71 @@ export default function UnifiedLogin({
                 />
                 <button
                   type="button"
-                  className="eye-toggle"
+                  className="eye-toggle-btn"
                   onClick={() => setShowPassword((s) => !s)}
-                  aria-label="Afficher/Masquer le mot de passe"
+                  aria-label="Afficher ou masquer le mot de passe"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-            </label>
+            </div>
 
-            <div className="form-options-row">
-              <label className="remember-checkbox">
+            <div className="form-meta-row">
+              <label className="remember-label">
                 <input
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
                 />
-                <span>Se souvenir de moi</span>
+                <span>Mémoriser la session</span>
               </label>
               <a
                 href="#forgot"
+                className="forgot-link"
                 onClick={(e) => {
                   e.preventDefault();
-                  setError('Veuillez contacter votre administrateur ou commercial pour réinitialiser le mot de passe.');
+                  setError('Veuillez contacter votre administrateur pour réinitialiser votre accès.');
                 }}
               >
                 Mot de passe oublié ?
               </a>
             </div>
 
-            <button className="submit-login-btn" type="submit" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 size={16} className="spin-animate" /> Connexion en cours…
-                </>
-              ) : (
-                <>
-                  <span>Se connecter à mon espace</span>
-                  <ChevronRight size={16} />
-                </>
-              )}
-            </button>
+            <div className="action-buttons-group">
+              <button className="submit-btn" type="submit" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 size={15} className="spin-animate" />
+                    <span>Connexion…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Se connecter</span>
+                    <ArrowRight size={15} />
+                  </>
+                )}
+              </button>
 
-            {/* Quick Demo Helper */}
-            <div className="demo-credentials-box">
-              <div className="demo-header">
-                <b>Accès disponibles :</b>
-              </div>
-              <div className="demo-list">
-                <div>
-                  <span>Super Admin :</span> <code>superadmin@hercules-erp.ma</code>
-                </div>
-                <div>
-                  <span>Commercial :</span> <code>commercial@hercules-erp.ma</code>
-                </div>
-                <div>
-                  <span>Client :</span> <code>contact@atlas-equipements.ma</code>
-                </div>
-                <small>Mot de passe staff : <code>password</code> · Client : <code>client1234</code></small>
-              </div>
+              {portalMode === 'staff' && (
+                <button
+                  type="button"
+                  className="quick-test-btn"
+                  onClick={() => executeLogin(activeRole.email, activeRole.password, 'staff', activeRole)}
+                  disabled={loading}
+                >
+                  <LogIn size={13} />
+                  <span>Entrer directement comme {activeRole.shortName}</span>
+                </button>
+              )}
             </div>
           </form>
+
+          {/* Compact footer hints */}
+          <div className="login-card-footer">
+            <div className="credentials-hint">
+              <span>Mot de passe démo : <code>password</code> (Staff) · <code>client1234</code> (Client)</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

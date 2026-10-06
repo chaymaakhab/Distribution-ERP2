@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import {
   Truck, MapPin, Phone, MessageSquare, CheckCircle2, AlertTriangle,
   Clock, DollarSign, Camera, FileCheck2, ShieldCheck, ChevronRight,
-  User, RefreshCw, XCircle, PenTool,
+  User, RefreshCw, XCircle, PenTool, X,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 
@@ -407,7 +407,9 @@ export default function DeliveryDashboard() {
                 <span className="eyebrow">PREUVE DE LIVRAISON (POD) · {activeStop.order_ref}</span>
                 <h2>Livraison & Encaissement : {activeStop.client}</h2>
               </div>
-              <button type="button" className="icon-button" onClick={() => setActiveStop(null)}>✕</button>
+              <button type="button" className="icon-button" onClick={() => setActiveStop(null)}>
+                <X size={16} />
+              </button>
             </div>
 
             <p className="modal-note">
@@ -536,7 +538,9 @@ export default function DeliveryDashboard() {
                 <span className="eyebrow">FIN DE TOURNÉE · CAISSE LIVREUR</span>
                 <h2>Clôture de Caisse du Livreur</h2>
               </div>
-              <button className="icon-button" onClick={() => setClosingModal(false)}>✕</button>
+              <button className="icon-button" onClick={() => setClosingModal(false)}>
+                <X size={16} />
+              </button>
             </div>
             <p className="modal-note">
               Calcul de l'écart automatique entre les encaissements saisis et les montants remis (CDC section 8.7).

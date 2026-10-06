@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   BadgeDollarSign, CreditCard, Receipt, FileText, CheckCircle2,
   AlertTriangle, Clock, MessageSquare, Download, Plus, Filter,
-  Building, Calendar,
+  Building, Calendar, X,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 
@@ -404,7 +404,9 @@ export default function AccountingDashboard() {
                 <span className="eyebrow">BORDEREAU OFFICIEL · BANQUE</span>
                 <h2>Bordereau de Remise de Chèques & Effets</h2>
               </div>
-              <button className="icon-button" onClick={() => setSlipModal(false)}>✕</button>
+              <button className="icon-button" onClick={() => setSlipModal(false)}>
+                <X size={16} />
+              </button>
             </div>
             <p className="modal-note">
               Génération automatique pour remise à l'agence bancaire (Attijariwafa Bank / Banque Populaire).
@@ -447,7 +449,9 @@ export default function AccountingDashboard() {
                 <span className="eyebrow">RELANCES AUTOMATIQUES MAROC</span>
                 <h2>Modèle de Relance WhatsApp / SMS (J+7)</h2>
               </div>
-              <button className="icon-button" onClick={() => setReminderModal(false)}>✕</button>
+              <button className="icon-button" onClick={() => setReminderModal(false)}>
+                <X size={16} />
+              </button>
             </div>
             <p className="modal-note">Modèle conforme au CDC section 9.7 (Français et Darija).</p>
             <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px', margin: '12px 0', fontSize: '12px', lineHeight: 1.6 }}>

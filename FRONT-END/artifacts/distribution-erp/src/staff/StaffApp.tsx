@@ -17,6 +17,12 @@ import PreparationDashboard from './pages/PreparationDashboard';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 import AccountingDashboard from './pages/AccountingDashboard';
 import ClientsCrm from './pages/ClientsCrm';
+import UsersManagement from './pages/UsersManagement';
+import RolesPermissions from './pages/RolesPermissions';
+import AuditLogs from './pages/AuditLogs';
+import SystemSettings from './pages/SystemSettings';
+import OrdersManagement from './pages/OrdersManagement';
+import ProductsManagement from './pages/ProductsManagement';
 import './staff.css';
 
 export default function StaffApp() {
@@ -247,7 +253,13 @@ function GuardedModule({ segment }: { segment: string }) {
   if (segment === 'inventory') return <WarehouseDashboard />;
   if (segment === 'preparation') return <PreparationDashboard />;
   if (segment === 'deliveries') return <DeliveryDashboard />;
-  if (segment === 'finance') return <AccountingDashboard />;
+  if (segment === 'finance' || segment === 'payments') return <AccountingDashboard />;
+  if (segment === 'users') return <UsersManagement />;
+  if (segment === 'roles') return <RolesPermissions />;
+  if (segment === 'audit') return <AuditLogs />;
+  if (segment === 'settings') return <SystemSettings />;
+  if (segment === 'orders') return <OrdersManagement />;
+  if (segment === 'products') return <ProductsManagement />;
   return <ModulePlaceholder module={module} />;
 }
 

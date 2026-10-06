@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Users, Search, Filter, Phone, MessageSquare, ShieldAlert,
   ArrowUpRight, Building2, CheckCircle2, ChevronRight, Download, Plus,
-  CreditCard, ExternalLink,
+  CreditCard, ExternalLink, X,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 
@@ -380,7 +380,9 @@ export default function ClientsCrm() {
                 <span className="eyebrow">{selectedClient.code} · FICHE CLIENT</span>
                 <h2>{selectedClient.company}</h2>
               </div>
-              <button className="icon-button" onClick={() => setSelectedClient(null)}>✕</button>
+              <button className="icon-button" onClick={() => setSelectedClient(null)}>
+                <X size={16} />
+              </button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', margin: '16px 0' }}>
               <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px' }}>

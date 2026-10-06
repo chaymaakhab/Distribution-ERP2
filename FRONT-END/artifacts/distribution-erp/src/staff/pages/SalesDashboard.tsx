@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Users, ClipboardCheck, AlertTriangle, MessageSquare, Phone,
   CheckCircle2, XCircle, ShoppingBag, ArrowRight, DollarSign,
-  Clock, Package, TrendingUp, Calendar, ChevronRight,
+  Clock, Package, TrendingUp, Calendar, ChevronRight, X, ShieldCheck,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 
@@ -323,7 +323,7 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
           </div>
 
           <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(59,130,246,0.08)', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.2)', fontSize: '11.5px', color: 'var(--text)' }}>
-            💡 <b>Règle métier CDC :</b> Le commercial est notifié automatiquement après 15 jours sans commande d'un client. Les modèles de relance sont personnalisés en Français ou Darija.
+            <b>Règle métier CDC :</b> Le commercial est notifié automatiquement après 15 jours sans commande d'un client. Les modèles de relance sont personnalisés en Français ou Darija.
           </div>
         </section>
       </div>
@@ -337,7 +337,9 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
                 <span className="eyebrow">REFUS DE COMMANDE · {rejectModalOrder.ref}</span>
                 <h2>Motif de refus</h2>
               </div>
-              <button type="button" className="icon-button" onClick={() => setRejectModalOrder(null)}>✕</button>
+              <button type="button" className="icon-button" onClick={() => setRejectModalOrder(null)}>
+                <X size={16} />
+              </button>
             </div>
             <p className="modal-note">
               Conformément au cahier des charges, tout refus de commande client doit obligatoirement comporter un motif transmis au client.

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Boxes, Warehouse, ArrowDownRight, ArrowUpRight, ArrowLeftRight,
   AlertTriangle, CheckCircle2, Clock, Plus, Download, ShieldCheck,
-  Calendar, Layers,
+  Calendar, Layers, X,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 
@@ -359,7 +359,7 @@ export default function WarehouseDashboard() {
           </div>
 
           <div style={{ marginTop: '14px', padding: '12px', background: 'rgba(234,179,8,0.08)', borderRadius: '8px', border: '1px solid rgba(234,179,8,0.2)', fontSize: '11px', color: 'var(--text)' }}>
-            ⚠️ <b>Règle de transfert :</b> Un transfert inter-dépôts s'effectue en deux étapes : sortie enregistrée au dépôt source puis validation avec contrôle d'écarts à la réception.
+            <b>Règle de transfert :</b> Un transfert inter-dépôts s'effectue en deux étapes : sortie enregistrée au dépôt source puis validation avec contrôle d'écarts à la réception.
           </div>
         </section>
       </div>
@@ -373,7 +373,9 @@ export default function WarehouseDashboard() {
                 <span className="eyebrow">MOUVEMENT INTER-DÉPÔTS</span>
                 <h2>Nouveau transfert de stock</h2>
               </div>
-              <button className="icon-button" onClick={() => setTransferModal(false)}>✕</button>
+              <button className="icon-button" onClick={() => setTransferModal(false)}>
+                <X size={16} />
+              </button>
             </div>
             <p className="modal-note">Sortie immédiate du dépôt source et mise en transit vers le dépôt destinataire.</p>
             <label className="field-label">
@@ -427,7 +429,9 @@ export default function WarehouseDashboard() {
                 <span className="eyebrow">FIN DE JOURNÉE</span>
                 <h2>Clôture de caisse du dépôt</h2>
               </div>
-              <button className="icon-button" onClick={() => setClosingModal(false)}>✕</button>
+              <button className="icon-button" onClick={() => setClosingModal(false)}>
+                <X size={16} />
+              </button>
             </div>
             <p className="modal-note">Validation des règlements au comptoir et encaissements du dépôt.</p>
             <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px', margin: '12px 0' }}>

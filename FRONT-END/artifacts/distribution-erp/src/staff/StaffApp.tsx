@@ -9,7 +9,8 @@ import { StaffAuthProvider, useStaffAuth } from './auth';
 import { MODULES, NAV_GROUPS, findModule, type NavModule } from './nav';
 import type { StaffUser } from './api';
 import StaffLogin from './StaffLogin';
-import AdminDashboard from './pages/AdminDashboard';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import AdministratorDashboard from './pages/AdministratorDashboard';
 import Warehouses from './pages/Warehouses';
 import SalesDashboard from './pages/SalesDashboard';
 import WarehouseDashboard from './pages/WarehouseDashboard';
@@ -23,6 +24,7 @@ import AuditLogs from './pages/AuditLogs';
 import SystemSettings from './pages/SystemSettings';
 import OrdersManagement from './pages/OrdersManagement';
 import ProductsManagement from './pages/ProductsManagement';
+import SystemMaintenance from './pages/SystemMaintenance';
 import './staff.css';
 
 export default function StaffApp() {
@@ -258,6 +260,7 @@ function GuardedModule({ segment }: { segment: string }) {
   if (segment === 'roles') return <RolesPermissions />;
   if (segment === 'audit') return <AuditLogs />;
   if (segment === 'settings') return <SystemSettings />;
+  if (segment === 'maintenance') return <SystemMaintenance />;
   if (segment === 'orders') return <OrdersManagement />;
   if (segment === 'products') return <ProductsManagement />;
   return <ModulePlaceholder module={module} />;
@@ -266,8 +269,11 @@ function GuardedModule({ segment }: { segment: string }) {
 // Each role gets its dedicated workspace matching Cahier des Charges.
 function RoleDashboard({ user, onNavigate }: { user: StaffUser; onNavigate: (segment: string) => void }) {
   const role = user.primary_role;
-  if (role === 'superadmin' || role === 'admin') {
-    return <AdminDashboard />;
+  if (role === 'superadmin') {
+    return <SuperAdminDashboard />;
+  }
+  if (role === 'admin') {
+    return <AdministratorDashboard />;
   }
   if (role === 'commercial') {
     return <SalesDashboard onNavigate={onNavigate} />;

@@ -105,8 +105,8 @@ function StaffShell({ user }: { user: StaffUser }) {
           <X size={18} />
         </button>
         <Link href={home} className="brand" onClick={() => setMobileNav(false)}>
-          <span className="brand-mark"><span>H</span></span>
-          <span className="brand-copy"><b>HERCULES</b><small>ERP · DISTRIBUTION</small></span>
+          <span className="brand-mark"><span>G</span></span>
+          <span className="brand-copy"><b>GESTION ERP</b><small>ERP · DISTRIBUTION</small></span>
         </Link>
 
         <div className="workspace-chip">
@@ -160,7 +160,7 @@ function StaffShell({ user }: { user: StaffUser }) {
           </button>
 
           <div className="crumb">
-            <span>Hercules ERP</span>
+            <span>Gestion ERP</span>
             <ChevronRight size={14} />
             <strong>{findModule(activeSegment)?.label ?? 'Tableau de bord'}</strong>
           </div>
@@ -283,7 +283,7 @@ function WorkspaceHome({ user, onNavigate }: { user: StaffUser; onNavigate: (seg
     <div className="dashboard-page">
       <div className="page-heading dash-heading">
         <div>
-          <span className="eyebrow">ESPACE {primary?.name.toUpperCase()} <span className="eyebrow-sep">/</span> HERCULES ERP</span>
+          <span className="eyebrow">ESPACE {primary?.name.toUpperCase()} <span className="eyebrow-sep">/</span> GESTION ERP</span>
           <h1>Bonjour, {user.name.split(' ')[0]}<span className="title-period">.</span></h1>
           <p>Voici les modules accessibles selon vos permissions.</p>
         </div>

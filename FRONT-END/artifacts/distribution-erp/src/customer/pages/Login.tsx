@@ -39,7 +39,7 @@ export default function CustomerLogin({ onAuthenticated }: { onAuthenticated: (u
         <div className="cx-login-brand">
           <span className="cx-brand-mark lg"><Store size={22} /></span>
           <div>
-            <b>HERCULES</b>
+            <b>GESTION ERP</b>
             <small>Distribution · Portail client</small>
           </div>
         </div>
@@ -55,7 +55,7 @@ export default function CustomerLogin({ onAuthenticated }: { onAuthenticated: (u
         <form className="cx-login-form" onSubmit={handleSubmit}>
           <div className="cx-login-head">
             <h1>Connexion</h1>
-            <p>Accédez à votre espace client Hercules.</p>
+            <p>Accédez à votre espace client Gestion ERP.</p>
           </div>
 
           {error && (

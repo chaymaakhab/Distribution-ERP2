@@ -41,9 +41,9 @@ export default function StaffLogin() {
     <div className="sx-login">
       <div className="sx-login-visual">
         <div className="sx-login-brand">
-          <span className="sx-brand-mark">H</span>
+          <span className="sx-brand-mark">G</span>
           <div>
-            <b>HERCULES</b>
+            <b>GESTION ERP</b>
             <small>ERP · DISTRIBUTION</small>
           </div>
         </div>
@@ -64,7 +64,7 @@ export default function StaffLogin() {
         <form className="sx-login-form" onSubmit={handleSubmit} noValidate>
           <div className="sx-login-head">
             <h1>Connexion</h1>
-            <p>Accédez à votre espace de travail Hercules ERP.</p>
+            <p>Accédez à votre espace de travail Gestion ERP.</p>
           </div>
 
           {error && (

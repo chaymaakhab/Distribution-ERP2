@@ -61,7 +61,7 @@ export default function AdminDashboard() {
     <div className="dashboard-page sx-admin">
       <div className="page-heading dash-heading">
         <div>
-          <span className="eyebrow">VISION GLOBALE <span className="eyebrow-sep">/</span> HERCULES ERP</span>
+          <span className="eyebrow">VISION GLOBALE <span className="eyebrow-sep">/</span> GESTION ERP</span>
           <h1>Bonjour, {firstName}<span className="title-period">.</span></h1>
           <p>Pilotage consolidé de l’ensemble des dépôts et de l’activité commerciale.</p>
         </div>

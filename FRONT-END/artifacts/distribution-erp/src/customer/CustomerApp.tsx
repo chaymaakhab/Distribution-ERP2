@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, Route, Switch, useLocation } from 'wouter';
 import {
-  ShoppingCart, Home, LayoutGrid, Package, Receipt, User as UserIcon,
+  ShoppingCart, Home as HomeIcon, LayoutGrid, Package, Receipt, User as UserIcon,
   LogOut, Menu, X, Search, Bell, ChevronRight, Store,
 } from 'lucide-react';
 import { CartProvider, useCart } from './cart';
@@ -18,7 +18,7 @@ import Profile from './pages/Profile';
 import './customer.css';
 
 const NAV = [
-  { href: '/customer/home', label: 'Accueil', icon: Home },
+  { href: '/customer/home', label: 'Accueil', icon: HomeIcon },
   { href: '/customer/catalog', label: 'Catalogue', icon: LayoutGrid },
   { href: '/customer/orders', label: 'Mes commandes', icon: Package },
   { href: '/customer/invoices', label: 'Factures & solde', icon: Receipt },
@@ -101,7 +101,7 @@ function CustomerShell({ user, onLogout }: { user: CustomerUser; onLogout: () =>
         <Link href="/customer/home" className="cx-brand">
           <span className="cx-brand-mark"><Store size={16} /></span>
           <span className="cx-brand-copy">
-            <b>HERCULES</b>
+            <b>GESTION ERP</b>
             <small>Espace client · {user.company || user.name}</small>
           </span>
         </Link>

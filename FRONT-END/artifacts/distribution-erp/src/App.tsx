@@ -185,7 +185,7 @@ function AppShell() {
   return <div className="erp-app">
     <aside className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}>
       <Link href="/" className="brand" onClick={() => setMobileMenu(false)}>
-        <span className="brand-mark"><span>H</span></span><span className="brand-copy"><b>HERCULES</b><small>ERP · DISTRIBUTION</small></span>
+        <span className="brand-mark"><span>G</span></span><span className="brand-copy"><b>GESTION ERP</b><small>ERP · DISTRIBUTION</small></span>
       </Link>
       <div className="workspace-chip"><span className="workspace-dot" /> <span>Maroc · Démo locale</span><ChevronDown size={13} /></div>
       <p className="nav-caption">ESPACE DE TRAVAIL</p>
@@ -206,7 +206,7 @@ function AppShell() {
     <div className="app-main">
       <header className="topbar">
         <button className="mobile-trigger icon-button" onClick={() => setMobileMenu(!mobileMenu)} aria-label="Ouvrir le menu"><Menu size={19} /></button>
-        <div className="crumb"><span>Hercules ERP</span><ChevronRight size={14} /><strong>{activeModule?.label ?? 'Vue d’ensemble'}</strong></div>
+        <div className="crumb"><span>Gestion ERP</span><ChevronRight size={14} /><strong>{activeModule?.label ?? 'Vue d’ensemble'}</strong></div>
         <div className="topbar-right">
           <label className="role-select" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '4px' }}>
             <UserCheck size={14} />

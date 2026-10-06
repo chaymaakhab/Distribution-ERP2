@@ -157,9 +157,11 @@ export const ALL_ROLES: RoleDef[] = [
 export default function UnifiedLogin({
   defaultTab = 'staff',
   onSuccess,
+  onStaffLogin,
 }: {
   defaultTab?: 'staff' | 'customer';
   onSuccess?: () => void;
+  onStaffLogin?: (identifier: string, password: string, remember: boolean) => Promise<StaffUser>;
 }) {
   const [, setLocation] = useLocation();
   const { toggleTheme, isLight } = useTheme();
@@ -183,7 +185,7 @@ export default function UnifiedLogin({
     setPassword(role.password);
 
     if (autoLogin) {
-      executeLogin(role.email, role.password, role.category, role);
+      executeLogin(role.email, role.password, role.category);
     }
   }
 
@@ -206,8 +208,7 @@ export default function UnifiedLogin({
   async function executeLogin(
     loginId: string,
     loginPass: string,
-    mode: 'staff' | 'customer',
-    forcedRole?: RoleDef
+    mode: 'staff' | 'customer'
   ) {
     setError(null);
     setLoading(true);
@@ -242,32 +243,17 @@ export default function UnifiedLogin({
           return;
         }
       } else {
-        try {
+        let user: StaffUser;
+        if (onStaffLogin) {
+          user = await onStaffLogin(loginId.trim(), loginPass, remember);
+        } else {
           const res = await staffApi.login(loginId.trim(), loginPass);
           setStaffSession(res.token, res.user, remember);
-          if (onSuccess) onSuccess();
-          setLocation(res.user.home || '/admin/dashboard');
-          return;
-        } catch {
-          const targetRole = forcedRole || ALL_ROLES.find((r) => r.email === loginId) || ALL_ROLES[0];
-          const mockStaff: StaffUser = {
-            id: targetRole.id === 'superadmin' ? 1 : 2,
-            name: targetRole.user_name,
-            email: loginId,
-            phone: null,
-            avatar: null,
-            locale: 'fr',
-            warehouse: { id: 1, code: 'DEP-01', name: 'Dépôt Casablanca', city: 'Casablanca' },
-            roles: [{ code: targetRole.role_code, name: targetRole.name, home: targetRole.home, is_primary: true }],
-            primary_role: targetRole.role_code,
-            permissions: targetRole.role_code === 'superadmin' ? ['*'] : [targetRole.role_code, 'dashboard.view'],
-            home: targetRole.home,
-          };
-          setStaffSession('mock-token-staff', mockStaff, remember);
-          if (onSuccess) onSuccess();
-          setLocation(targetRole.home);
-          return;
+          user = res.user;
         }
+        if (onSuccess) onSuccess();
+        setLocation(user.home || '/admin/dashboard');
+        return;
       }
     } catch (err: any) {
       setError(err?.message || 'Identifiants invalides.');
@@ -462,7 +448,7 @@ export default function UnifiedLogin({
                 <button
                   type="button"
                   className="quick-test-btn"
-                  onClick={() => executeLogin(activeRole.email, activeRole.password, 'staff', activeRole)}
+                  onClick={() => executeLogin(activeRole.email, activeRole.password, 'staff')}
                   disabled={loading}
                 >
                   <LogIn size={13} />

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Route, Switch, useLocation } from 'wouter';
 import {
   Menu, X, ChevronDown, ChevronRight, Bell, LogOut, Search, Sun, Moon, Lock,
-  ArrowRight, ShieldCheck, Warehouse as WarehouseIcon, LayoutDashboard, LogIn,
+  ArrowRight, ArrowLeft, ShieldCheck, Warehouse as WarehouseIcon, LayoutDashboard, LogIn,
 } from 'lucide-react';
 import { useTheme } from '@/lib/theme';
 import { StaffAuthProvider, useStaffAuth } from './auth';
@@ -199,15 +199,64 @@ function StaffShell({ user }: { user: StaffUser }) {
             <Menu size={19} />
           </button>
 
-          <div className="crumb">
-            <span>Gestion ERP</span>
-            <ChevronRight size={14} />
-            <strong>{findModule(activeSegment)?.label ?? 'Tableau de bord'}</strong>
+          <div className="crumb" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {activeSegment !== 'dashboard' && (
+              <button
+                className="icon-button"
+                onClick={() => {
+                  if (window.history.length > 1) {
+                    window.history.back();
+                  } else {
+                    go('dashboard');
+                  }
+                }}
+                title="Bouton Retour (Page précédente)"
+                aria-label="Retour"
+                style={{ width: 28, height: 28, marginRight: 2, borderRadius: 6 }}
+              >
+                <ArrowLeft size={14} />
+              </button>
+            )}
+            <button
+              onClick={() => go('dashboard')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                color: activeSegment === 'dashboard' ? 'var(--text)' : 'var(--muted)',
+                cursor: 'pointer',
+                fontWeight: activeSegment === 'dashboard' ? 700 : 500,
+                fontSize: 13,
+              }}
+            >
+              {findModule('dashboard')?.label ?? 'Tableau de bord'}
+            </button>
+            {activeSegment !== 'dashboard' && (
+              <>
+                <ChevronRight size={13} style={{ color: 'var(--muted)' }} />
+                <strong style={{ fontSize: 13, color: 'var(--text)' }}>
+                  {findModule(activeSegment)?.label ?? activeSegment}
+                </strong>
+              </>
+            )}
           </div>
 
           <div className="topbar-right">
+            {/* Quick search input trigger for desktop */}
+            <div
+              className="topbar-search-trigger"
+              onClick={() => setSearchOpen(true)}
+              role="button"
+              tabIndex={0}
+              title="Recherche globale ERP (Ctrl + K)"
+            >
+              <Search size={14} />
+              <span className="search-placeholder">Rechercher commande, client, article…</span>
+              <kbd className="search-kbd">Ctrl K</kbd>
+            </div>
+
             <button
-              className="icon-button"
+              className="icon-button mobile-only-search"
               onClick={() => setSearchOpen(true)}
               aria-label="Recherche globale (Ctrl + K)"
               title="Recherche globale (Ctrl + K)"
@@ -337,7 +386,7 @@ function GuardedModule({ segment, onNavigate }: { segment: string; onNavigate?: 
   if (segment === 'products') return <ProductsManagement />;
   if (segment === 'purchasing') return <PurchasingManagement />;
   if (segment === 'suppliers') return <SuppliersManagement />;
-  if (segment === 'returns') return <ReturnsManagement />;
+  if (segment === 'returns') return <ReturnsManagement onNavigate={onNavigate} />;
   if (segment === 'reports') return <ReportsPage />;
   return <ModulePlaceholder module={module} />;
 }

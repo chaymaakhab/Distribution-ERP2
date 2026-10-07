@@ -251,3 +251,64 @@ body.light-theme .sx-empty span { color: #64748b; }
 
 body.light-theme .sx-denied h2 { color: #0f172a; }
 body.light-theme .sx-denied p { color: #64748b; }
+
+/* ---------------- Topbar Quick Search & Back Button ---------------- */
+.topbar-search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  background: var(--navy-2, #141d29);
+  border: 1px solid var(--line, #253346);
+  border-radius: 6px;
+  color: var(--muted, #8998ac);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.topbar-search-trigger:hover {
+  background: var(--navy-3, #1a2635);
+  border-color: #38bdf8;
+  color: var(--text, #e3eaf4);
+}
+.topbar-search-trigger .search-placeholder {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-search-trigger .search-kbd {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line, #253346);
+  color: var(--text-soft, #94a3b8);
+  font-family: inherit;
+}
+body.light-theme .topbar-search-trigger {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+body.light-theme .topbar-search-trigger:hover {
+  background: #e2e8f0;
+  border-color: #0284c7;
+  color: #0f172a;
+}
+body.light-theme .topbar-search-trigger .search-kbd {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+@media (max-width: 768px) {
+  .topbar-search-trigger {
+    display: none !important;
+  }
+}
+@media (min-width: 769px) {
+  .mobile-only-search {
+    display: none !important;
+  }
+}

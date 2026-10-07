@@ -2,7 +2,8 @@ import { useState } from 'react';
 import {
   BadgeDollarSign, CreditCard, Receipt, FileText, CheckCircle2,
   AlertTriangle, Clock, MessageSquare, Download, Plus, Filter,
-  Building, Calendar, X, Printer, Search,
+  Building, Calendar, X, Printer, Search, TrendingUp, ShieldAlert,
+  ArrowRight, Check,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 import InvoiceDocumentModal, { type InvoiceData } from '../components/InvoiceDocumentModal';
@@ -141,12 +142,23 @@ const INITIAL_INVOICES: InvoiceData[] = [
   },
 ];
 
+const AGING_CLIENTS = [
+  { client: 'Comptoir Al Amal', ice: '004128901000092', city: 'Fès', current: 0, d30: 0, d60: 32100, d90: 0, dOver: 0, total: 32100, risk: 'Modéré', phone: '+212 535 61 20 08', whatsapp: '212663445566' },
+  { client: 'Quincaillerie Saada', ice: '001928374000045', city: 'Casablanca', current: 0, d30: 0, d60: 0, d90: 14500, dOver: 0, total: 14500, risk: 'Élevé (Chèque impayé)', phone: '+212 522 99 88 77', whatsapp: '212661001122' },
+  { client: 'Atlas Équipements SARL', ice: '003147829000064', city: 'Casablanca', current: 24860, d30: 0, d60: 0, d90: 0, dOver: 0, total: 24860, risk: 'Faible', phone: '+212 522 34 78 90', whatsapp: '212661234567' },
+  { client: 'BatiPro Maroc', ice: '002984123000081', city: 'Rabat', current: 10420.5, d30: 8000, d60: 0, d90: 0, dOver: 0, total: 18420.5, risk: 'Faible', phone: '+212 537 22 16 40', whatsapp: '212661987654' },
+  { client: 'Marché Al Matar', ice: '005519820000019', city: 'Casablanca', current: 45200, d30: 12000, d60: 0, d90: 0, dOver: 0, total: 57200, risk: 'Faible (VIP)', phone: '+212 522 88 77 66', whatsapp: '212662334455' },
+];
+
 export default function AccountingDashboard() {
+  const [activeTab, setActiveTab] = useState<'invoices' | 'cheques' | 'aging' | 'banking'>('invoices');
   const [cheques, setCheques] = useState<Cheque[]>(INITIAL_CHEQUES);
-  const [chequeFilter, setChequeFilter] = useState<string>('all');
   const [invoices, setInvoices] = useState<InvoiceData[]>(INITIAL_INVOICES);
+  const [chequeFilter, setChequeFilter] = useState<string>('all');
   const [invoiceFilter, setInvoiceFilter] = useState<string>('all');
-  const [invoiceSearch, setInvoiceSearch] = useState<string>('');
+  const [invoiceSearch, setInvoiceSearch] = useState('');
+
+  // Modals
   const [viewInvoice, setViewInvoice] = useState<InvoiceData | null>(null);
   const [showNewInvoice, setShowNewInvoice] = useState<boolean>(false);
   const [payInvoice, setPayInvoice] = useState<InvoiceData | null>(null);
@@ -270,7 +282,7 @@ export default function AccountingDashboard() {
 
   return (
     <div className="dashboard-page accounting-workspace">
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="page-heading dash-heading">
         <div>
           <span className="eyebrow">COMPTABILITÉ & TRÉSORERIE <span className="eyebrow-sep">/</span> FACTURATION & EFFETS MAROC</span>
@@ -290,323 +302,534 @@ export default function AccountingDashboard() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="metric-grid">
-        <div className="metric-card metric-blue">
-          <div className="metric-top">
-            <span>En Portefeuille</span>
-            <div className="metric-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6' }}>
-              <CreditCard size={16} />
-            </div>
-          </div>
-          <div className="metric-number">{formatMoney(totalPortfolio)} <small>DH</small></div>
-          <div className="metric-foot">
-            <span>Chèques et traites reçus</span>
-          </div>
-        </div>
-
-        <div className="metric-card metric-cyan">
-          <div className="metric-top">
-            <span>Remis en Banque</span>
-            <div className="metric-icon" style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4' }}>
-              <Clock size={16} />
-            </div>
-          </div>
-          <div className="metric-number">{formatMoney(totalRemis)} <small>DH</small></div>
-          <div className="metric-foot">
-            <span>Encaissement en cours</span>
-          </div>
-        </div>
-
-        <div className="metric-card metric-amber">
-          <div className="metric-top">
-            <span>Créances Clients Échues</span>
-            <div className="metric-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
-              <AlertTriangle size={16} />
-            </div>
-          </div>
-          <div className="metric-number">428 560 <small>DH</small></div>
-          <div className="metric-foot">
-            <span className="metric-change change-down">11 factures échues</span>
-          </div>
-        </div>
-
-        <div className="metric-card metric-red">
-          <div className="metric-top">
-            <span>Chèques Impayés</span>
-            <div className="metric-icon" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
-              <AlertTriangle size={16} />
-            </div>
-          </div>
-          <div className="metric-number">{formatMoney(totalImpayes)} <small>DH</small></div>
-          <div className="metric-foot">
-            <span>Solde client réaugmenté</span>
-          </div>
-        </div>
+      {/* ── Sub-navigation Tabs ── */}
+      <div className="table-tabs" style={{ marginBottom: 16 }}>
+        <button
+          className={`table-tab ${activeTab === 'invoices' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('invoices')}
+        >
+          <FileText size={14} style={{ display: 'inline', marginRight: 5 }} />
+          Factures de Vente ({invoices.length})
+        </button>
+        <button
+          className={`table-tab ${activeTab === 'cheques' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('cheques')}
+        >
+          <CreditCard size={14} style={{ display: 'inline', marginRight: 5 }} />
+          Effets & Chèques ({cheques.length})
+        </button>
+        <button
+          className={`table-tab ${activeTab === 'aging' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('aging')}
+        >
+          <Clock size={14} style={{ display: 'inline', marginRight: 5 }} />
+          Balance Âgée & Risque
+        </button>
+        <button
+          className={`table-tab ${activeTab === 'banking' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('banking')}
+        >
+          <Building size={14} style={{ display: 'inline', marginRight: 5 }} />
+          Bordereaux Bancaires
+        </button>
       </div>
 
-      {/* Cheques & Commercial Papers Register (CDC p.12) */}
-      <section className="panel list-panel" style={{ marginTop: '16px' }}>
-        <div className="list-panel-heading">
-          <div>
-            <span className="eyebrow">REGISTRE DES EFFETS DE COMMERCE</span>
-            <h2>Chèques et Traites en circulation ({filteredCheques.length})</h2>
-          </div>
-          <div className="table-tools" style={{ padding: 0 }}>
-            <div className="table-tabs">
-              {['all', 'en_portefeuille', 'remis_en_banque', 'encaisse', 'impaye'].map((st) => (
-                <button
-                  key={st}
-                  className={`table-tab ${chequeFilter === st ? 'active-tab' : ''}`}
-                  onClick={() => setChequeFilter(st)}
-                >
-                  {st === 'all'
-                    ? 'Tous'
-                    : st === 'en_portefeuille'
-                    ? 'En portefeuille'
-                    : st === 'remis_en_banque'
-                    ? 'Remis en banque'
-                    : st === 'encaisse'
-                    ? 'Encaissés'
-                    : 'Impayés'}
-                </button>
-              ))}
+      {/* ════════════════════ TAB 1 : FACTURES DE VENTE ════════════════════ */}
+      {activeTab === 'invoices' && (
+        <>
+          {/* Facturation KPIs */}
+          <div className="metric-grid">
+            <div className="metric-card metric-blue">
+              <div className="metric-top">
+                <span>Total Facturé TTC</span>
+                <div className="metric-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6' }}>
+                  <FileText size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{formatMoney(totalInvoiced)} <small>DH</small></div>
+              <div className="metric-foot">
+                <span>Total factures émises</span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-green">
+              <div className="metric-top">
+                <span>Règlements Encaissés</span>
+                <div className="metric-icon" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e' }}>
+                  <CheckCircle2 size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{formatMoney(totalCollected)} <small>DH</small></div>
+              <div className="metric-foot">
+                <span className="metric-change change-up">
+                  {Math.round((totalCollected / (totalInvoiced || 1)) * 100)}% encaissé
+                </span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-amber">
+              <div className="metric-top">
+                <span>Reste à Recouvrer</span>
+                <div className="metric-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
+                  <Clock size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{formatMoney(totalReceivables)} <small>DH</small></div>
+              <div className="metric-foot">
+                <span>Factures ouvertes</span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-red">
+              <div className="metric-top">
+                <span>Factures en Retard</span>
+                <div className="metric-icon" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
+                  <AlertTriangle size={16} />
+                </div>
+              </div>
+              <div className="metric-number">
+                {invoices.filter((i) => i.status === 'En retard').length} <small>factures</small>
+              </div>
+              <div className="metric-foot">
+                <span className="metric-change change-down">Échéance dépassée</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="table-container">
-          <table className="data-table module-table">
-            <thead>
-              <tr>
-                <th>N° EFFET / RÉFÉRENCE</th>
-                <th>CLIENT ÉMETTEUR</th>
-                <th>BANQUE TIREUR</th>
-                <th>DATE D'ÉCHÉANCE</th>
-                <th>MONTANT</th>
-                <th>STATUT EFFET</th>
-                <th>ACTION</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCheques.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <span className="table-ref">{c.ref}</span>
-                  </td>
-                  <td>
-                    <b className="table-main">{c.client}</b>
-                  </td>
-                  <td>
-                    <span>{c.bank}</span>
-                  </td>
-                  <td>
-                    <span style={{ fontFamily: 'var(--app-font-mono)' }}>{c.due_date}</span>
-                  </td>
-                  <td className="table-amount">
-                    <b>{formatMoney(c.amount)} DH</b>
-                  </td>
-                  <td>
-                    <span
-                      className={`status-pill ${
-                        c.status === 'encaisse'
-                          ? 'status-green'
-                          : c.status === 'remis_en_banque'
-                          ? 'status-blue'
-                          : c.status === 'impaye'
-                          ? 'status-red'
-                          : 'status-amber'
-                      }`}
+          {/* Moroccan Legal Invoices Section */}
+          <section className="panel list-panel" style={{ marginTop: '16px' }}>
+            <div className="list-panel-heading">
+              <div>
+                <span className="eyebrow">FACTURATION CLIENTS MAROC</span>
+                <h2>Registre de Facturation ({filteredInvoices.length} factures)</h2>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="button-secondary" onClick={exportInvoicesCsv} style={{ fontSize: '11.5px', height: '32px' }}>
+                  <Download size={13} /> Exporter CSV
+                </button>
+                <button className="button-primary" onClick={() => setShowNewInvoice(true)} style={{ fontSize: '11.5px', height: '32px' }}>
+                  <Plus size={13} /> Nouvelle Facture
+                </button>
+              </div>
+            </div>
+
+            <div className="table-tools">
+              <div className="table-tabs">
+                {['all', 'Impayée', 'Partielle', 'Payée', 'En retard'].map((st) => (
+                  <button
+                    key={st}
+                    className={`table-tab ${invoiceFilter === st ? 'active-tab' : ''}`}
+                    onClick={() => setInvoiceFilter(st)}
+                  >
+                    {st === 'all' ? 'Toutes les factures' : st}
+                  </button>
+                ))}
+              </div>
+              <div className="tool-actions">
+                <label className="search-field">
+                  <Search size={14} />
+                  <input
+                    value={invoiceSearch}
+                    onChange={(e) => setInvoiceSearch(e.target.value)}
+                    placeholder="Rechercher facture, client, ICE..."
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="data-table module-table">
+                <thead>
+                  <tr>
+                    <th>N° FACTURE</th>
+                    <th>CLIENT & ICE</th>
+                    <th>TOTAL HT</th>
+                    <th>TVA (20%)</th>
+                    <th>TOTAL TTC</th>
+                    <th>DÉJÀ PAYÉ / RESTE</th>
+                    <th>STATUT</th>
+                    <th>ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredInvoices.map((fac) => {
+                    const ht = fac.lines.reduce((s, l) => s + l.qty * l.unit_price_ht, 0);
+                    const tva = ht * 0.2;
+                    const ttc = ht + tva;
+                    const paid = fac.paid_amount ?? (fac.status === 'Payée' ? ttc : 0);
+                    const remaining = Math.max(0, ttc - paid);
+
+                    return (
+                      <tr key={fac.ref}>
+                        <td>
+                          <span className="table-ref">{fac.ref}</span>
+                          <small style={{ display: 'block', color: 'var(--muted)', fontSize: '10.5px' }}>
+                            Émise : {fac.date_issued}
+                          </small>
+                        </td>
+                        <td>
+                          <b className="table-main">{fac.client}</b>
+                          <small style={{ display: 'block', color: 'var(--muted)' }}>
+                            ICE: {fac.client_ice || '002984123000081'}
+                          </small>
+                        </td>
+                        <td style={{ fontFamily: 'var(--app-font-mono)' }}>{formatMoney(ht)} DH</td>
+                        <td style={{ fontFamily: 'var(--app-font-mono)' }}>{formatMoney(tva)} DH</td>
+                        <td>
+                          <b>{formatMoney(ttc)} DH</b>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: '11px' }}>
+                            <span style={{ color: '#22c55e', fontWeight: 600 }}>{formatMoney(paid)} DH</span> /{' '}
+                            <b style={{ color: remaining > 0 ? '#ef4444' : 'inherit' }}>
+                              {formatMoney(remaining)} DH
+                            </b>
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            className={`status-pill ${
+                              fac.status === 'Payée'
+                                ? 'status-green'
+                                : fac.status === 'Partielle'
+                                ? 'status-blue'
+                                : fac.status === 'En retard'
+                                ? 'status-red'
+                                : 'status-amber'
+                            }`}
+                          >
+                            <i /> {fac.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="row-actions">
+                            <button
+                              className="row-action"
+                              title="Aperçu & Impression Facture A4"
+                              onClick={() => setViewInvoice(fac)}
+                              style={{ color: '#38bdf8' }}
+                            >
+                              <FileText size={14} />
+                            </button>
+                            <button
+                              className="row-action"
+                              title="Imprimer"
+                              onClick={() => setViewInvoice(fac)}
+                            >
+                              <Printer size={14} />
+                            </button>
+                            {remaining > 0 && (
+                              <button
+                                className="button-primary"
+                                style={{
+                                  fontSize: '11px',
+                                  height: '28px',
+                                  padding: '0 8px',
+                                  background: '#16a34a',
+                                  borderColor: '#15803d',
+                                }}
+                                onClick={() => setPayInvoice(fac)}
+                                title="Encaisser un règlement"
+                              >
+                                <CreditCard size={12} /> Encaisser
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* ════════════════════ TAB 2 : EFFETS & CHÈQUES ════════════════════ */}
+      {activeTab === 'cheques' && (
+        <>
+          <div className="metric-grid">
+            <div className="metric-card metric-blue">
+              <div className="metric-top">
+                <span>En Portefeuille</span>
+                <div className="metric-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6' }}>
+                  <CreditCard size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{formatMoney(totalPortfolio)} <small>DH</small></div>
+              <div className="metric-foot">
+                <span>Chèques et traites reçus</span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-cyan">
+              <div className="metric-top">
+                <span>Remis en Banque</span>
+                <div className="metric-icon" style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4' }}>
+                  <Clock size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{formatMoney(totalRemis)} <small>DH</small></div>
+              <div className="metric-foot">
+                <span>Encaissement en cours</span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-red">
+              <div className="metric-top">
+                <span>Chèques Impayés</span>
+                <div className="metric-icon" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
+                  <AlertTriangle size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{formatMoney(totalImpayes)} <small>DH</small></div>
+              <div className="metric-foot">
+                <span>Solde client réaugmenté</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Cheques & Commercial Papers Register (CDC p.12) */}
+          <section className="panel list-panel" style={{ marginTop: '16px' }}>
+            <div className="list-panel-heading">
+              <div>
+                <span className="eyebrow">REGISTRE DES EFFETS DE COMMERCE</span>
+                <h2>Chèques et Traites en circulation ({filteredCheques.length})</h2>
+              </div>
+              <div className="table-tools" style={{ padding: 0 }}>
+                <div className="table-tabs">
+                  {['all', 'en_portefeuille', 'remis_en_banque', 'encaisse', 'impaye'].map((st) => (
+                    <button
+                      key={st}
+                      className={`table-tab ${chequeFilter === st ? 'active-tab' : ''}`}
+                      onClick={() => setChequeFilter(st)}
                     >
-                      <i />{' '}
-                      {c.status === 'encaisse'
-                        ? 'Encaissé'
-                        : c.status === 'remis_en_banque'
+                      {st === 'all'
+                        ? 'Tous'
+                        : st === 'en_portefeuille'
+                        ? 'En portefeuille'
+                        : st === 'remis_en_banque'
                         ? 'Remis en banque'
-                        : c.status === 'impaye'
-                        ? 'Impayé (Alerte)'
-                        : 'En portefeuille'}
-                    </span>
-                  </td>
-                  <td>
-                    {c.status === 'en_portefeuille' && (
-                      <button
-                        className="button-secondary"
-                        style={{ fontSize: '11px', height: '28px', padding: '0 8px' }}
-                        onClick={() => advanceChequeStatus(c.id)}
-                      >
-                        Remettre en banque
-                      </button>
-                    )}
-                    {c.status === 'remis_en_banque' && (
-                      <button
-                        className="button-secondary"
-                        style={{ fontSize: '11px', height: '28px', padding: '0 8px', color: '#22c55e' }}
-                        onClick={() => advanceChequeStatus(c.id)}
-                      >
-                        Valider encaissement
-                      </button>
-                    )}
-                    {c.status === 'impaye' && (
-                      <span style={{ color: '#ef4444', fontSize: '11px', fontWeight: 600 }}>
-                        Rejeté par la banque
-                      </span>
-                    )}
-                  </td>
+                        : st === 'encaisse'
+                        ? 'Encaissés'
+                        : 'Impayés'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="data-table module-table">
+                <thead>
+                  <tr>
+                    <th>N° EFFET / RÉFÉRENCE</th>
+                    <th>CLIENT ÉMETTEUR</th>
+                    <th>BANQUE TIREUR</th>
+                    <th>DATE D'ÉCHÉANCE</th>
+                    <th>MONTANT</th>
+                    <th>STATUT EFFET</th>
+                    <th>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCheques.map((c) => (
+                    <tr key={c.id}>
+                      <td>
+                        <span className="table-ref">{c.ref}</span>
+                      </td>
+                      <td>
+                        <b className="table-main">{c.client}</b>
+                      </td>
+                      <td>
+                        <span>{c.bank}</span>
+                      </td>
+                      <td>
+                        <span style={{ fontFamily: 'var(--app-font-mono)' }}>{c.due_date}</span>
+                      </td>
+                      <td className="table-amount">
+                        <b>{formatMoney(c.amount)} DH</b>
+                      </td>
+                      <td>
+                        <span
+                          className={`status-pill ${
+                            c.status === 'encaisse'
+                              ? 'status-green'
+                              : c.status === 'remis_en_banque'
+                              ? 'status-blue'
+                              : c.status === 'impaye'
+                              ? 'status-red'
+                              : 'status-amber'
+                          }`}
+                        >
+                          <i />{' '}
+                          {c.status === 'encaisse'
+                            ? 'Encaissé'
+                            : c.status === 'remis_en_banque'
+                            ? 'Remis en banque'
+                            : c.status === 'impaye'
+                            ? 'Impayé (Alerte)'
+                            : 'En portefeuille'}
+                        </span>
+                      </td>
+                      <td>
+                        {c.status === 'en_portefeuille' && (
+                          <button
+                            className="button-secondary"
+                            style={{ fontSize: '11px', height: '28px', padding: '0 8px' }}
+                            onClick={() => advanceChequeStatus(c.id)}
+                          >
+                            Remettre en banque
+                          </button>
+                        )}
+                        {c.status === 'remis_en_banque' && (
+                          <button
+                            className="button-secondary"
+                            style={{ fontSize: '11px', height: '28px', padding: '0 8px', color: '#22c55e' }}
+                            onClick={() => advanceChequeStatus(c.id)}
+                          >
+                            Valider encaissement
+                          </button>
+                        )}
+                        {c.status === 'impaye' && (
+                          <span style={{ color: '#ef4444', fontSize: '11px', fontWeight: 600 }}>
+                            Rejeté par la banque
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* ════════════════════ TAB 3 : BALANCE ÂGÉE & RISQUE ════════════════════ */}
+      {activeTab === 'aging' && (
+        <section className="panel list-panel">
+          <div className="list-panel-heading">
+            <div>
+              <span className="eyebrow">RECOUVREMENT &amp; ANALYSE DU CRÉDIT</span>
+              <h2>Balance Âgée des Créances Clients (Normes Maroc)</h2>
+            </div>
+            <button className="button-secondary" onClick={() => setReminderModal(true)}>
+              <MessageSquare size={14} /> Relances groupées WhatsApp
+            </button>
+          </div>
+
+          <div className="table-container">
+            <table className="data-table module-table">
+              <thead>
+                <tr>
+                  <th>CLIENT B2B &amp; ICE</th>
+                  <th>VILLE</th>
+                  <th>NON ÉCHU (&lt;0j)</th>
+                  <th>1 À 30 JOURS</th>
+                  <th>31 À 60 JOURS</th>
+                  <th>61 À 90 JOURS</th>
+                  <th>TOTAL ENCOURS</th>
+                  <th>NIVEAU DE RISQUE</th>
+                  <th>ACTION</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Moroccan Legal Invoices Section */}
-      <section className="panel list-panel" style={{ marginTop: '16px' }}>
-        <div className="list-panel-heading">
-          <div>
-            <span className="eyebrow">FACTURATION CLIENTS MAROC</span>
-            <h2>Registre de Facturation ({filteredInvoices.length} factures)</h2>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="button-secondary" onClick={exportInvoicesCsv} style={{ fontSize: '11.5px', height: '32px' }}>
-              <Download size={13} /> Exporter CSV
-            </button>
-            <button className="button-primary" onClick={() => setShowNewInvoice(true)} style={{ fontSize: '11.5px', height: '32px' }}>
-              <Plus size={13} /> Nouvelle Facture
-            </button>
-          </div>
-        </div>
-
-        <div className="table-tools">
-          <div className="table-tabs">
-            {['all', 'Impayée', 'Partielle', 'Payée', 'En retard'].map((st) => (
-              <button
-                key={st}
-                className={`table-tab ${invoiceFilter === st ? 'active-tab' : ''}`}
-                onClick={() => setInvoiceFilter(st)}
-              >
-                {st === 'all' ? 'Toutes les factures' : st}
-              </button>
-            ))}
-          </div>
-          <div className="tool-actions">
-            <label className="search-field">
-              <Search size={14} />
-              <input
-                value={invoiceSearch}
-                onChange={(e) => setInvoiceSearch(e.target.value)}
-                placeholder="Rechercher facture, client, ICE..."
-              />
-            </label>
-          </div>
-        </div>
-
-        <div className="table-container">
-          <table className="data-table module-table">
-            <thead>
-              <tr>
-                <th>N° FACTURE</th>
-                <th>CLIENT & ICE</th>
-                <th>TOTAL HT</th>
-                <th>TVA (20%)</th>
-                <th>TOTAL TTC</th>
-                <th>DÉJÀ PAYÉ / RESTE</th>
-                <th>STATUT</th>
-                <th>ACTIONS RAPIDES</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredInvoices.map((fac) => {
-                const ht = fac.lines.reduce((s, l) => s + l.qty * l.unit_price_ht, 0);
-                const tva = ht * 0.2;
-                const ttc = ht + tva;
-                const paid = fac.paid_amount ?? (fac.status === 'Payée' ? ttc : 0);
-                const remaining = Math.max(0, ttc - paid);
-
-                return (
-                  <tr key={fac.ref}>
+              </thead>
+              <tbody>
+                {AGING_CLIENTS.map((ac) => (
+                  <tr key={ac.client}>
                     <td>
-                      <span className="table-ref">{fac.ref}</span>
-                      <small style={{ display: 'block', color: 'var(--muted)', fontSize: '10.5px' }}>
-                        Émise : {fac.date_issued}
-                      </small>
+                      <b className="table-main">{ac.client}</b>
+                      <small style={{ display: 'block', color: 'var(--muted)' }}>ICE: {ac.ice}</small>
+                    </td>
+                    <td><span className="table-secondary">{ac.city}</span></td>
+                    <td style={{ color: ac.current > 0 ? '#22c55e' : 'var(--muted)' }}>
+                      {ac.current > 0 ? `${formatMoney(ac.current)} DH` : '—'}
+                    </td>
+                    <td style={{ color: ac.d30 > 0 ? '#38bdf8' : 'var(--muted)' }}>
+                      {ac.d30 > 0 ? `${formatMoney(ac.d30)} DH` : '—'}
+                    </td>
+                    <td style={{ color: ac.d60 > 0 ? '#f59e0b' : 'var(--muted)' }}>
+                      {ac.d60 > 0 ? `${formatMoney(ac.d60)} DH` : '—'}
+                    </td>
+                    <td style={{ color: ac.d90 > 0 ? '#ef4444' : 'var(--muted)', fontWeight: ac.d90 > 0 ? 700 : 400 }}>
+                      {ac.d90 > 0 ? `${formatMoney(ac.d90)} DH` : '—'}
                     </td>
                     <td>
-                      <b className="table-main">{fac.client}</b>
-                      <small style={{ display: 'block', color: 'var(--muted)' }}>
-                        ICE: {fac.client_ice || '002984123000081'}
-                      </small>
-                    </td>
-                    <td style={{ fontFamily: 'var(--app-font-mono)' }}>{formatMoney(ht)} DH</td>
-                    <td style={{ fontFamily: 'var(--app-font-mono)' }}>{formatMoney(tva)} DH</td>
-                    <td>
-                      <b>{formatMoney(ttc)} DH</b>
-                    </td>
-                    <td>
-                      <div style={{ fontSize: '11px' }}>
-                        <span style={{ color: '#22c55e', fontWeight: 600 }}>{formatMoney(paid)} DH</span> /{' '}
-                        <b style={{ color: remaining > 0 ? '#ef4444' : 'inherit' }}>
-                          {formatMoney(remaining)} DH
-                        </b>
-                      </div>
+                      <strong style={{ fontSize: 13 }}>{formatMoney(ac.total)} DH</strong>
                     </td>
                     <td>
                       <span
                         className={`status-pill ${
-                          fac.status === 'Payée'
-                            ? 'status-green'
-                            : fac.status === 'Partielle'
-                            ? 'status-blue'
-                            : fac.status === 'En retard'
+                          ac.risk.includes('Élevé')
                             ? 'status-red'
-                            : 'status-amber'
+                            : ac.risk.includes('Modéré')
+                            ? 'status-amber'
+                            : 'status-green'
                         }`}
                       >
-                        <i /> {fac.status}
+                        {ac.risk}
                       </span>
                     </td>
                     <td>
-                      <div className="row-actions">
-                        <button
-                          className="row-action"
-                          title="Consulter et imprimer la facture officielle"
-                          onClick={() => setViewInvoice(fac)}
-                          style={{ color: '#38bdf8' }}
-                        >
-                          <FileText size={14} />
-                        </button>
-                        <button
-                          className="row-action"
-                          title="Imprimer au format A4"
-                          onClick={() => setViewInvoice(fac)}
-                        >
-                          <Printer size={14} />
-                        </button>
-                        {remaining > 0 && (
-                          <button
-                            className="button-primary"
-                            style={{
-                              fontSize: '11px',
-                              height: '28px',
-                              padding: '0 8px',
-                              background: '#16a34a',
-                              borderColor: '#15803d',
-                            }}
-                            onClick={() => setPayInvoice(fac)}
-                            title="Encaisser un règlement sur cette facture"
-                          >
-                            <CreditCard size={12} /> Encaisser
-                          </button>
-                        )}
-                      </div>
+                      <a
+                        href={`https://wa.me/${ac.whatsapp}?text=Bonjour%20${encodeURIComponent(ac.client)},%20rappel%20de%20facture%20Hercules%20Distribution.`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="button-secondary"
+                        style={{ height: 26, fontSize: 11, padding: '0 8px', color: '#22c55e', gap: 4 }}
+                      >
+                        <MessageSquare size={12} /> Relancer
+                      </a>
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* ════════════════════ TAB 4 : BORDEREAUX BANCAIRES ════════════════════ */}
+      {activeTab === 'banking' && (
+        <section className="panel" style={{ padding: 20 }}>
+          <div className="panel-heading" style={{ marginBottom: 14 }}>
+            <div>
+              <span className="eyebrow">SERVICES BANCAIRES &amp; REMISES</span>
+              <h2>Bordereaux de Remise de Chèques &amp; Traites</h2>
+            </div>
+            <button className="button-primary" onClick={() => setSlipModal(true)}>
+              <Download size={14} /> Télécharger Bordereau PDF
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div style={{ background: 'var(--navy-2)', padding: 16, borderRadius: 8, border: '1px solid var(--line)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#38bdf8', marginBottom: 8 }}>
+                <Building size={16} />
+                <b>Attijariwafa Bank · Agence Mers Sultan</b>
+              </div>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
+                RIB : <b>007 780 0001234567890123 45</b><br />
+                Titulaire : <b>HERCULES DISTRIBUTION SARL</b><br />
+                Dernière remise : <b>28 Février 2025 (32 100 DH)</b>
+              </p>
+            </div>
+
+            <div style={{ background: 'var(--navy-2)', padding: 16, borderRadius: 8, border: '1px solid var(--line)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#22c55e', marginBottom: 8 }}>
+                <Building size={16} />
+                <b>Banque Populaire · Agence Ain Sebaâ</b>
+              </div>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
+                RIB : <b>127 780 0009876543210987 12</b><br />
+                Titulaire : <b>HERCULES DISTRIBUTION SARL</b><br />
+                Dernière remise : <b>24 Février 2025 (18 420 DH)</b>
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Bank Remittance Slip Modal */}
       {slipModal && (

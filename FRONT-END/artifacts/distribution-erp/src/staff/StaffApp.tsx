@@ -24,6 +24,10 @@ import AuditLogs from './pages/AuditLogs';
 import SystemSettings from './pages/SystemSettings';
 import OrdersManagement from './pages/OrdersManagement';
 import ProductsManagement from './pages/ProductsManagement';
+import PurchasingManagement from './pages/PurchasingManagement';
+import SuppliersManagement from './pages/SuppliersManagement';
+import ReturnsManagement from './pages/ReturnsManagement';
+import ReportsPage from './pages/ReportsPage';
 import SystemMaintenance from './pages/SystemMaintenance';
 import './staff.css';
 
@@ -263,6 +267,10 @@ function GuardedModule({ segment }: { segment: string }) {
   if (segment === 'maintenance') return <SystemMaintenance />;
   if (segment === 'orders') return <OrdersManagement />;
   if (segment === 'products') return <ProductsManagement />;
+  if (segment === 'purchasing') return <PurchasingManagement />;
+  if (segment === 'suppliers') return <SuppliersManagement />;
+  if (segment === 'returns') return <ReturnsManagement />;
+  if (segment === 'reports') return <ReportsPage />;
   return <ModulePlaceholder module={module} />;
 }
 

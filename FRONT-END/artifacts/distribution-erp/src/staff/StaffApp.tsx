@@ -29,6 +29,11 @@ import SuppliersManagement from './pages/SuppliersManagement';
 import ReturnsManagement from './pages/ReturnsManagement';
 import ReportsPage from './pages/ReportsPage';
 import SystemMaintenance from './pages/SystemMaintenance';
+import GlobalSearchModal from './components/GlobalSearchModal';
+import NotificationsDrawer from './components/NotificationsDrawer';
+import LogoutConfirmModal from './components/LogoutConfirmModal';
+import './components/global-search.css';
+import './components/notifications.css';
 import './staff.css';
 
 export default function StaffApp() {
@@ -77,6 +82,10 @@ function StaffShell({ user }: { user: StaffUser }) {
   const [location, setLocation] = useLocation();
   const [mobileNav, setMobileNav] = useState(false);
   const [roleMenu, setRoleMenu] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(4);
   const { theme, toggleTheme, isLight } = useTheme();
   const roleRef = useRef<HTMLDivElement>(null);
 
@@ -91,6 +100,17 @@ function StaffShell({ user }: { user: StaffUser }) {
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   async function handleSwitch(code: string) {
     setRoleMenu(false);
     if (code === primary?.code) return;
@@ -99,6 +119,7 @@ function StaffShell({ user }: { user: StaffUser }) {
   }
 
   async function handleLogout() {
+    setLogoutModalOpen(false);
     await logout();
     setLocation('/login');
   }
@@ -155,7 +176,14 @@ function StaffShell({ user }: { user: StaffUser }) {
               <small>{user.permissions.includes('*') ? 'Accès complet' : `${user.permissions.length} permissions`}</small>
             </div>
           </div>
-          <div className="user-panel" role="button" tabIndex={0} onClick={handleLogout} onKeyDown={(e) => e.key === 'Enter' && handleLogout()}>
+          <div
+            className="user-panel"
+            role="button"
+            tabIndex={0}
+            onClick={() => setLogoutModalOpen(true)}
+            onKeyDown={(e) => e.key === 'Enter' && setLogoutModalOpen(true)}
+            title="Se déconnecter"
+          >
             <div className="user-avatar">{initials(user.name)}</div>
             <span className="user-copy"><b>{user.name}</b><small>{user.email ?? user.phone}</small></span>
             <LogOut size={15} />
@@ -178,11 +206,22 @@ function StaffShell({ user }: { user: StaffUser }) {
           </div>
 
           <div className="topbar-right">
-            <button className="icon-button" aria-label="Recherche globale" title="Recherche globale">
+            <button
+              className="icon-button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Recherche globale (Ctrl + K)"
+              title="Recherche globale (Ctrl + K)"
+            >
               <Search size={16} />
             </button>
-            <button className="icon-button sx-bell" aria-label="Notifications" title="Notifications">
+            <button
+              className="icon-button sx-bell"
+              onClick={() => setNotifOpen(true)}
+              aria-label="Notifications & alertes"
+              title="Notifications & alertes"
+            >
               <Bell size={16} />
+              {unreadNotifCount > 0 && <span className="sx-bell-badge">{unreadNotifCount}</span>}
             </button>
 
             {user.roles.length > 1 && (
@@ -216,6 +255,15 @@ function StaffShell({ user }: { user: StaffUser }) {
             <button className="icon-button" onClick={toggleTheme} title="Basculer le thème" data-testid="button-theme-toggle">
               {isLight ? <Moon size={16} /> : <Sun size={16} />}
             </button>
+            <button
+              className="icon-button"
+              onClick={() => setLogoutModalOpen(true)}
+              title="Se déconnecter"
+              aria-label="Se déconnecter"
+              style={{ color: '#ef4444' }}
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </header>
 
@@ -223,12 +271,32 @@ function StaffShell({ user }: { user: StaffUser }) {
           <Switch>
             <Route path="/:ws/dashboard" component={() => <RoleDashboard user={user} onNavigate={go} />} />
             <Route path="/:ws/:module">
-              {(params: { ws: string; module: string }) => <GuardedModule segment={params.module} />}
+              {(params: { ws: string; module: string }) => <GuardedModule segment={params.module} onNavigate={go} />}
             </Route>
             <Route component={() => <NotFound onHome={() => setLocation(home)} />} />
           </Switch>
         </main>
       </div>
+
+      <GlobalSearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onNavigate={go}
+      />
+
+      <NotificationsDrawer
+        isOpen={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        onNavigate={go}
+        onUnreadCountChange={setUnreadNotifCount}
+      />
+
+      <LogoutConfirmModal
+        isOpen={logoutModalOpen}
+        user={user}
+        onCancel={() => setLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+      />
     </div>
   );
 }
@@ -247,7 +315,7 @@ function NavButton({ module, active, onClick }: { module: NavModule; active: boo
   );
 }
 
-function GuardedModule({ segment }: { segment: string }) {
+function GuardedModule({ segment, onNavigate }: { segment: string; onNavigate?: (s: string) => void }) {
   const { hasPermission } = useStaffAuth();
   const module = findModule(segment);
 
@@ -258,7 +326,7 @@ function GuardedModule({ segment }: { segment: string }) {
   if (segment === 'customers') return <ClientsCrm />;
   if (segment === 'inventory') return <WarehouseDashboard />;
   if (segment === 'preparation') return <PreparationDashboard />;
-  if (segment === 'deliveries') return <DeliveryDashboard />;
+  if (segment === 'deliveries') return <DeliveryDashboard onNavigate={onNavigate} />;
   if (segment === 'finance' || segment === 'payments') return <AccountingDashboard />;
   if (segment === 'users') return <UsersManagement />;
   if (segment === 'roles') return <RolesPermissions />;
@@ -293,7 +361,7 @@ function RoleDashboard({ user, onNavigate }: { user: StaffUser; onNavigate: (seg
     return <PreparationDashboard />;
   }
   if (role === 'delivery') {
-    return <DeliveryDashboard />;
+    return <DeliveryDashboard onNavigate={onNavigate} />;
   }
   if (role === 'accounting') {
     return <AccountingDashboard />;

@@ -395,7 +395,7 @@ export default function SuppliersManagement() {
         <PurchaseOrderDocumentModal
           order={viewPoData}
           onClose={() => setViewPoData(null)}
-          onStatusChange={(status) => {
+          onStatusChange={(_order, status) => {
             setViewPoData(prev => prev ? { ...prev, status } : null);
             notify(`Statut du Bon d'Achat mis à jour: ${status}`);
           }}

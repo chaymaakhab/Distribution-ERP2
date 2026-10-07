@@ -69,7 +69,6 @@ export default function ReportsPage() {
   const chartData = revenueData.slice(-8).map(d => ({
     label: d.month,
     value: d.CA,
-    value2: d.Encaissé,
   }));
 
   return (
@@ -127,7 +126,7 @@ export default function ReportsPage() {
           <div className="panel-heading">
             <div>
               <span className="eyebrow">ÉVOLUTION</span>
-              <h2>Chiffre d'Affaires vs Encaissements</h2>
+              <h2>Chiffre d'Affaires</h2>
             </div>
             <div className="heading-actions">
               <button
@@ -145,13 +144,12 @@ export default function ReportsPage() {
               <AreaChart
                 data={chartData}
                 color="var(--accent-blue)"
-                formatter={(v: number) => formatMoney(v)}
+                valueFormat={(v: number) => formatMoney(v)}
               />
             ) : (
               <ColumnChart
                 data={monthlyColumns.slice(-8)}
                 color="var(--accent-violet)"
-                formatter={(v: number) => `${v} cmd`}
               />
             )}
           </div>
@@ -164,8 +162,8 @@ export default function ReportsPage() {
           </div>
           <div className="rp-bar-wrap">
             <BarList
-              data={topClients.map(c => ({ name: c.name, value: c.value }))}
-              formatter={(v: number) => formatMoney(v)}
+              data={topClients.map(c => ({ label: c.name, value: c.value }))}
+              valueFormat={(v: number) => formatMoney(v)}
             />
           </div>
         </div>
@@ -180,9 +178,9 @@ export default function ReportsPage() {
           </div>
           <div className="rp-bar-wrap">
             <BarList
-              data={topProducts.map(p => ({ name: p.name, value: p.value }))}
-              formatter={(v: number) => formatMoney(v)}
-              color="var(--accent-green)"
+              data={topProducts.map(p => ({ label: p.name, value: p.value }))}
+              valueFormat={(v: number) => formatMoney(v)}
+              tone="green"
             />
           </div>
         </div>

@@ -73,9 +73,12 @@ const ROLE_HOMES: Record<string, string> = {
   admin: '/administrator/dashboard',
   commercial: '/sales/dashboard',
   warehouse: '/warehouse/dashboard',
+  depot: '/warehouse/dashboard',
   preparation: '/preparation/dashboard',
   delivery: '/delivery/dashboard',
+  livreur: '/delivery/dashboard',
   accounting: '/accounting/dashboard',
+  compta: '/accounting/dashboard',
 };
 
 const ROLE_NAMES: Record<string, string> = {
@@ -83,14 +86,49 @@ const ROLE_NAMES: Record<string, string> = {
   admin: 'Amine El Fassi',
   commercial: 'Youssef Bennani',
   warehouse: 'Nadia El Amrani',
+  depot: 'Nadia El Amrani',
   preparation: 'Karim Ouazzani',
   delivery: 'Mehdi Lahlou',
+  livreur: 'Mehdi Lahlou',
   accounting: 'Sofia Cherkaoui',
+  compta: 'Sofia Cherkaoui',
 };
 
+export function normalizeRoleCode(rawCode?: string | null): string {
+  const code = (rawCode || '').trim().toLowerCase();
+  const map: Record<string, string> = {
+    depot: 'warehouse',
+    entrepôt: 'warehouse',
+    entrepot: 'warehouse',
+    stock: 'warehouse',
+    stocks: 'warehouse',
+    warehouse: 'warehouse',
+    livreur: 'delivery',
+    livraison: 'delivery',
+    deliveries: 'delivery',
+    delivery: 'delivery',
+    compta: 'accounting',
+    comptable: 'accounting',
+    comptabilite: 'accounting',
+    finance: 'accounting',
+    accounting: 'accounting',
+    commercial: 'commercial',
+    vente: 'commercial',
+    ventes: 'commercial',
+    sales: 'commercial',
+    preparation: 'preparation',
+    preparateur: 'preparation',
+    prep: 'preparation',
+    superadmin: 'superadmin',
+    admin: 'admin',
+    administrator: 'admin',
+  };
+  return map[code] || code;
+}
+
 export function createMockStaffUser(roleCode: string, email?: string): StaffUser {
-  const code = roleCode.toLowerCase();
-  const permissions = ROLE_PERMISSIONS[code] || ['dashboard.view'];
+  const code = normalizeRoleCode(roleCode);
+  const permissions = ROLE_PERMISSIONS[code] || ROLE_PERMISSIONS[roleCode.toLowerCase()] || ['dashboard.view'];
   const home = ROLE_HOMES[code] || '/admin/dashboard';
   const name = ROLE_NAMES[code] || 'Utilisateur ERP';
 
@@ -108,7 +146,7 @@ export function createMockStaffUser(roleCode: string, email?: string): StaffUser
     roles: [
       {
         code,
-        name: code.charAt(0).toUpperCase() + code.slice(1),
+        name: code === 'warehouse' ? 'Responsable Dépôt' : code.charAt(0).toUpperCase() + code.slice(1),
         home,
         is_primary: true,
       },

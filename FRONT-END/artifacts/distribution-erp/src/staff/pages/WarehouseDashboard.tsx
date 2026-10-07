@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Boxes, Warehouse, ArrowDownRight, ArrowUpRight, ArrowLeftRight,
   AlertTriangle, CheckCircle2, Clock, Plus, Download, ShieldCheck,
   Calendar, Layers, X, Truck, User, Phone, MapPin, Building2,
-  Navigation, Search, Filter, MessageSquare, ChevronRight,
+  Navigation, Search, Filter, MessageSquare, ChevronRight, Check,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 
@@ -234,8 +234,22 @@ const MOVEMENTS = [
   { type: 'Ajustement Inventaire', ref: 'INV-0225', prod: 'Câble 3G2.5', qty: '+5 (Écart)', depot: 'Rabat', time: 'Hier' },
 ];
 
-export default function WarehouseDashboard() {
-  const [activeTab, setActiveTab] = useState<'stocks' | 'drivers' | 'movements'>('stocks');
+interface WarehouseDashboardProps {
+  initialTab?: 'stocks' | 'drivers' | 'movements';
+  onNavigate?: (segment: string) => void;
+}
+
+export default function WarehouseDashboard({
+  initialTab = 'stocks',
+  onNavigate,
+}: WarehouseDashboardProps = {}) {
+  const [activeTab, setActiveTab] = useState<'stocks' | 'drivers' | 'movements'>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [stocks, setStocks] = useState<StockItem[]>(INITIAL_STOCKS);
   const [drivers, setDrivers] = useState<WarehouseDriver[]>(INITIAL_DRIVERS);
   const [selectedDepot, setSelectedDepot] = useState<'all' | 'Casablanca (DEP-01)' | 'Rabat (DEP-02)'>('all');
@@ -318,9 +332,10 @@ export default function WarehouseDashboard() {
 
     setDrivers((prev) => [newDriver, ...prev]);
     notify(
-      `Livreur « ${newDriver.name} » ajouté (${newDriver.driver_type === 'depot_to_client' ? 'Dépôt → Client' : 'Navette Inter-Dépôts'}) !`
+      `Livreur « ${newDriver.name} » ajouté avec succès (${newDriver.driver_type === 'depot_to_client' ? 'Type 1 : Dépôt → Client' : 'Type 2 : Navette Dépôt → Dépôt'}) !`
     );
     setNewDriverModal(false);
+    setActiveTab('drivers');
 
     // Reset form
     setFormName('');
@@ -353,21 +368,28 @@ export default function WarehouseDashboard() {
           <h1>Espace Entrepôt & Flotte Logistique<span className="title-period">.</span></h1>
           <p>Supervision des stocks disponibles, réapprovisionnements et gestion des 2 types de livreurs (Clients & Navettes Inter-Dépôts).</p>
         </div>
-        <div className="heading-actions">
-          {activeTab === 'drivers' ? (
-            <button className="button-primary" onClick={() => setNewDriverModal(true)}>
-              <Plus size={15} /> Ajouter un livreur
-            </button>
-          ) : (
-            <>
-              <button className="button-secondary" onClick={() => setClosingModal(true)}>
-                <ShieldCheck size={15} /> Clôture caisse dépôt
-              </button>
-              <button className="button-primary" onClick={() => setTransferModal(true)}>
-                <ArrowLeftRight size={16} /> Transfert inter-dépôts
-              </button>
-            </>
-          )}
+        <div className="heading-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            className="button-primary"
+            style={{ background: '#0284c7', borderColor: '#0369a1', fontWeight: 600 }}
+            onClick={() => setNewDriverModal(true)}
+            title="Ajouter un livreur au dépôt (Type 1 : Dépôt → Client OU Type 2 : Navette Dépôt → Dépôt)"
+            data-testid="btn-add-driver-main"
+          >
+            <Plus size={15} /> + Ajouter un livreur (2 Types)
+          </button>
+          <button
+            className="button-secondary"
+            onClick={() => setTransferModal(true)}
+          >
+            <ArrowLeftRight size={15} /> Transfert inter-dépôts
+          </button>
+          <button
+            className="button-secondary"
+            onClick={() => setClosingModal(true)}
+          >
+            <ShieldCheck size={15} /> Clôture caisse dépôt
+          </button>
         </div>
       </div>
 
@@ -384,8 +406,8 @@ export default function WarehouseDashboard() {
           className={`table-tab ${activeTab === 'drivers' ? 'active-tab' : ''}`}
           onClick={() => setActiveTab('drivers')}
         >
-          <Truck size={14} style={{ display: 'inline', marginRight: 6 }} />
-          Flotte & Livreurs ({drivers.length})
+          <Truck size={14} style={{ display: 'inline', marginRight: 6, color: '#38bdf8' }} />
+          Flotte & 2 Types de Livreurs ({drivers.length})
         </button>
         <button
           className={`table-tab ${activeTab === 'movements' ? 'active-tab' : ''}`}
@@ -399,6 +421,69 @@ export default function WarehouseDashboard() {
       {/* ════════════════════ TAB 1: STOCKS ════════════════════ */}
       {activeTab === 'stocks' && (
         <>
+          {/* Highlight Banner: 2 Types de Livreurs */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'linear-gradient(135deg, rgba(2,132,199,0.12), rgba(168,85,247,0.08))',
+              border: '1px solid rgba(56,189,248,0.25)',
+              borderRadius: 10,
+              padding: '14px 18px',
+              marginBottom: 16,
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: 'rgba(56,189,248,0.15)',
+                  color: '#38bdf8',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Truck size={22} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>
+                    Flotte & Affectation des 2 Types de Livreurs
+                  </h3>
+                  <span className="status-pill status-blue" style={{ fontSize: 10 }}>
+                    {drivers.length} Chauffeurs actifs
+                  </span>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>
+                  <strong style={{ color: '#38bdf8' }}>Type 1 (Dépôt → Client) : {clientDriversCount}</strong> (Distribution magasins & chantiers) &nbsp;·&nbsp;&nbsp;
+                  <strong style={{ color: '#c084fc' }}>Type 2 (Navette Dépôt → Dépôt) : {interDepotDriversCount}</strong> (Liaisons inter-villes)
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button
+                className="button-secondary"
+                onClick={() => setActiveTab('drivers')}
+                style={{ height: 34, fontSize: 12, gap: 6 }}
+              >
+                <Truck size={14} /> Voir la flotte ({drivers.length})
+              </button>
+              <button
+                className="button-primary"
+                onClick={() => setNewDriverModal(true)}
+                style={{ height: 34, fontSize: 12, gap: 6, background: '#0284c7', borderColor: '#0369a1' }}
+              >
+                <Plus size={14} /> + Ajouter un livreur
+              </button>
+            </div>
+          </div>
           {/* KPI Strip */}
           <div className="metric-grid">
             <div className="metric-card metric-blue">
@@ -590,6 +675,55 @@ export default function WarehouseDashboard() {
             </div>
           </div>
 
+          {/* 2 Types de Livreurs - Cartes explicatives interactives */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginTop: 14 }}>
+            <div
+              onClick={() => setDriverTypeFilter(driverTypeFilter === 'depot_to_client' ? 'all' : 'depot_to_client')}
+              style={{
+                padding: '14px 16px',
+                borderRadius: 8,
+                background: driverTypeFilter === 'depot_to_client' ? 'rgba(56,189,248,0.12)' : 'var(--navy-2)',
+                border: driverTypeFilter === 'depot_to_client' ? '2px solid #38bdf8' : '1px solid var(--line)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#38bdf8', fontWeight: 700, fontSize: 13 }}>
+                  <Truck size={16} />
+                  <span>Type 1 : Livreur Dépôt → Client (Dernier Kilomètre)</span>
+                </div>
+                <span className="status-pill status-blue" style={{ fontSize: 11 }}>{clientDriversCount} livreurs</span>
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.4 }}>
+                Distribution locale auprès des commerces, clients B2B, épiceries et chantiers urbains. Véhicules légers (fourgons 3.5T).
+              </p>
+            </div>
+
+            <div
+              onClick={() => setDriverTypeFilter(driverTypeFilter === 'depot_to_depot' ? 'all' : 'depot_to_depot')}
+              style={{
+                padding: '14px 16px',
+                borderRadius: 8,
+                background: driverTypeFilter === 'depot_to_depot' ? 'rgba(168,85,247,0.12)' : 'var(--navy-2)',
+                border: driverTypeFilter === 'depot_to_depot' ? '2px solid #a855f7' : '1px solid var(--line)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#c084fc', fontWeight: 700, fontSize: 13 }}>
+                  <Building2 size={16} />
+                  <span>Type 2 : Chauffeur Navette Dépôt → Dépôt (Inter-Villes)</span>
+                </div>
+                <span className="status-pill status-violet" style={{ fontSize: 11 }}>{interDepotDriversCount} navettes</span>
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.4 }}>
+                Liaisons régulières et acheminement de palettes entre dépôts régionaux (Casablanca, Mohammedia, Berrechid, Settat). Poids lourds (8T - 12T).
+              </p>
+            </div>
+          </div>
+
           {/* Drivers Filter & Search Panel */}
           <section className="panel list-panel" style={{ marginTop: '14px' }}>
             <div className="list-panel-heading">
@@ -598,8 +732,12 @@ export default function WarehouseDashboard() {
                 <h2>Registre des Chauffeurs & Affectation ({filteredDrivers.length})</h2>
               </div>
               <div className="heading-actions">
-                <button className="button-primary" onClick={() => setNewDriverModal(true)}>
-                  <Plus size={14} /> Nouveau livreur
+                <button
+                  className="button-primary"
+                  style={{ background: '#0284c7', borderColor: '#0369a1' }}
+                  onClick={() => setNewDriverModal(true)}
+                >
+                  <Plus size={14} /> + Ajouter un livreur (2 Types)
                 </button>
               </div>
             </div>
@@ -848,42 +986,60 @@ export default function WarehouseDashboard() {
               </span>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div
-                  onClick={() => setFormType('depot_to_client')}
+                  onClick={() => {
+                    setFormType('depot_to_client');
+                    if (!formRoute || formRoute.includes('↔')) setFormRoute('Grand Casablanca & Ain Sebaâ');
+                    if (!formVehicle || formVehicle.includes('Volvo')) setFormVehicle('Renault Master 3.5T');
+                    if (!formCapacity || formCapacity.includes('12.0')) setFormCapacity('3.5 T / 4 Palettes');
+                  }}
                   style={{
-                    padding: 12,
+                    padding: 14,
                     borderRadius: 8,
                     cursor: 'pointer',
                     border: formType === 'depot_to_client' ? '2px solid #38bdf8' : '1px solid var(--line)',
-                    background: formType === 'depot_to_client' ? 'rgba(56,189,248,0.1)' : 'var(--navy-2)',
+                    background: formType === 'depot_to_client' ? 'rgba(56,189,248,0.12)' : 'var(--navy-2)',
                     transition: 'all 0.15s ease',
+                    position: 'relative',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700, fontSize: 13 }}>
-                    <Truck size={15} />
-                    <span>Dépôt → Client</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700, fontSize: 13 }}>
+                      <Truck size={16} />
+                      <span>Type 1 : Dépôt → Client</span>
+                    </div>
+                    {formType === 'depot_to_client' && <Check size={16} style={{ color: '#38bdf8' }} />}
                   </div>
-                  <small style={{ display: 'block', color: 'var(--muted)', marginTop: 4, fontSize: 11, lineHeight: 1.4 }}>
-                    Distribution locale directe aux clients, magasins & chantiers.
+                  <small style={{ display: 'block', color: 'var(--muted)', marginTop: 6, fontSize: 11, lineHeight: 1.4 }}>
+                    Distribution locale directe aux magasins, épiceries, clients finaux & chantiers.
                   </small>
                 </div>
 
                 <div
-                  onClick={() => setFormType('depot_to_depot')}
+                  onClick={() => {
+                    setFormType('depot_to_depot');
+                    if (!formRoute || !formRoute.includes('↔')) setFormRoute('Casablanca ↔ Berrechid ↔ Settat (Ligne 2)');
+                    if (!formVehicle || formVehicle.includes('Renault')) setFormVehicle('Volvo FL 12T');
+                    if (!formCapacity || formCapacity.includes('3.5')) setFormCapacity('12.0 T / 16 Palettes');
+                  }}
                   style={{
-                    padding: 12,
+                    padding: 14,
                     borderRadius: 8,
                     cursor: 'pointer',
                     border: formType === 'depot_to_depot' ? '2px solid #a855f7' : '1px solid var(--line)',
-                    background: formType === 'depot_to_depot' ? 'rgba(168,85,247,0.1)' : 'var(--navy-2)',
+                    background: formType === 'depot_to_depot' ? 'rgba(168,85,247,0.12)' : 'var(--navy-2)',
                     transition: 'all 0.15s ease',
+                    position: 'relative',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#c084fc', fontWeight: 700, fontSize: 13 }}>
-                    <Building2 size={15} />
-                    <span>Navette Dépôt → Dépôt</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#c084fc', fontWeight: 700, fontSize: 13 }}>
+                      <Building2 size={16} />
+                      <span>Type 2 : Navette Dépôt → Dépôt</span>
+                    </div>
+                    {formType === 'depot_to_depot' && <Check size={16} style={{ color: '#c084fc' }} />}
                   </div>
-                  <small style={{ display: 'block', color: 'var(--muted)', marginTop: 4, fontSize: 11, lineHeight: 1.4 }}>
-                    Liaisons régulières et transferts de palettes entre dépôts régionaux.
+                  <small style={{ display: 'block', color: 'var(--muted)', marginTop: 6, fontSize: 11, lineHeight: 1.4 }}>
+                    Liaisons régulières et transferts de palettes entre dépôts régionaux selon les lignes.
                   </small>
                 </div>
               </div>

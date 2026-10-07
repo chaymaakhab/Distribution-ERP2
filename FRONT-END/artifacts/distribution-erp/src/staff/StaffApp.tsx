@@ -8,6 +8,7 @@ import { useTheme } from '@/lib/theme';
 import { StaffAuthProvider, useStaffAuth } from './auth';
 import { MODULES, NAV_GROUPS, findModule, type NavModule } from './nav';
 import type { StaffUser } from './api';
+import { normalizeRoleCode } from './mockAuth';
 import StaffLogin from './StaffLogin';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdministratorDashboard from './pages/AdministratorDashboard';
@@ -365,7 +366,7 @@ function NavButton({ module, active, onClick }: { module: NavModule; active: boo
 }
 
 function GuardedModule({ segment, onNavigate }: { segment: string; onNavigate?: (s: string) => void }) {
-  const { hasPermission } = useStaffAuth();
+  const { hasPermission, user } = useStaffAuth();
   const module = findModule(segment);
 
   if (!module) return <NotFoundInline />;
@@ -373,9 +374,15 @@ function GuardedModule({ segment, onNavigate }: { segment: string; onNavigate?: 
   if (!hasPermission(module.permission)) return <Denied permission={module.permission} />;
   if (segment === 'warehouses') return <Warehouses />;
   if (segment === 'customers') return <ClientsCrm />;
-  if (segment === 'inventory') return <WarehouseDashboard />;
+  if (segment === 'inventory') return <WarehouseDashboard initialTab="stocks" onNavigate={onNavigate} />;
+  if (segment === 'fleet') return <WarehouseDashboard initialTab="drivers" onNavigate={onNavigate} />;
   if (segment === 'preparation') return <PreparationDashboard />;
-  if (segment === 'deliveries') return <DeliveryDashboard onNavigate={onNavigate} />;
+  if (segment === 'deliveries') {
+    if (user && normalizeRoleCode(user.primary_role) === 'warehouse') {
+      return <WarehouseDashboard initialTab="drivers" onNavigate={onNavigate} />;
+    }
+    return <DeliveryDashboard onNavigate={onNavigate} />;
+  }
   if (segment === 'finance' || segment === 'payments') return <AccountingDashboard />;
   if (segment === 'users') return <UsersManagement />;
   if (segment === 'roles') return <RolesPermissions />;
@@ -393,7 +400,7 @@ function GuardedModule({ segment, onNavigate }: { segment: string; onNavigate?: 
 
 // Each role gets its dedicated workspace matching Cahier des Charges.
 function RoleDashboard({ user, onNavigate }: { user: StaffUser; onNavigate: (segment: string) => void }) {
-  const role = user.primary_role;
+  const role = normalizeRoleCode(user.primary_role);
   if (role === 'superadmin') {
     return <SuperAdminDashboard />;
   }
@@ -404,7 +411,7 @@ function RoleDashboard({ user, onNavigate }: { user: StaffUser; onNavigate: (seg
     return <SalesDashboard onNavigate={onNavigate} />;
   }
   if (role === 'warehouse') {
-    return <WarehouseDashboard />;
+    return <WarehouseDashboard onNavigate={onNavigate} />;
   }
   if (role === 'preparation') {
     return <PreparationDashboard />;

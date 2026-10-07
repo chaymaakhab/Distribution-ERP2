@@ -40,6 +40,7 @@ export const MODULES: NavModule[] = [
 
   { segment: 'inventory', label: 'Stocks', icon: Boxes, permission: 'stock.view', group: 'Entrepôt' },
   { segment: 'warehouses', label: 'Dépôts', icon: Warehouse, permission: 'warehouses.view', group: 'Entrepôt' },
+  { segment: 'fleet', label: 'Flotte & Livreurs', icon: Truck, permission: 'stock.view', group: 'Entrepôt' },
   { segment: 'purchasing', label: 'Achats', icon: ShoppingCart, permission: 'purchases.view', group: 'Entrepôt' },
   { segment: 'preparation', label: 'Préparation', icon: PackageCheck, permission: 'preparation.view', group: 'Entrepôt' },
 

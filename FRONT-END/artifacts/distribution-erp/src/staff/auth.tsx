@@ -61,9 +61,9 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
         setUser(res.user);
         return res.user;
       } catch {
-        const role = identifier.split('@')[0].toLowerCase();
-        const mock = createMockStaffUser(role, identifier);
-        setSession('mock-token-' + role, mock, remember);
+        const rawRole = identifier.includes('@') ? identifier.split('@')[0].toLowerCase() : identifier.toLowerCase();
+        const mock = createMockStaffUser(rawRole, identifier);
+        setSession('mock-token-' + mock.primary_role, mock, remember);
         setUser(mock);
         return mock;
       }

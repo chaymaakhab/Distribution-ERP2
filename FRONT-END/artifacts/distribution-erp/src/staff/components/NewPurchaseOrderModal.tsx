@@ -108,30 +108,109 @@ export default function NewPurchaseOrderModal({
     <div className="doc-modal-backdrop" onClick={onClose}>
       <form
         className="doc-modal-container"
-        style={{ maxWidth: '680px' }}
+        style={{
+          maxWidth: '720px',
+          width: '95%',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          padding: 0,
+          background: '#ffffff',
+          color: '#0f172a',
+          borderRadius: 12,
+          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.35)',
+          border: '1px solid #e2e8f0',
+        }}
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="doc-modal-toolbar">
-          <div className="doc-modal-toolbar-title">
-            <ShoppingCart size={17} style={{ color: '#38bdf8' }} />
-            <span>Nouveau Bon de Commande Achat (Fournisseur)</span>
+        {/* Header */}
+        <div
+          style={{
+            padding: '16px 24px',
+            background: '#f8fafc',
+            borderBottom: '1px solid #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                background: '#e0f2fe',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#0284c7',
+              }}
+            >
+              <ShoppingCart size={17} />
+            </div>
+            <div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                ACHATS FOURNISSEURS · BON DE COMMANDE
+              </span>
+              <h2 style={{ fontSize: 17, fontWeight: 700, color: '#0f172a', margin: '1px 0 0' }}>
+                Nouveau Bon d'Achat (BC)
+              </h2>
+            </div>
           </div>
-          <button type="button" className="doc-btn-close" onClick={onClose}>
-            <X size={18} />
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid #e2e8f0',
+              borderRadius: 6,
+              color: '#64748b',
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <X size={16} />
           </button>
         </div>
 
-        <div style={{ padding: '20px 24px', overflowY: 'auto', maxHeight: '80vh', display: 'flex', flexDirection: 'column', gap: '14px', background: 'var(--navy-1, #131c28)', color: 'var(--text, #e2e8f0)' }}>
+        {/* Scrollable Form Body */}
+        <div
+          style={{
+            padding: '20px 24px',
+            overflowY: 'auto',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+            background: '#ffffff',
+            color: '#0f172a',
+          }}
+        >
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                FOURNISSEUR DESTINATAIRE
+              <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
+                FOURNISSEUR DESTINATAIRE *
               </label>
               <select
                 value={supplierCode}
                 onChange={(e) => setSupplierCode(e.target.value)}
-                style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
+                style={{
+                  width: '100%',
+                  height: '38px',
+                  padding: '0 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  fontSize: '12.5px',
+                }}
               >
                 {DEMO_SUPPLIERS.map((s) => (
                   <option key={s.code} value={s.code}>
@@ -142,13 +221,22 @@ export default function NewPurchaseOrderModal({
             </div>
 
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
                 DÉPÔT DE RÉCEPTION CONVENU
               </label>
               <select
                 value={warehouse}
                 onChange={(e) => setWarehouse(e.target.value)}
-                style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
+                style={{
+                  width: '100%',
+                  height: '38px',
+                  padding: '0 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  fontSize: '12.5px',
+                }}
               >
                 <option value="DEP-01 · Casablanca">DEP-01 · Casablanca (Principal)</option>
                 <option value="DEP-02 · Rabat">DEP-02 · Rabat (Secondaire)</option>
@@ -159,39 +247,69 @@ export default function NewPurchaseOrderModal({
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
                 DATE DU BON DE COMMANDE
               </label>
               <input
                 value={dateOrder}
                 onChange={(e) => setDateOrder(e.target.value)}
-                style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
+                style={{
+                  width: '100%',
+                  height: '38px',
+                  padding: '0 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  fontSize: '12.5px',
+                }}
               />
             </div>
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
+              <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
                 DATE DE LIVRAISON SOUHAITÉE
               </label>
               <input
                 value={expectedDate}
                 onChange={(e) => setExpectedDate(e.target.value)}
-                style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
+                style={{
+                  width: '100%',
+                  height: '38px',
+                  padding: '0 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  fontSize: '12.5px',
+                }}
               />
             </div>
           </div>
 
           {/* Line items */}
-          <div style={{ marginTop: '8px' }}>
+          <div style={{ marginTop: '4px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#0369a1', textTransform: 'uppercase' }}>
                 ARTICLES À COMMANDER ({lines.length})
               </span>
               <button
                 type="button"
                 onClick={addLine}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#0284c7', color: '#fff', border: 0, padding: '4px 10px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 0,
+                  padding: '5px 12px',
+                  borderRadius: '5px',
+                  fontSize: '11.5px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
               >
-                <Plus size={12} /> Ajouter une référence
+                <Plus size={13} /> Ajouter une référence
               </button>
             </div>
 
@@ -201,19 +319,27 @@ export default function NewPurchaseOrderModal({
                   key={idx}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '1.4fr 70px 70px 90px auto',
+                    gridTemplateColumns: '1.4fr 75px 75px 95px auto',
                     gap: '8px',
                     alignItems: 'center',
-                    background: '#0f172a',
-                    padding: '8px 10px',
+                    background: '#f8fafc',
+                    padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #334155',
+                    border: '1px solid #e2e8f0',
                   }}
                 >
                   <select
                     value={l.product}
                     onChange={(e) => updateLine(idx, 'product', e.target.value)}
-                    style={{ height: '32px', background: '#1e293b', border: '1px solid #475569', color: '#fff', fontSize: '11.5px', borderRadius: '4px', padding: '0 6px' }}
+                    style={{
+                      height: '34px',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
+                      fontSize: '12px',
+                      borderRadius: '5px',
+                      padding: '0 8px',
+                    }}
                   >
                     {PURCHASABLE_ITEMS.map((pi) => (
                       <option key={pi.name} value={pi.name}>
@@ -228,14 +354,32 @@ export default function NewPurchaseOrderModal({
                     value={l.qty_ordered}
                     onChange={(e) => updateLine(idx, 'qty_ordered', Number(e.target.value))}
                     title="Quantité commandée"
-                    style={{ height: '32px', width: '100%', textAlign: 'center', background: '#1e293b', border: '1px solid #475569', color: '#fff', fontSize: '11.5px', borderRadius: '4px' }}
+                    style={{
+                      height: '34px',
+                      width: '100%',
+                      textAlign: 'center',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
+                      fontSize: '12px',
+                      borderRadius: '5px',
+                    }}
                   />
 
                   <input
                     value={l.unit}
                     onChange={(e) => updateLine(idx, 'unit', e.target.value)}
                     title="Unité (ex: sac, bidon, pièce)"
-                    style={{ height: '32px', width: '100%', textAlign: 'center', background: '#1e293b', border: '1px solid #475569', color: '#fff', fontSize: '11.5px', borderRadius: '4px' }}
+                    style={{
+                      height: '34px',
+                      width: '100%',
+                      textAlign: 'center',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
+                      fontSize: '12px',
+                      borderRadius: '5px',
+                    }}
                   />
 
                   <input
@@ -244,58 +388,132 @@ export default function NewPurchaseOrderModal({
                     value={l.unit_price}
                     onChange={(e) => updateLine(idx, 'unit_price', Number(e.target.value))}
                     title="Prix d'achat HT unitaire"
-                    style={{ height: '32px', width: '100%', textAlign: 'right', background: '#1e293b', border: '1px solid #475569', color: '#fff', fontSize: '11.5px', borderRadius: '4px', paddingRight: '4px' }}
+                    style={{
+                      height: '34px',
+                      width: '100%',
+                      textAlign: 'right',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
+                      fontSize: '12px',
+                      borderRadius: '5px',
+                      paddingRight: '6px',
+                    }}
                   />
 
                   <button
                     type="button"
                     onClick={() => removeLine(idx)}
                     disabled={lines.length <= 1}
-                    style={{ background: 'transparent', border: 0, color: lines.length <= 1 ? '#475569' : '#ef4444', cursor: lines.length <= 1 ? 'not-allowed' : 'pointer', padding: '4px' }}
+                    style={{
+                      background: 'transparent',
+                      border: 0,
+                      color: lines.length <= 1 ? '#cbd5e1' : '#ef4444',
+                      cursor: lines.length <= 1 ? 'not-allowed' : 'pointer',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={16} />
                   </button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Calculations Summary */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', background: '#0f172a', padding: '12px 16px', borderRadius: '8px', border: '1px solid #334155', marginTop: '6px' }}>
-            <div style={{ width: '240px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+          {/* Calculations Summary Box */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              background: '#f8fafc',
+              padding: '12px 18px',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              marginTop: '4px',
+            }}
+          >
+            <div style={{ width: '250px', fontSize: '12.5px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
                 <span>Total Achat HT :</span>
-                <b>{formatMoney(totalHt)} DH</b>
+                <b style={{ color: '#0f172a' }}>{formatMoney(totalHt)} DH</b>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
                 <span>TVA Déductible (20%) :</span>
-                <b>{formatMoney(totalTva)} DH</b>
+                <b style={{ color: '#0f172a' }}>{formatMoney(totalTva)} DH</b>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #334155', paddingTop: '4px', fontSize: '14px', color: '#38bdf8', fontWeight: 800 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  borderTop: '1px solid #e2e8f0',
+                  paddingTop: '6px',
+                  fontSize: '14px',
+                  color: '#0284c7',
+                  fontWeight: 800,
+                }}
+              >
                 <span>Total TTC Engagé :</span>
                 <span>{formatMoney(totalTtc)} DH</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-            <button
-              type="button"
-              className="button-secondary"
-              onClick={onClose}
-              style={{ height: '36px', padding: '0 14px' }}
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="button-primary"
-              style={{ height: '36px', padding: '0 16px' }}
-            >
-              <CheckCircle2 size={14} /> Créer le Bon d'Achat (BC)
-            </button>
-          </div>
+        {/* Sticky Actions Footer */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '10px',
+            padding: '12px 24px',
+            background: '#f8fafc',
+            borderTop: '1px solid #e2e8f0',
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 10,
+          }}
+        >
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={onClose}
+            style={{
+              height: '38px',
+              padding: '0 16px',
+              background: '#ffffff',
+              color: '#475569',
+              border: '1px solid #cbd5e1',
+              borderRadius: 6,
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            className="button-primary"
+            style={{
+              height: '38px',
+              padding: '0 20px',
+              background: '#0284c7',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 6,
+              fontWeight: 700,
+              fontSize: 13,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)',
+            }}
+          >
+            <CheckCircle2 size={16} /> Enregistrer le Bon d'Achat
+          </button>
         </div>
       </form>
     </div>

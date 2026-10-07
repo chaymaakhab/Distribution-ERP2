@@ -384,74 +384,211 @@ export default function PurchasingManagement() {
         />
       )}
 
-      {/* ── Detail / Reception modal ── */}
+      {/* ── Detail / Reception modal (Bon de Réception Papier Blanc) ── */}
       {selected && (
         <div className="modal-backdrop" onClick={() => { setSelected(null); setReceptionMode(false); }}>
-          <div className="record-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
-            <div className="modal-top">
+          <div
+            className="record-modal"
+            onClick={e => e.stopPropagation()}
+            style={{
+              maxWidth: 640,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <span className="eyebrow">{receptionMode ? 'RÉCEPTION MARCHANDISES' : 'BON DE COMMANDE'} · {selected.ref}</span>
-                <h2>{receptionMode ? `Réceptionner — ${selected.supplier}` : selected.supplier}</h2>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  {receptionMode ? 'RÉCEPTION MARCHANDISES · BON D’ENTRÉE EN STOCK' : 'BON DE COMMANDE ACHAT'} · {selected.ref}
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  {receptionMode ? `Réceptionner — ${selected.supplier}` : selected.supplier}
+                </h2>
               </div>
-              <button className="icon-button" onClick={() => { setSelected(null); setReceptionMode(false); }}><X size={16} /></button>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => { setSelected(null); setReceptionMode(false); }}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
             </div>
 
-            {receptionMode && (
-              <div className="modal-note" style={{ marginBottom: 12 }}>
-                <AlertTriangle size={14} />
-                Vérifiez les quantités reçues. Après validation, les stocks seront mis à jour automatiquement.
-              </div>
-            )}
-
-            <table className="data-table module-table" style={{ marginBottom: 16 }}>
-              <thead>
-                <tr>
-                  <th>Produit</th>
-                  <th>Commandé</th>
-                  <th>Reçu</th>
-                  <th>P.U. HT</th>
-                  <th className="table-amount">Total HT</th>
-                  {receptionMode && <th>Qté reçue</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {selected.lines.map(l => (
-                  <tr key={l.product}>
-                    <td className="table-main">{l.product}</td>
-                    <td>{l.qty_ordered} {l.unit}</td>
-                    <td style={{ color: l.qty_received === l.qty_ordered ? 'var(--accent-green)' : 'var(--muted)' }}>
-                      {l.qty_received} {l.unit}
-                    </td>
-                    <td>{formatMoney(l.unit_price)} DH</td>
-                    <td className="table-amount">{formatMoney(l.qty_ordered * l.unit_price)} DH</td>
-                    {receptionMode && (
-                      <td>
-                        <input
-                          type="number"
-                          min={0}
-                          max={l.qty_ordered}
-                          value={recQtys[l.product] ?? l.qty_ordered - l.qty_received}
-                          onChange={e => setRecQtys(prev => ({ ...prev, [l.product]: +e.target.value }))}
-                          style={{ width: 70, padding: '2px 6px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--navy-2)', color: 'var(--text)' }}
-                        />
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, fontSize: 13, marginBottom: 16 }}>
-              <span>HT : <b>{formatMoney(selected.total_ht)} DH</b></span>
-              <span>TVA : <b>{formatMoney(selected.tva)} DH</b></span>
-              <span>TTC : <b style={{ color: 'var(--accent-blue)' }}>{formatMoney(selected.total_ttc)} DH</b></span>
-            </div>
-
-            <div className="modal-actions">
-              <button className="button-secondary" onClick={() => { setSelected(null); setReceptionMode(false); }}>Fermer</button>
+            <div
+              style={{
+                padding: '18px 22px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                background: '#ffffff',
+              }}
+            >
               {receptionMode && (
-                <button className="button-primary" onClick={confirmReception}>
-                  <PackageCheck size={14} /> Valider réception &amp; mettre à jour stocks
+                <div
+                  style={{
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    borderRadius: 6,
+                    padding: '8px 12px',
+                    fontSize: 12,
+                    color: '#166534',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <PackageCheck size={16} style={{ flexShrink: 0 }} />
+                  <span>Vérifiez les quantités livrées au quai. Après enregistrement, les stocks physiques seront incrémentés en temps réel.</span>
+                </div>
+              )}
+
+              <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: 8 }}>
+                <table className="data-table module-table" style={{ margin: 0, width: '100%' }}>
+                  <thead style={{ background: '#f8fafc' }}>
+                    <tr>
+                      <th style={{ color: '#475569', fontSize: 11.5 }}>Article</th>
+                      <th style={{ color: '#475569', fontSize: 11.5 }}>Commandé</th>
+                      <th style={{ color: '#475569', fontSize: 11.5 }}>Déjà Reçu</th>
+                      <th style={{ color: '#475569', fontSize: 11.5 }}>P.U. HT</th>
+                      <th className="table-amount" style={{ color: '#475569', fontSize: 11.5 }}>Total HT</th>
+                      {receptionMode && <th style={{ color: '#0284c7', fontSize: 11.5 }}>Qté Reçue Ce Jour</th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selected.lines.map(l => (
+                      <tr key={l.product} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td className="table-main" style={{ color: '#0f172a', fontWeight: 600 }}>{l.product}</td>
+                        <td style={{ color: '#334155' }}>{l.qty_ordered} {l.unit}</td>
+                        <td style={{ color: l.qty_received === l.qty_ordered ? '#16a34a' : '#64748b', fontWeight: 600 }}>
+                          {l.qty_received} {l.unit}
+                        </td>
+                        <td style={{ color: '#334155' }}>{formatMoney(l.unit_price)} DH</td>
+                        <td className="table-amount" style={{ color: '#0f172a', fontWeight: 600 }}>
+                          {formatMoney(l.qty_ordered * l.unit_price)} DH
+                        </td>
+                        {receptionMode && (
+                          <td>
+                            <input
+                              type="number"
+                              min={0}
+                              max={l.qty_ordered}
+                              value={recQtys[l.product] ?? l.qty_ordered - l.qty_received}
+                              onChange={e => setRecQtys(prev => ({ ...prev, [l.product]: +e.target.value }))}
+                              style={{
+                                width: 75,
+                                height: 32,
+                                padding: '0 6px',
+                                borderRadius: 6,
+                                border: '1px solid #cbd5e1',
+                                background: '#ffffff',
+                                color: '#0f172a',
+                                textAlign: 'center',
+                                fontWeight: 700,
+                              }}
+                            />
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: 16,
+                  fontSize: 13,
+                  background: '#f8fafc',
+                  padding: '10px 16px',
+                  borderRadius: 8,
+                  border: '1px solid #e2e8f0',
+                  marginTop: 4,
+                }}
+              >
+                <span style={{ color: '#64748b' }}>Total HT : <b style={{ color: '#0f172a' }}>{formatMoney(selected.total_ht)} DH</b></span>
+                <span style={{ color: '#64748b' }}>TVA (20%) : <b style={{ color: '#0f172a' }}>{formatMoney(selected.tva)} DH</b></span>
+                <span style={{ color: '#64748b' }}>Total TTC : <b style={{ color: '#0284c7', fontSize: 14 }}>{formatMoney(selected.total_ttc)} DH</b></span>
+              </div>
+            </div>
+
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 22px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => { setSelected(null); setReceptionMode(false); }}
+                style={{
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Fermer
+              </button>
+              {receptionMode && (
+                <button
+                  type="button"
+                  className="button-primary"
+                  onClick={confirmReception}
+                  style={{
+                    height: 38,
+                    padding: '0 20px',
+                    background: '#16a34a',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: 6,
+                    fontWeight: 700,
+                    fontSize: 13,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 4px rgba(22, 163, 74, 0.3)',
+                  }}
+                >
+                  <PackageCheck size={16} /> Enregistrer la réception & mettre à jour stocks
                 </button>
               )}
             </div>

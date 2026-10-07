@@ -35,33 +35,117 @@ export default function RegisterPaymentModal({
     <div className="doc-modal-backdrop" onClick={onClose}>
       <form
         className="doc-modal-container"
-        style={{ maxWidth: '480px' }}
+        style={{
+          maxWidth: '520px',
+          width: '95%',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          padding: 0,
+          background: '#ffffff',
+          color: '#0f172a',
+          borderRadius: 12,
+          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.35)',
+          border: '1px solid #e2e8f0',
+        }}
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="doc-modal-toolbar">
-          <div className="doc-modal-toolbar-title">
-            <CreditCard size={17} style={{ color: '#22c55e' }} />
-            <span>Encaisser Règlement · {invoice.ref}</span>
+        <div
+          style={{
+            padding: '16px 22px',
+            background: '#f8fafc',
+            borderBottom: '1px solid #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                background: '#dcfce7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#16a34a',
+              }}
+            >
+              <CreditCard size={18} />
+            </div>
+            <div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                TRÉSORERIE · ENCAISSEMENT RÈGLEMENT
+              </span>
+              <h2 style={{ fontSize: 17, fontWeight: 700, color: '#0f172a', margin: '1px 0 0' }}>
+                Encaisser Facture {invoice.ref}
+              </h2>
+            </div>
           </div>
-          <button type="button" className="doc-btn-close" onClick={onClose}>
-            <X size={18} />
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: '#f1f5f9',
+              border: '1px solid #e2e8f0',
+              borderRadius: 6,
+              color: '#64748b',
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <X size={16} />
           </button>
         </div>
 
-        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '14px', background: 'var(--navy-1, #131c28)', color: 'var(--text, #e2e8f0)' }}>
-          <div style={{ background: '#0f172a', padding: '12px 14px', borderRadius: '8px', border: '1px solid #334155' }}>
-            <div style={{ fontSize: '11px', color: '#94a3b8' }}>Client débiteur :</div>
-            <div style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>{invoice.client}</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '12px', borderTop: '1px solid #1e293b', paddingTop: '6px' }}>
-              <span>Total Facture : <b>{formatMoney(totalTtc)} DH</b></span>
-              <span style={{ color: '#ef4444' }}>Solde restant : <b>{formatMoney(remaining)} DH</b></span>
+        <div
+          style={{
+            padding: '18px 24px',
+            overflowY: 'auto',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 13,
+            background: '#ffffff',
+            color: '#0f172a',
+          }}
+        >
+          <div
+            style={{
+              background: '#f8fafc',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>CLIENT DÉBITEUR :</div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f172a', marginTop: 2 }}>{invoice.client}</div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: '8px',
+                fontSize: '12.5px',
+                borderTop: '1px solid #e2e8f0',
+                paddingTop: '8px',
+              }}
+            >
+              <span style={{ color: '#64748b' }}>Total Facture : <b style={{ color: '#0f172a' }}>{formatMoney(totalTtc)} DH</b></span>
+              <span style={{ color: '#ef4444', fontWeight: 700 }}>Solde restant : {formatMoney(remaining)} DH</span>
             </div>
           </div>
 
           <div>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-              MONTANT DU RÈGLEMENT (DH)
+            <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
+              MONTANT DU RÈGLEMENT À ENCAISSER (DH) *
             </label>
             <input
               type="number"
@@ -71,19 +155,38 @@ export default function RegisterPaymentModal({
               required
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
-              style={{ width: '100%', height: '38px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#22c55e', fontSize: '16px', fontWeight: 700 }}
+              style={{
+                width: '100%',
+                height: '40px',
+                padding: '0 12px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e1',
+                background: '#ffffff',
+                color: '#16a34a',
+                fontSize: '17px',
+                fontWeight: 800,
+              }}
             />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                MODE DE RÈGLEMENT
+              <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
+                MODE DE RÈGLEMENT *
               </label>
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value as any)}
-                style={{ width: '100%', height: '36px', padding: '0 8px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
+                style={{
+                  width: '100%',
+                  height: '38px',
+                  padding: '0 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  fontSize: '12.5px',
+                }}
               >
                 <option value="Virement bancaire">Virement bancaire</option>
                 <option value="Chèque">Chèque bancaire</option>
@@ -93,28 +196,46 @@ export default function RegisterPaymentModal({
             </div>
 
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                N° PIÈCE / RÉFÉRENCE
+              <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
+                N° PIÈCE / RÉFÉRENCE *
               </label>
               <input
                 required
                 value={refDoc}
                 onChange={(e) => setRefDoc(e.target.value)}
-                placeholder="N° chèque ou virement"
-                style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
+                placeholder="Ex. CHQ-890123 / VIR-094"
+                style={{
+                  width: '100%',
+                  height: '38px',
+                  padding: '0 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  fontSize: '12.5px',
+                }}
               />
             </div>
           </div>
 
           {method !== 'Espèces' && (
             <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                BANQUE TIREUR / COMPTE
+              <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
+                BANQUE ÉMETTRICE
               </label>
               <select
                 value={bank}
                 onChange={(e) => setBank(e.target.value)}
-                style={{ width: '100%', height: '36px', padding: '0 8px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
+                style={{
+                  width: '100%',
+                  height: '38px',
+                  padding: '0 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  fontSize: '12.5px',
+                }}
               >
                 <option value="Attijariwafa Bank">Attijariwafa Bank</option>
                 <option value="Banque Populaire">Banque Populaire</option>
@@ -128,33 +249,78 @@ export default function RegisterPaymentModal({
           )}
 
           <div>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-              DATE D'ENCAISSEMENT
+            <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
+              DATE D'ENCAISSEMENT COMPTABLE
             </label>
             <input
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
+              style={{
+                width: '100%',
+                height: '38px',
+                padding: '0 10px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e1',
+                background: '#ffffff',
+                color: '#0f172a',
+                fontSize: '12.5px',
+              }}
             />
           </div>
+        </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
-            <button
-              type="button"
-              className="button-secondary"
-              onClick={onClose}
-              style={{ height: '36px', padding: '0 14px' }}
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="button-primary"
-              style={{ height: '36px', padding: '0 16px', background: '#16a34a', borderColor: '#15803d' }}
-            >
-              <CheckCircle2 size={14} /> Valider l'encaissement
-            </button>
-          </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '10px',
+            padding: '12px 24px',
+            background: '#f8fafc',
+            borderTop: '1px solid #e2e8f0',
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 10,
+          }}
+        >
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={onClose}
+            style={{
+              height: '38px',
+              padding: '0 16px',
+              background: '#ffffff',
+              color: '#475569',
+              border: '1px solid #cbd5e1',
+              borderRadius: 6,
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            className="button-primary"
+            style={{
+              height: '38px',
+              padding: '0 20px',
+              background: '#16a34a',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 6,
+              fontWeight: 700,
+              fontSize: 13,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(22, 163, 74, 0.3)',
+            }}
+          >
+            <CheckCircle2 size={16} /> Enregistrer l'encaissement
+          </button>
         </div>
       </form>
     </div>

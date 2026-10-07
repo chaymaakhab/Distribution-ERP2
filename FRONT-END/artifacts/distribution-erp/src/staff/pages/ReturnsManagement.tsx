@@ -671,202 +671,435 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
       {/* ── New Return Modal ── */}
       {newReturnModal && (
         <div className="modal-backdrop" onClick={() => setNewReturnModal(false)}>
-          <form className="record-modal" onSubmit={handleCreateReturn} onClick={(e) => e.stopPropagation()} style={{ maxWidth: 580 }}>
-            <div className="modal-top">
+          <form
+            className="record-modal"
+            onSubmit={handleCreateReturn}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 620,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            {/* Header */}
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <span className="eyebrow">DÉCLARATION RETOUR MARCHANDISE</span>
-                <h2>Enregistrer un retour client</h2>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  DÉCLARATION RETOUR MARCHANDISE
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Enregistrer un retour client
+                </h2>
               </div>
-              <button type="button" className="icon-button" onClick={() => setNewReturnModal(false)}>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setNewReturnModal(false)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
                 <X size={16} />
               </button>
             </div>
 
-            <p className="modal-note">
-              Renseignez les détails de la commande retournée par le chauffeur. Vous pouvez décider de réintégrer les produits conformes au stock ou de les affecter au rebut.
-            </p>
+            {/* Scrollable Body */}
+            <div
+              style={{
+                padding: '18px 22px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                background: '#ffffff',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 12.5,
+                  color: '#64748b',
+                  margin: 0,
+                  padding: '8px 12px',
+                  background: '#f8fafc',
+                  borderRadius: 6,
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                Renseignez les détails de la marchandise retournée par le livreur. Vous pouvez réintégrer les articles intacts en stock disponible ou les déclarer en avarie.
+              </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
-              <label className="field-label">
-                N° Commande / BL d'origine
-                <input
-                  required
-                  value={formOrderRef}
-                  onChange={(e) => setFormOrderRef(e.target.value)}
-                  placeholder="Ex. CMD-2403"
-                />
-              </label>
-
-              <label className="field-label">
-                Client destinataire
-                <input
-                  required
-                  value={formClient}
-                  onChange={(e) => setFormClient(e.target.value)}
-                  placeholder="Ex. Comptoir Al Amal"
-                />
-              </label>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
-              <label className="field-label">
-                ICE Client
-                <input
-                  value={formClientIce}
-                  onChange={(e) => setFormClientIce(e.target.value)}
-                  placeholder="003147829000064"
-                />
-              </label>
-
-              <label className="field-label">
-                Ville
-                <input
-                  value={formClientCity}
-                  onChange={(e) => setFormClientCity(e.target.value)}
-                  placeholder="Ex. Casablanca, Fès, Rabat..."
-                />
-              </label>
-            </div>
-
-            {/* Transport & Chauffeur */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
-              <label className="field-label">
-                Dépôt de réception
-                <select
-                  className="select-compact"
-                  style={{ width: '100%', height: 38 }}
-                  value={formDepot}
-                  onChange={(e) => setFormDepot(e.target.value)}
-                >
-                  <option>DEP-01 Casablanca Central</option>
-                  <option>DEP-02 Mohammedia</option>
-                  <option>DEP-03 Berrechid</option>
-                  <option>DEP-04 Settat</option>
-                </select>
-              </label>
-
-              <label className="field-label">
-                Type de chauffeur
-                <select
-                  className="select-compact"
-                  style={{ width: '100%', height: 38 }}
-                  value={formDriverType}
-                  onChange={(e) => setFormDriverType(e.target.value as any)}
-                >
-                  <option value="depot_to_client">Livreur Dépôt → Client</option>
-                  <option value="depot_to_depot">Navette Dépôt → Dépôt</option>
-                </select>
-              </label>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
-              <label className="field-label">
-                Nom du chauffeur
-                <input
-                  required
-                  value={formDriver}
-                  onChange={(e) => setFormDriver(e.target.value)}
-                  placeholder="Ex. Hamid Moukrim"
-                />
-              </label>
-
-              <label className="field-label">
-                Motif principal de retour
-                <select
-                  className="select-compact"
-                  style={{ width: '100%', height: 38 }}
-                  value={formReason}
-                  onChange={(e) => setFormReason(e.target.value as ReturnReason)}
-                >
-                  <option value="Produit endommagé">Produit endommagé / Avarie</option>
-                  <option value="Erreur commande">Erreur de référence commande</option>
-                  <option value="Produit périmé">Date limite proche / Périmé</option>
-                  <option value="Refus client">Refus client (litige prix ou délai)</option>
-                  <option value="Surplus">Surplus de stock non commandé</option>
-                  <option value="Qualité insuffisante">Non-conformité qualité</option>
-                </select>
-              </label>
-            </div>
-
-            {/* Articles Details */}
-            <div style={{ background: 'var(--navy-2)', padding: 12, borderRadius: 8, marginTop: 12, border: '1px solid var(--line)' }}>
-              <span className="field-label" style={{ marginBottom: 8, color: '#38bdf8' }}>
-                Ligne d'article retournée :
-              </span>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 8 }}>
-                <label className="field-label">
-                  Désignation article
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  N° Commande / BL d'origine *
                   <input
                     required
-                    value={formProduct}
-                    onChange={(e) => setFormProduct(e.target.value)}
-                    placeholder="Ex. Huile Végétale 5L"
+                    value={formOrderRef}
+                    onChange={(e) => setFormOrderRef(e.target.value)}
+                    placeholder="Ex. CMD-2403"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
                   />
                 </label>
-                <label className="field-label">
-                  Quantité retour
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Client destinataire *
                   <input
-                    type="number"
-                    min={1}
                     required
-                    value={formQty}
-                    onChange={(e) => setFormQty(Number(e.target.value))}
-                  />
-                </label>
-                <label className="field-label">
-                  P.U. HT (DH)
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.5}
-                    required
-                    value={formPrice}
-                    onChange={(e) => setFormPrice(Number(e.target.value))}
+                    value={formClient}
+                    onChange={(e) => setFormClient(e.target.value)}
+                    placeholder="Ex. Comptoir Al Amal"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
                   />
                 </label>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  ICE Client (15 chiffres)
                   <input
-                    type="checkbox"
-                    checked={formReintegrate}
-                    onChange={(e) => setFormReintegrate(e.target.checked)}
-                    style={{ width: 16, height: 16, accentColor: '#22c55e' }}
+                    value={formClientIce}
+                    onChange={(e) => setFormClientIce(e.target.value)}
+                    placeholder="003147829000064"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
                   />
-                  <span>Réintégrer immédiatement en stock disponible (produit intact)</span>
                 </label>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>
-                  Total ligne : <span style={{ color: '#38bdf8' }}>{formatMoney(formQty * formPrice)} DH</span>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Ville de livraison
+                  <input
+                    value={formClientCity}
+                    onChange={(e) => setFormClientCity(e.target.value)}
+                    placeholder="Ex. Casablanca, Fès, Rabat..."
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Transport & Chauffeur */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Dépôt de réception
+                  <select
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                    value={formDepot}
+                    onChange={(e) => setFormDepot(e.target.value)}
+                  >
+                    <option>DEP-01 Casablanca Central</option>
+                    <option>DEP-02 Mohammedia</option>
+                    <option>DEP-03 Berrechid</option>
+                    <option>DEP-04 Settat</option>
+                  </select>
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Type de chauffeur
+                  <select
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                    value={formDriverType}
+                    onChange={(e) => setFormDriverType(e.target.value as any)}
+                  >
+                    <option value="depot_to_client">Livreur Dépôt → Client</option>
+                    <option value="depot_to_depot">Navette Dépôt → Dépôt</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Nom du chauffeur livreur *
+                  <input
+                    required
+                    value={formDriver}
+                    onChange={(e) => setFormDriver(e.target.value)}
+                    placeholder="Ex. Hamid Moukrim"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Motif principal du retour
+                  <select
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                    value={formReason}
+                    onChange={(e) => setFormReason(e.target.value as ReturnReason)}
+                  >
+                    <option value="Produit endommagé">Produit endommagé / Avarie</option>
+                    <option value="Erreur commande">Erreur de référence commande</option>
+                    <option value="Produit périmé">Date limite proche / Périmé</option>
+                    <option value="Refus client">Refus client (litige prix ou délai)</option>
+                    <option value="Surplus">Surplus de stock non commandé</option>
+                    <option value="Qualité insuffisante">Non-conformité qualité</option>
+                  </select>
+                </label>
+              </div>
+
+              {/* Articles Details Box */}
+              <div
+                style={{
+                  background: '#f8fafc',
+                  padding: 14,
+                  borderRadius: 8,
+                  border: '1px solid #e2e8f0',
+                  marginTop: 4,
+                }}
+              >
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#0369a1', marginBottom: 10, textTransform: 'uppercase' }}>
+                  Ligne d'article retournée :
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 8 }}>
+                  <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 11.5 }}>
+                    Désignation article *
+                    <input
+                      required
+                      value={formProduct}
+                      onChange={(e) => setFormProduct(e.target.value)}
+                      placeholder="Ex. Huile Végétale 5L"
+                      style={{
+                        width: '100%',
+                        height: 36,
+                        padding: '0 8px',
+                        borderRadius: 6,
+                        border: '1px solid #cbd5e1',
+                        background: '#ffffff',
+                        color: '#0f172a',
+                        fontSize: 12,
+                      }}
+                    />
+                  </label>
+                  <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 11.5 }}>
+                    Quantité *
+                    <input
+                      type="number"
+                      min={1}
+                      required
+                      value={formQty}
+                      onChange={(e) => setFormQty(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        height: 36,
+                        padding: '0 8px',
+                        borderRadius: 6,
+                        border: '1px solid #cbd5e1',
+                        background: '#ffffff',
+                        color: '#0f172a',
+                        fontSize: 12,
+                        textAlign: 'center',
+                      }}
+                    />
+                  </label>
+                  <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 11.5 }}>
+                    P.U. HT (DH) *
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      required
+                      value={formPrice}
+                      onChange={(e) => setFormPrice(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        height: 36,
+                        padding: '0 8px',
+                        borderRadius: 6,
+                        border: '1px solid #cbd5e1',
+                        background: '#ffffff',
+                        color: '#0f172a',
+                        fontSize: 12,
+                        textAlign: 'right',
+                      }}
+                    />
+                  </label>
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: 12,
+                    paddingTop: 10,
+                    borderTop: '1px solid #e2e8f0',
+                  }}
+                >
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 12, color: '#334155' }}>
+                    <input
+                      type="checkbox"
+                      checked={formReintegrate}
+                      onChange={(e) => setFormReintegrate(e.target.checked)}
+                      style={{ width: 16, height: 16, accentColor: '#16a34a' }}
+                    />
+                    <span>Réintégrer immédiatement en stock disponible (produit intact)</span>
+                  </label>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+                    Total ligne : <span style={{ color: '#0284c7' }}>{formatMoney(formQty * formPrice)} DH</span>
+                  </div>
                 </div>
               </div>
+
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                Observations & constatation du chauffeur
+                <textarea
+                  rows={2}
+                  value={formNotes}
+                  onChange={(e) => setFormNotes(e.target.value)}
+                  placeholder="Ex. Déchargé au quai de Casablanca, emballage intact, motif confirmé par le client."
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 12,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </label>
             </div>
 
-            <label className="field-label" style={{ marginTop: 10 }}>
-              Observations & constatation du chauffeur
-              <textarea
-                rows={2}
-                value={formNotes}
-                onChange={(e) => setFormNotes(e.target.value)}
-                placeholder="Ex. Déchargé au quai de Mohammedia, emballage intact, motif confirmé par le gérant."
+            {/* Sticky Actions Footer */}
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 22px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                zIndex: 10,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setNewReturnModal(false)}
                 style={{
-                  width: '100%',
-                  padding: 8,
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
                   borderRadius: 6,
-                  border: '1px solid var(--line)',
-                  background: 'var(--navy-2)',
-                  color: 'var(--text)',
-                  fontSize: 12,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
                 }}
-              />
-            </label>
-
-            <div className="modal-actions" style={{ marginTop: 16 }}>
-              <button type="button" className="button-secondary" onClick={() => setNewReturnModal(false)}>
+              >
                 Annuler
               </button>
-              <button type="submit" className="button-primary">
-                <Plus size={15} /> Enregistrer le retour
+              <button
+                type="submit"
+                className="button-primary"
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)',
+                }}
+              >
+                <CheckCircle2 size={16} /> Enregistrer le retour client
               </button>
             </div>
           </form>

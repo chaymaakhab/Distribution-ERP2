@@ -142,6 +142,64 @@ export default function ClientsCrm() {
   const [tierFilter, setTierFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedClient, setSelectedClient] = useState<CrmClient | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // New Client Form State
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [formCompany, setFormCompany] = useState('');
+  const [formContact, setFormContact] = useState('');
+  const [formPhone, setFormPhone] = useState('+212 5');
+  const [formEmail, setFormEmail] = useState('');
+  const [formCity, setFormCity] = useState('Casablanca');
+  const [formIce, setFormIce] = useState('');
+  const [formPriceTier, setFormPriceTier] = useState<'revendeur' | 'grossiste' | 'chantier' | 'standard'>('revendeur');
+  const [formCreditLimit, setFormCreditLimit] = useState(50000);
+  const [formCommercial, setFormCommercial] = useState('Yassine Mansouri');
+
+  function notify(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
+
+  function handleCreateClient(e: React.FormEvent) {
+    e.preventDefault();
+    if (!formCompany.trim()) {
+      notify('Veuillez renseigner le nom de la société.');
+      return;
+    }
+    const nextCode = `CLT-${String(clients.length + 1).padStart(3, '0')}`;
+    const newClient: CrmClient = {
+      id: Date.now(),
+      code: nextCode,
+      name: formContact.trim() || 'Gérant Principal',
+      company: formCompany.trim(),
+      phone: formPhone.trim() || '+212 5 22 00 00 00',
+      whatsapp: formPhone.replace(/[^0-9]/g, '') || '212600000000',
+      city: formCity.trim(),
+      ice: formIce.trim() || '00' + Math.floor(1000000000000 + Math.random() * 9000000000000),
+      commercial_name: formCommercial,
+      price_tier: formPriceTier,
+      credit_limit: Number(formCreditLimit) || 50000,
+      current_balance: 0,
+      overdue_amount: 0,
+      orders_count: 0,
+      last_order_days_ago: 0,
+      status: 'Actif',
+    };
+
+    setClients([newClient, ...clients]);
+    setShowAddClientModal(false);
+
+    // Reset Form
+    setFormCompany('');
+    setFormContact('');
+    setFormPhone('+212 5');
+    setFormEmail('');
+    setFormIce('');
+    setFormCreditLimit(50000);
+
+    notify(`Client « ${newClient.company} » (${newClient.code}) enregistré avec succès !`);
+  }
 
   const filtered = clients.filter((c) => {
     const matchesQ =
@@ -184,7 +242,7 @@ export default function ClientsCrm() {
           <button className="button-secondary">
             <Download size={15} /> Exporter CSV
           </button>
-          <button className="button-primary">
+          <button className="button-primary" onClick={() => setShowAddClientModal(true)}>
             <Plus size={16} /> Nouveau client
           </button>
         </div>
@@ -371,46 +429,421 @@ export default function ClientsCrm() {
         </div>
       </section>
 
-      {/* Client Detail Modal */}
-      {selectedClient && (
-        <div className="modal-backdrop" onClick={() => setSelectedClient(null)}>
-          <div className="record-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-            <div className="modal-top">
+      {/* ── Modal Nouveau Client (Fiche d'Enregistrement) ── */}
+      {showAddClientModal && (
+        <div className="modal-backdrop" onClick={() => setShowAddClientModal(false)}>
+          <form
+            className="record-modal"
+            onSubmit={handleCreateClient}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 640,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            {/* Header */}
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <span className="eyebrow">{selectedClient.code} · FICHE CLIENT</span>
-                <h2>{selectedClient.company}</h2>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  RELATION CLIENT B2B · ENREGISTREMENT COMPTE
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Enregistrer un nouveau client pro
+                </h2>
               </div>
-              <button className="icon-button" onClick={() => setSelectedClient(null)}>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setShowAddClientModal(false)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
                 <X size={16} />
               </button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', margin: '16px 0' }}>
-              <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px' }}>
-                <small style={{ color: 'var(--muted)', display: 'block' }}>Interlocuteur</small>
-                <b>{selectedClient.name}</b>
-                <div style={{ fontSize: '11px', marginTop: '4px' }}>{selectedClient.phone}</div>
+
+            {/* Scrollable Form Body */}
+            <div
+              style={{
+                padding: '18px 24px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 13,
+                background: '#ffffff',
+              }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 12 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Raison Sociale / Société *
+                  <input
+                    required
+                    value={formCompany}
+                    onChange={(e) => setFormCompany(e.target.value)}
+                    placeholder="Ex. Quincaillerie Al Baraka SARL"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Interlocuteur / Contact principal
+                  <input
+                    value={formContact}
+                    onChange={(e) => setFormContact(e.target.value)}
+                    placeholder="Ex. Khalid Tazi"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
               </div>
-              <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px' }}>
-                <small style={{ color: 'var(--muted)', display: 'block' }}>Mentions légales</small>
-                <b>ICE: {selectedClient.ice}</b>
-                <div style={{ fontSize: '11px', marginTop: '4px' }}>Ville: {selectedClient.city}</div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  ICE Client (15 chiffres) *
+                  <input
+                    required
+                    value={formIce}
+                    onChange={(e) => setFormIce(e.target.value)}
+                    placeholder="Ex. 002194850000038"
+                    maxLength={15}
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Téléphone direct *
+                  <input
+                    required
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                    placeholder="+212 5 22 XX XX XX"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
               </div>
-              <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px' }}>
-                <small style={{ color: 'var(--muted)', display: 'block' }}>Conditions tarifaires</small>
-                <b style={{ textTransform: 'capitalize' }}>Tarif {selectedClient.price_tier}</b>
-                <div style={{ fontSize: '11px', marginTop: '4px' }}>Commercial: {selectedClient.commercial_name}</div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Ville
+                  <select
+                    value={formCity}
+                    onChange={(e) => setFormCity(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  >
+                    <option value="Casablanca">Casablanca</option>
+                    <option value="Rabat">Rabat</option>
+                    <option value="Fès">Fès</option>
+                    <option value="Tanger">Tanger</option>
+                    <option value="Marrakech">Marrakech</option>
+                    <option value="Agadir">Agadir</option>
+                    <option value="Meknès">Meknès</option>
+                    <option value="Kénitra">Kénitra</option>
+                  </select>
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Grille Tarifaire assignée
+                  <select
+                    value={formPriceTier}
+                    onChange={(e) => setFormPriceTier(e.target.value as any)}
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  >
+                    <option value="revendeur">Tarif Revendeur</option>
+                    <option value="grossiste">Tarif Grossiste</option>
+                    <option value="chantier">Tarif Chantier BTP</option>
+                    <option value="standard">Tarif Standard Comptoir</option>
+                  </select>
+                </label>
               </div>
-              <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px' }}>
-                <small style={{ color: 'var(--muted)', display: 'block' }}>Encours & Crédit</small>
-                <b>{formatMoney(selectedClient.current_balance)} / {formatMoney(selectedClient.credit_limit)} DH</b>
-                <div style={{ fontSize: '11px', marginTop: '4px' }}>Commandes passées: {selectedClient.orders_count}</div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Plafond de Crédit Autorisé (DH)
+                  <input
+                    type="number"
+                    min={0}
+                    step={5000}
+                    value={formCreditLimit}
+                    onChange={(e) => setFormCreditLimit(Number(e.target.value))}
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Commercial Référent
+                  <select
+                    value={formCommercial}
+                    onChange={(e) => setFormCommercial(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  >
+                    <option value="Yassine Mansouri">Yassine Mansouri</option>
+                    <option value="Sara El Amrani">Sara El Amrani</option>
+                    <option value="Tariq Bennani">Tariq Bennani</option>
+                  </select>
+                </label>
               </div>
             </div>
 
-            <div className="modal-actions" style={{ justifyContent: 'space-between' }}>
+            {/* Sticky Actions Footer */}
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 24px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                zIndex: 10,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
               <button
                 type="button"
-                className={`button-secondary ${selectedClient.status === 'Actif' ? 'text-red-500' : 'text-green-500'}`}
+                className="button-secondary"
+                onClick={() => setShowAddClientModal(false)}
+                style={{
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)',
+                }}
+              >
+                <Plus size={16} /> Enregistrer le client
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Client Detail Modal */}
+      {selectedClient && (
+        <div className="modal-backdrop" onClick={() => setSelectedClient(null)}>
+          <div
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 540,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  {selectedClient.code} · FICHE CLIENT
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  {selectedClient.company}
+                </h2>
+              </div>
+              <button
+                className="icon-button"
+                onClick={() => setSelectedClient(null)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: '18px 24px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 12,
+                background: '#ffffff',
+              }}
+            >
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <small style={{ color: '#64748b', display: 'block', fontSize: 11, fontWeight: 600 }}>Interlocuteur</small>
+                <b style={{ color: '#0f172a', fontSize: 13 }}>{selectedClient.name}</b>
+                <div style={{ fontSize: '11.5px', marginTop: '4px', color: '#64748b' }}>{selectedClient.phone}</div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <small style={{ color: '#64748b', display: 'block', fontSize: 11, fontWeight: 600 }}>Mentions légales</small>
+                <b style={{ color: '#0f172a', fontSize: 13 }}>ICE: {selectedClient.ice}</b>
+                <div style={{ fontSize: '11.5px', marginTop: '4px', color: '#64748b' }}>Ville: {selectedClient.city}</div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <small style={{ color: '#64748b', display: 'block', fontSize: 11, fontWeight: 600 }}>Conditions tarifaires</small>
+                <b style={{ textTransform: 'capitalize', color: '#0284c7', fontSize: 13 }}>Tarif {selectedClient.price_tier}</b>
+                <div style={{ fontSize: '11.5px', marginTop: '4px', color: '#64748b' }}>Commercial: {selectedClient.commercial_name}</div>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <small style={{ color: '#64748b', display: 'block', fontSize: 11, fontWeight: 600 }}>Encours & Crédit</small>
+                <b style={{ color: '#0f172a', fontSize: 13 }}>{formatMoney(selectedClient.current_balance)} / {formatMoney(selectedClient.credit_limit)} DH</b>
+                <div style={{ fontSize: '11.5px', marginTop: '4px', color: '#64748b' }}>Commandes: {selectedClient.orders_count}</div>
+              </div>
+            </div>
+
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 24px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'space-between',
+                margin: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                style={{
+                  height: 38,
+                  padding: '0 14px',
+                  background: '#ffffff',
+                  color: selectedClient.status === 'Actif' ? '#ef4444' : '#16a34a',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 12.5,
+                  cursor: 'pointer',
+                }}
                 onClick={() => {
                   toggleStatus(selectedClient.id);
                   setSelectedClient((prev) => (prev ? { ...prev, status: prev.status === 'Actif' ? 'Bloqué' : 'Actif' } : null));
@@ -418,11 +851,31 @@ export default function ClientsCrm() {
               >
                 {selectedClient.status === 'Actif' ? 'Bloquer l’accès portail' : 'Réactiver l’accès'}
               </button>
-              <button className="button-primary" onClick={() => setSelectedClient(null)}>
+              <button
+                className="button-primary"
+                onClick={() => setSelectedClient(null)}
+                style={{
+                  height: 38,
+                  padding: '0 18px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
                 Fermer
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="toast-note">
+          <CheckCircle2 size={16} /> {toast}
         </div>
       )}
     </div>

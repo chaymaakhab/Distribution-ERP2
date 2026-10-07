@@ -1221,62 +1221,225 @@ export default function WarehouseDashboard({
         </div>
       )}
 
-      {/* Inter-depot Transfer Modal */}
+      {/* Inter-depot Transfer Modal (Bon de Transfert Papier Blanc) */}
       {transferModal && (
         <div className="modal-backdrop" onClick={() => setTransferModal(false)}>
-          <div className="record-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500 }}>
-            <div className="modal-top">
+          <div
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 540,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <span className="eyebrow">LOGISTIQUE INTERNE · TRANSFERT</span>
-                <h2>Bon de Transfert Inter-Dépôts</h2>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  LOGISTIQUE INTERNE · BON DE TRANSFERT
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Bon de Transfert Inter-Dépôts
+                </h2>
               </div>
-              <button className="icon-button" onClick={() => setTransferModal(false)}>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setTransferModal(false)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
                 <X size={16} />
               </button>
             </div>
-            <p className="modal-note">
-              Mouvement en 2 étapes : Sortie du dépôt source puis réception confirmée au dépôt destinataire.
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, margin: '12px 0' }}>
-              <label className="field-label">
-                Dépôt Source (Départ)
-                <select className="select-compact" style={{ width: '100%', height: 36 }}>
-                  <option>Casablanca (DEP-01)</option>
-                  <option>Rabat (DEP-02)</option>
-                  <option>Berrechid (DEP-03)</option>
+
+            <div
+              style={{
+                padding: '18px 22px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                background: '#ffffff',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 12.5,
+                  color: '#64748b',
+                  margin: 0,
+                  padding: '8px 12px',
+                  background: '#f8fafc',
+                  borderRadius: 6,
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                Mouvement logistique en 2 étapes : Sortie du dépôt émetteur puis confirmation de réception au quai destinataire.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Dépôt Source (Départ)
+                  <select
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  >
+                    <option>Casablanca (DEP-01)</option>
+                    <option>Rabat (DEP-02)</option>
+                    <option>Berrechid (DEP-03)</option>
+                  </select>
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Dépôt Destinataire (Arrivée)
+                  <select
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  >
+                    <option>Rabat (DEP-02)</option>
+                    <option>Casablanca (DEP-01)</option>
+                    <option>Berrechid (DEP-03)</option>
+                  </select>
+                </label>
+              </div>
+
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                Chauffeur Navette Dépôt → Dépôt (Type 2)
+                <select
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 13,
+                  }}
+                >
+                  {drivers
+                    .filter((d) => d.driver_type === 'depot_to_depot')
+                    .map((d) => (
+                      <option key={d.id}>
+                        {d.name} — {d.vehicle_model} ({d.assigned_city_or_route})
+                      </option>
+                    ))}
                 </select>
               </label>
-              <label className="field-label">
-                Dépôt Destinataire
-                <select className="select-compact" style={{ width: '100%', height: 36 }}>
-                  <option>Rabat (DEP-02)</option>
-                  <option>Casablanca (DEP-01)</option>
-                  <option>Berrechid (DEP-03)</option>
-                </select>
-              </label>
+
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  padding: 12,
+                }}
+              >
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#0369a1', marginBottom: 8, textTransform: 'uppercase' }}>
+                  Articles transférés (Lot échantillon) :
+                </div>
+                <div style={{ fontSize: 12.5, color: '#334155', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>50x Perceuse à percussion 850W</span>
+                  <b>Palette P-01</b>
+                </div>
+                <div style={{ fontSize: 12.5, color: '#334155', display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                  <span>100x Disque diamant 230 mm</span>
+                  <b>Carton C-04</b>
+                </div>
+              </div>
             </div>
-            <label className="field-label">
-              Chauffeur Navette Dépôt → Dépôt
-              <select className="select-compact" style={{ width: '100%', height: 36 }}>
-                {drivers
-                  .filter((d) => d.driver_type === 'depot_to_depot')
-                  .map((d) => (
-                    <option key={d.id}>
-                      {d.name} — {d.vehicle_model} ({d.assigned_city_or_route})
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <div className="modal-actions" style={{ marginTop: 14 }}>
-              <button className="button-secondary" onClick={() => setTransferModal(false)}>Annuler</button>
+
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 22px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
               <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setTransferModal(false)}
+                style={{
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
                 className="button-primary"
                 onClick={() => {
                   setTransferModal(false);
                   notify('Ordre de transfert TRF-0013 créé et assigné au chauffeur navette.');
                 }}
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)',
+                }}
               >
-                Créer l'ordre de transfert
+                <CheckCircle2 size={16} /> Enregistrer l'Ordre de Transfert
               </button>
             </div>
           </div>
@@ -1286,35 +1449,169 @@ export default function WarehouseDashboard({
       {/* Cash closing modal */}
       {closingModal && (
         <div className="modal-backdrop" onClick={() => setClosingModal(false)}>
-          <div className="record-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
-            <div className="modal-top">
+          <div
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 480,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <span className="eyebrow">CLÔTURE JOURNALIÈRE · CAISSE DÉPÔT</span>
-                <h2>Clôture de Caisse du Dépôt</h2>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  CLÔTURE JOURNALIÈRE · CAISSE DÉPÔT
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Clôture de Caisse du Dépôt
+                </h2>
               </div>
-              <button className="icon-button" onClick={() => setClosingModal(false)}><X size={16} /></button>
-            </div>
-            <p className="modal-note">Contrôle des encaissements physiques avant versement bancaire.</p>
-            <div style={{ background: 'var(--navy-2)', padding: 12, borderRadius: 8, margin: '12px 0', fontSize: 13 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Total espèces dépôt :</span>
-                <b>42 800 DH</b>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                <span>Total chèques reçus (3 effets) :</span>
-                <b>68 450 DH</b>
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button className="button-secondary" onClick={() => setClosingModal(false)}>Annuler</button>
               <button
+                type="button"
+                className="icon-button"
+                onClick={() => setClosingModal(false)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: '18px 22px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                background: '#ffffff',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 12.5,
+                  color: '#64748b',
+                  margin: 0,
+                  padding: '8px 12px',
+                  background: '#f8fafc',
+                  borderRadius: 6,
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                Contrôle physique des encaissements chauffeurs avant clôture et remise bancaire.
+              </p>
+
+              <div
+                style={{
+                  background: '#f8fafc',
+                  padding: 14,
+                  borderRadius: 8,
+                  border: '1px solid #e2e8f0',
+                  fontSize: 13,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#64748b' }}>Total espèces dépôt :</span>
+                  <b style={{ color: '#0f172a' }}>42 800 DH</b>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                  <span style={{ color: '#64748b' }}>Total chèques reçus (3 effets) :</span>
+                  <b style={{ color: '#0f172a' }}>68 450 DH</b>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginTop: 10,
+                    paddingTop: 8,
+                    borderTop: '1px solid #e2e8f0',
+                    fontSize: 14,
+                    color: '#0284c7',
+                    fontWeight: 700,
+                  }}
+                >
+                  <span>Total Encaissé Global :</span>
+                  <span>111 250 DH</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 22px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setClosingModal(false)}
+                style={{
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
                 className="button-primary"
                 onClick={() => {
                   setClosingModal(false);
                   notify('Caisse du dépôt clôturée et horodatée.');
                 }}
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)',
+                }}
               >
-                Valider la clôture
+                <CheckCircle2 size={16} /> Valider la clôture
               </button>
             </div>
           </div>

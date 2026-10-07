@@ -2,9 +2,12 @@ import { useState } from 'react';
 import {
   ClipboardList, Search, Filter, Plus, CheckCircle2, XCircle,
   Eye, Download, ShoppingBag, Truck, Calendar, ArrowRight,
-  PackageCheck,
+  PackageCheck, FileText, Printer, BadgeDollarSign,
 } from 'lucide-react';
 import { formatMoney } from '../api';
+import InvoiceDocumentModal, { type InvoiceData } from '../components/InvoiceDocumentModal';
+import DeliverySlipDocumentModal, { type DeliverySlipData } from '../components/DeliverySlipDocumentModal';
+import NewInvoiceModal from '../components/NewInvoiceModal';
 
 interface OrderItemRow {
   ref: string;
@@ -32,6 +35,9 @@ export default function OrdersManagement() {
   const [orders, setOrders] = useState<OrderItemRow[]>(INITIAL_ORDERS);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [activeInvoiceOrder, setActiveInvoiceOrder] = useState<OrderItemRow | null>(null);
+  const [activeBlOrder, setActiveBlOrder] = useState<OrderItemRow | null>(null);
+  const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   function notify(msg: string) {
@@ -83,6 +89,9 @@ export default function OrdersManagement() {
         <div className="heading-actions">
           <button className="button-secondary" onClick={exportCsv}>
             <Download size={15} /> Exporter CSV
+          </button>
+          <button className="button-primary" onClick={() => setShowNewInvoiceModal(true)}>
+            <Plus size={15} /> Nouvelle Facture
           </button>
         </div>
       </div>
@@ -210,6 +219,22 @@ export default function OrdersManagement() {
                       )}
                       <button
                         className="row-action"
+                        title="Éditer / Imprimer le Bon de Livraison (BL)"
+                        style={{ color: '#38bdf8' }}
+                        onClick={() => setActiveBlOrder(ord)}
+                      >
+                        <Truck size={14} />
+                      </button>
+                      <button
+                        className="row-action"
+                        title="Éditer / Imprimer la Facture officielle"
+                        style={{ color: '#22c55e' }}
+                        onClick={() => setActiveInvoiceOrder(ord)}
+                      >
+                        <FileText size={14} />
+                      </button>
+                      <button
+                        className="row-action"
                         title="Voir détail"
                         onClick={() => notify(`Détail commande ${ord.ref} · Client ${ord.customer}.`)}
                       >
@@ -223,6 +248,65 @@ export default function OrdersManagement() {
           </table>
         </div>
       </section>
+
+      {/* ── Official Invoice Document Modal ── */}
+      {activeInvoiceOrder && (
+        <InvoiceDocumentModal
+          invoice={{
+            ref: `FAC-2025-${activeInvoiceOrder.ref.replace('CMD-', '')}`,
+            order_ref: activeInvoiceOrder.ref,
+            client: activeInvoiceOrder.customer,
+            client_city: activeInvoiceOrder.city,
+            client_phone: '+212 522 34 78 90',
+            date_issued: activeInvoiceOrder.date,
+            due_date: '30 jours date facture',
+            status: activeInvoiceOrder.status === 'Livrée' ? 'Payée' : 'Impayée',
+            payment_method: 'Virement bancaire / Chèque',
+            lines: [
+              { sku: 'HRC-0850', name: 'Articles commandés · ' + activeInvoiceOrder.customer, qty: activeInvoiceOrder.items_count, unit_price_ht: Math.round((activeInvoiceOrder.total / 1.2 / activeInvoiceOrder.items_count) * 100) / 100, tva_rate: 20 },
+            ],
+          }}
+          onClose={() => setActiveInvoiceOrder(null)}
+        />
+      )}
+
+      {/* ── Official Delivery Slip (BL) Document Modal ── */}
+      {activeBlOrder && (
+        <DeliverySlipDocumentModal
+          slip={{
+            bl_ref: `BL-2026-${activeBlOrder.ref.replace('CMD-', '')}`,
+            order_ref: activeBlOrder.ref,
+            client: activeBlOrder.customer,
+            client_address: `Zone industrielle & commerciale, ${activeBlOrder.city}`,
+            client_city: activeBlOrder.city,
+            client_phone: '+212 522 34 78 90',
+            whatsapp: '212661234567',
+            driver_name: 'Mehdi Lahlou',
+            vehicle: 'Renault Master 23-A-54321',
+            tour_ref: 'TRN-2026-08',
+            date_dispatched: activeBlOrder.date,
+            date_delivered: activeBlOrder.status === 'Livrée' ? activeBlOrder.date : undefined,
+            warehouse: 'Casablanca (DEP-01 Central)',
+            status: activeBlOrder.status === 'Livrée' ? 'Livré' : activeBlOrder.status === 'En livraison' ? 'En cours' : 'En attente',
+            amount_to_collect: activeBlOrder.total,
+            receiver_name: activeBlOrder.customer.split(' ')[0],
+            lines: [
+              { sku: 'SKU-' + activeBlOrder.ref.slice(-4), name: 'Articles commandés (' + activeBlOrder.items_count + ' réf.)', qty_ordered: activeBlOrder.items_count, qty_delivered: activeBlOrder.items_count, unit: 'Colis' },
+            ],
+          }}
+          onClose={() => setActiveBlOrder(null)}
+        />
+      )}
+
+      {/* ── New Invoice Modal ── */}
+      {showNewInvoiceModal && (
+        <NewInvoiceModal
+          onClose={() => setShowNewInvoiceModal(false)}
+          onCreate={(inv) => {
+            notify(`Facture ${inv.ref} créée avec succès pour ${inv.client} !`);
+          }}
+        />
+      )}
 
       {toast && (
         <div className="toast-note">

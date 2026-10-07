@@ -3,8 +3,12 @@ import {
   Users, ClipboardCheck, AlertTriangle, MessageSquare, Phone,
   CheckCircle2, XCircle, ShoppingBag, ArrowRight, DollarSign,
   Clock, Package, TrendingUp, Calendar, ChevronRight, X, ShieldCheck,
+  FileText, Truck,
 } from 'lucide-react';
 import { formatMoney } from '../api';
+import InvoiceDocumentModal, { type InvoiceData } from '../components/InvoiceDocumentModal';
+import DeliverySlipDocumentModal, { type DeliverySlipData } from '../components/DeliverySlipDocumentModal';
+import NewInvoiceModal from '../components/NewInvoiceModal';
 
 interface PendingOrder {
   id: number;
@@ -92,6 +96,9 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
   const [rejectModalOrder, setRejectModalOrder] = useState<PendingOrder | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [toast, setToast] = useState<string | null>(null);
+  const [activeInvoiceOrder, setActiveInvoiceOrder] = useState<PendingOrder | null>(null);
+  const [activeBlOrder, setActiveBlOrder] = useState<PendingOrder | null>(null);
+  const [showNewInvoice, setShowNewInvoice] = useState(false);
 
   function notify(msg: string) {
     setToast(msg);
@@ -121,9 +128,14 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
           <h1>Cockpit Commercial<span className="title-period">.</span></h1>
           <p>Validez les commandes de vos clients, suivez vos créances et relancez les clients inactifs.</p>
         </div>
-        <button className="button-primary" onClick={() => onNavigate?.('orders')}>
-          <ShoppingBag size={16} /> Saisir une commande
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="button-secondary" onClick={() => setShowNewInvoice(true)}>
+            <FileText size={16} /> Nouvelle Facture
+          </button>
+          <button className="button-primary" onClick={() => onNavigate?.('orders')}>
+            <ShoppingBag size={16} /> Saisir une commande
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -245,17 +257,33 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--line-soft)' }}>
                     <button
                       className="button-secondary"
+                      style={{ fontSize: '11px', height: '30px', padding: '0 10px', color: '#10b981', gap: '4px' }}
+                      onClick={() => setActiveInvoiceOrder(ord)}
+                      title="Aperçu Facture officielle"
+                    >
+                      <FileText size={13} /> Facture
+                    </button>
+                    <button
+                      className="button-secondary"
+                      style={{ fontSize: '11px', height: '30px', padding: '0 10px', color: '#0ea5e9', gap: '4px' }}
+                      onClick={() => setActiveBlOrder(ord)}
+                      title="Aperçu Bon de Livraison (BL)"
+                    >
+                      <Truck size={13} /> BL
+                    </button>
+                    <button
+                      className="button-secondary"
                       style={{ fontSize: '11px', height: '30px', padding: '0 10px', color: '#ef4444' }}
                       onClick={() => setRejectModalOrder(ord)}
                     >
-                      <XCircle size={13} /> Refuser avec motif
+                      <XCircle size={13} /> Refuser
                     </button>
                     <button
                       className="button-primary"
                       style={{ fontSize: '11px', height: '30px', padding: '0 12px', background: '#22c55e', borderColor: '#16a34a' }}
                       onClick={() => handleValidate(ord)}
                     >
-                      <CheckCircle2 size={13} /> Valider la commande
+                      <CheckCircle2 size={13} /> Valider
                     </button>
                   </div>
                 </div>
@@ -369,6 +397,76 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
             </div>
           </form>
         </div>
+      )}
+
+      {/* ── Official Invoice Document Modal ── */}
+      {activeInvoiceOrder && (
+        <InvoiceDocumentModal
+          invoice={{
+            ref: `FAC-2026-${activeInvoiceOrder.ref.replace('CMD-', '')}`,
+            order_ref: activeInvoiceOrder.ref,
+            client: activeInvoiceOrder.client,
+            client_city: activeInvoiceOrder.city,
+            client_phone: '+212 522 34 78 90',
+            date_issued: activeInvoiceOrder.date,
+            due_date: '30 jours fin de mois',
+            status: 'Impayée',
+            payment_method: 'Virement bancaire / Chèque',
+            lines: [
+              {
+                sku: 'HRC-CMD',
+                name: `Marchandises commandées · Lot ${activeInvoiceOrder.ref}`,
+                qty: activeInvoiceOrder.items_count,
+                unit_price_ht: Math.round((activeInvoiceOrder.total_ttc / 1.2 / activeInvoiceOrder.items_count) * 100) / 100,
+                tva_rate: 20,
+              },
+            ],
+          }}
+          onClose={() => setActiveInvoiceOrder(null)}
+        />
+      )}
+
+      {/* ── Official Delivery Slip (BL) Document Modal ── */}
+      {activeBlOrder && (
+        <DeliverySlipDocumentModal
+          slip={{
+            bl_ref: `BL-2026-${activeBlOrder.ref.replace('CMD-', '')}`,
+            order_ref: activeBlOrder.ref,
+            client: activeBlOrder.client,
+            client_address: `Zone commerciale & logistique, ${activeBlOrder.city}`,
+            client_city: activeBlOrder.city,
+            client_phone: '+212 522 34 78 90',
+            whatsapp: '212661234567',
+            driver_name: 'Mehdi Lahlou',
+            vehicle: 'Renault Master 23-A-54321',
+            tour_ref: 'TRN-2026-08',
+            date_dispatched: activeBlOrder.date,
+            warehouse: 'Casablanca (DEP-01 Central)',
+            status: 'En cours',
+            amount_to_collect: activeBlOrder.total_ttc,
+            receiver_name: activeBlOrder.client.split(' ')[0],
+            lines: [
+              {
+                sku: 'SKU-' + activeBlOrder.ref.slice(-4),
+                name: `Articles commandés (${activeBlOrder.items_count} réf.)`,
+                qty_ordered: activeBlOrder.items_count,
+                qty_delivered: activeBlOrder.items_count,
+                unit: 'Colis',
+              },
+            ],
+          }}
+          onClose={() => setActiveBlOrder(null)}
+        />
+      )}
+
+      {/* ── New Invoice Modal ── */}
+      {showNewInvoice && (
+        <NewInvoiceModal
+          onClose={() => setShowNewInvoice(false)}
+          onCreate={(inv) => {
+            notify(`Facture ${inv.ref} créée avec succès pour ${inv.client} !`);
+          }}
+        />
       )}
 
       {toast && <div className="toast-note"><CheckCircle2 size={16} />{toast}</div>}

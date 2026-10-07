@@ -7,7 +7,7 @@
 import {
   LayoutDashboard, ClipboardList, Package, Boxes, Users, Building2, ShoppingCart,
   PackageCheck, Truck, BadgeDollarSign, HandCoins, Undo2, BarChart3, Warehouse,
-  UserCheck, ShieldCheck, Settings, ScrollText, type LucideIcon,
+  UserCheck, ShieldCheck, Settings, ScrollText, Database, type LucideIcon,
 } from 'lucide-react';
 
 export interface NavModule {
@@ -53,6 +53,7 @@ export const MODULES: NavModule[] = [
   { segment: 'roles', label: 'Rôles & droits', icon: ShieldCheck, permission: 'roles.view', group: 'Administration' },
   { segment: 'settings', label: 'Paramètres', icon: Settings, permission: 'settings.view', group: 'Administration' },
   { segment: 'audit', label: 'Journal d’audit', icon: ScrollText, permission: 'audit.view', group: 'Administration' },
+  { segment: 'maintenance', label: 'Maintenance & BD', icon: Database, permission: 'settings.manage', group: 'Administration' },
 ];
 
 export function findModule(segment: string): NavModule | undefined {

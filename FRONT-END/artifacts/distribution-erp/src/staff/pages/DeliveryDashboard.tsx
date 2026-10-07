@@ -2,9 +2,10 @@ import { useRef, useState } from 'react';
 import {
   Truck, MapPin, Phone, MessageSquare, CheckCircle2, AlertTriangle,
   Clock, DollarSign, Camera, FileCheck2, ShieldCheck, ChevronRight,
-  User, RefreshCw, XCircle, PenTool, X,
+  User, RefreshCw, XCircle, PenTool, X, FileText, Printer,
 } from 'lucide-react';
 import { formatMoney } from '../api';
+import DeliverySlipDocumentModal, { type BLLineItem } from '../components/DeliverySlipDocumentModal';
 
 interface DeliveryStop {
   id: number;
@@ -69,9 +70,28 @@ const INITIAL_STOPS: DeliveryStop[] = [
   },
 ];
 
+const STOP_LINES: Record<string, BLLineItem[]> = {
+  'CMD-2403': [
+    { sku: 'HRC-0850', name: 'Perceuse à percussion 850W', qty_ordered: 6, qty_delivered: 6, unit: 'Carton 4 pcs' },
+    { sku: 'CUT-230D', name: 'Disque diamant 230 mm', qty_ordered: 20, qty_delivered: 20, unit: 'Boîte 10 pcs' },
+    { sku: 'CAB-3G25', name: 'Câble électrique 3G2.5', qty_ordered: 4, qty_delivered: 4, unit: 'Couronne 100m' },
+  ],
+  'CMD-2405': [
+    { sku: 'HRC-0850', name: 'Perceuse à percussion 850W', qty_ordered: 4, qty_delivered: 4, unit: 'Carton 4 pcs' },
+    { sku: 'CAB-3G25', name: 'Câble électrique 3G2.5', qty_ordered: 2, qty_delivered: 2, unit: 'Couronne 100m' },
+    { sku: 'PMP-15HP', name: 'Pompe immergée 1.5 HP', qty_ordered: 2, qty_delivered: 2, unit: 'Pièce' },
+  ],
+  'CMD-2406': [
+    { sku: 'PMP-15HP', name: 'Pompe immergée 1.5 HP', qty_ordered: 1, qty_delivered: 1, unit: 'Pièce' },
+    { sku: 'CUT-230D', name: 'Disque diamant 230 mm', qty_ordered: 6, qty_delivered: 4, unit: 'Boîte 10 pcs', notes: '2 boîtes en rupture' },
+    { sku: 'GEN-5000', name: 'Groupe électrogène 5 kVA', qty_ordered: 1, qty_delivered: 1, unit: 'Pièce' },
+  ],
+};
+
 export default function DeliveryDashboard() {
   const [stops, setStops] = useState<DeliveryStop[]>(INITIAL_STOPS);
   const [activeStop, setActiveStop] = useState<DeliveryStop | null>(null);
+  const [activeBlStop, setActiveBlStop] = useState<DeliveryStop | null>(null);
   const [closingModal, setClosingModal] = useState(false);
   const [cashSubmitted, setCashSubmitted] = useState<number>(75000);
   const [toast, setToast] = useState<string | null>(null);
@@ -352,6 +372,14 @@ export default function DeliveryDashboard() {
                   >
                     <Phone size={13} /> Appeler
                   </a>
+                  <button
+                    className="button-secondary"
+                    style={{ height: '32px', padding: '0 10px', gap: '4px', color: '#38bdf8' }}
+                    onClick={() => setActiveBlStop(stop)}
+                    title="Consulter et imprimer le Bon de Livraison officiel (BL)"
+                  >
+                    <FileText size={13} /> Bon de Livraison (BL)
+                  </button>
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -397,6 +425,38 @@ export default function DeliveryDashboard() {
           ))}
         </div>
       </section>
+
+      {/* Bon de Livraison Document Modal */}
+      {activeBlStop && (
+        <DeliverySlipDocumentModal
+          slip={{
+            bl_ref: `BL-2026-${activeBlStop.order_ref.replace('CMD-', '')}`,
+            order_ref: activeBlStop.order_ref,
+            client: activeBlStop.client,
+            client_address: activeBlStop.address,
+            client_city: activeBlStop.city,
+            client_phone: activeBlStop.phone,
+            whatsapp: activeBlStop.whatsapp,
+            driver_name: 'Mehdi Lahlou',
+            vehicle: 'Renault Master 23-A-54321',
+            tour_ref: 'TRN-2026-08',
+            date_dispatched: '28 Fév 2025',
+            date_delivered: activeBlStop.status === 'delivered' ? '28 Fév 2025 · 11:30' : undefined,
+            warehouse: 'DEP-01 Casablanca Central',
+            status: activeBlStop.status === 'delivered' ? 'Livré' : activeBlStop.status === 'in_route' ? 'En cours' : activeBlStop.status === 'refused' ? 'Refusé' : 'En attente',
+            amount_to_collect: activeBlStop.amount_to_collect,
+            paid_amount: activeBlStop.paid_amount,
+            payment_method: activeBlStop.payment_method,
+            cheque_number: activeBlStop.cheque_number,
+            receiver_name: activeBlStop.receiver_name,
+            signature: activeBlStop.signature,
+            lines: STOP_LINES[activeBlStop.order_ref] || [
+              { sku: 'PRD-DIV', name: 'Marchandises assorties commande', qty_ordered: 2, qty_delivered: 2, unit: 'Colis' },
+            ],
+          }}
+          onClose={() => setActiveBlStop(null)}
+        />
+      )}
 
       {/* Proof of Delivery (POD) & Payment Modal */}
       {activeStop && (

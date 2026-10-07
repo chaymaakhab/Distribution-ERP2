@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
   PackageCheck, Scan, CheckCircle2, AlertTriangle, Barcode,
-  ArrowRight, Check, X, ShieldAlert, Truck,
+  ArrowRight, Check, X, ShieldAlert, Truck, FileText, Printer,
 } from 'lucide-react';
+import DeliverySlipDocumentModal, { type DeliverySlipData } from '../components/DeliverySlipDocumentModal';
 
 interface PrepItem {
   id: number;
@@ -68,6 +69,7 @@ export default function PreparationDashboard() {
   const [scannedCode, setScannedCode] = useState('');
   const [scanMessage, setScanMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [activeTab, setActiveTab] = useState<'grouped' | 'by_order'>('grouped');
+  const [activeBlOrder, setActiveBlOrder] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   function notify(msg: string) {
@@ -128,13 +130,22 @@ export default function PreparationDashboard() {
           <h1>Bon de Préparation Groupé<span className="title-period">.</span></h1>
           <p>Tournée Centre (Casablanca Sud) · 2 commandes à préparer avant chargement véhicule.</p>
         </div>
-        <button
-          className="button-primary"
-          style={{ background: '#22c55e', borderColor: '#16a34a' }}
-          onClick={() => notify('Bon de préparation validé ! Prêt pour affectation et chargement du livreur.')}
-        >
-          <CheckCircle2 size={16} /> Valider la préparation tournée
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            className="button-secondary"
+            onClick={() => setActiveBlOrder('CMD-2405')}
+            title="Générer et imprimer le Bon de Livraison pour l'expédition"
+          >
+            <Printer size={15} /> Éditer Bon de Livraison (BL)
+          </button>
+          <button
+            className="button-primary"
+            style={{ background: '#22c55e', borderColor: '#16a34a' }}
+            onClick={() => notify('Bon de préparation validé ! Prêt pour affectation et chargement du livreur.')}
+          >
+            <CheckCircle2 size={16} /> Valider la préparation tournée
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -316,7 +327,15 @@ export default function PreparationDashboard() {
                       </small>
                     </td>
                     <td>
-                      <span className="table-ref">{it.order_ref}</span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveBlOrder(it.order_ref)}
+                        className="table-ref"
+                        style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', textDecoration: 'underline' }}
+                        title="Consulter le Bon de Livraison officiel pour cette commande"
+                      >
+                        {it.order_ref}
+                      </button>
                       <small style={{ display: 'block', color: 'var(--muted)' }}>{it.client}</small>
                     </td>
                     <td>
@@ -380,6 +399,37 @@ export default function PreparationDashboard() {
           </table>
         </div>
       </section>
+
+      {/* ── Official Delivery Slip (BL) Document Modal ── */}
+      {activeBlOrder && (
+        <DeliverySlipDocumentModal
+          slip={{
+            bl_ref: `BL-2026-${activeBlOrder.replace('CMD-', '')}`,
+            order_ref: activeBlOrder,
+            client: activeBlOrder === 'CMD-2405' ? 'BatiPro Maroc' : 'Atlas Équipements',
+            client_address: activeBlOrder === 'CMD-2405' ? 'Lot 14, Zone Industrielle Takaddoum' : '12, Boulevard Zerktouni',
+            client_city: activeBlOrder === 'CMD-2405' ? 'Rabat' : 'Casablanca',
+            client_phone: activeBlOrder === 'CMD-2405' ? '+212 537 22 16 40' : '+212 522 34 78 90',
+            whatsapp: activeBlOrder === 'CMD-2405' ? '212661987654' : '212661234567',
+            driver_name: 'Mehdi Lahlou',
+            vehicle: 'Renault Master 23-A-54321',
+            tour_ref: 'TRN-2026-08',
+            date_dispatched: '28 Fév 2025',
+            warehouse: 'Casablanca (DEP-01 Central)',
+            status: 'En cours',
+            lines: items
+              .filter((it) => it.order_ref === activeBlOrder)
+              .map((it) => ({
+                sku: it.barcode.slice(-7),
+                name: it.name,
+                qty_ordered: it.requested_qty,
+                qty_delivered: it.prepared_qty,
+                unit: 'Colis',
+              })),
+          }}
+          onClose={() => setActiveBlOrder(null)}
+        />
+      )}
 
       {toast && <div className="toast-note"><CheckCircle2 size={16} />{toast}</div>}
     </div>

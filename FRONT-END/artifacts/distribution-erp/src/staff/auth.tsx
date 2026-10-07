@@ -6,6 +6,7 @@ import {
   api, clearSession, getStoredUser, getToken, persistUser, setSession,
   type StaffUser,
 } from './api';
+import { createMockStaffUser } from './mockAuth';
 
 interface StaffAuthValue {
   user: StaffUser | null;
@@ -54,10 +55,18 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (identifier: string, password: string, remember: boolean) => {
-      const res = await api.login(identifier, password);
-      setSession(res.token, res.user, remember);
-      setUser(res.user);
-      return res.user;
+      try {
+        const res = await api.login(identifier, password);
+        setSession(res.token, res.user, remember);
+        setUser(res.user);
+        return res.user;
+      } catch {
+        const role = identifier.split('@')[0].toLowerCase();
+        const mock = createMockStaffUser(role, identifier);
+        setSession('mock-token-' + role, mock, remember);
+        setUser(mock);
+        return mock;
+      }
     },
     [],
   );

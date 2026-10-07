@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
+import { useLocation } from 'wouter';
 import {
   Truck, MapPin, Phone, MessageSquare, CheckCircle2, AlertTriangle,
   Clock, DollarSign, Camera, FileCheck2, ShieldCheck, ChevronRight,
-  User, RefreshCw, XCircle, PenTool, X, FileText, Printer,
+  User, RefreshCw, XCircle, PenTool, X, FileText, Printer, Undo2,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 import DeliverySlipDocumentModal, { type BLLineItem } from '../components/DeliverySlipDocumentModal';
@@ -88,10 +89,15 @@ const STOP_LINES: Record<string, BLLineItem[]> = {
   ],
 };
 
-export default function DeliveryDashboard() {
+export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segment: string) => void } = {}) {
+  const [, setLocation] = useLocation();
   const [stops, setStops] = useState<DeliveryStop[]>(INITIAL_STOPS);
   const [activeStop, setActiveStop] = useState<DeliveryStop | null>(null);
   const [activeBlStop, setActiveBlStop] = useState<DeliveryStop | null>(null);
+  const [returnStop, setReturnStop] = useState<DeliveryStop | null>(null);
+  const [returnReason, setReturnReason] = useState<string>('Produit endommagé');
+  const [returnNotes, setReturnNotes] = useState<string>('');
+  const [returnQtys, setReturnQtys] = useState<Record<string, number>>({});
   const [closingModal, setClosingModal] = useState(false);
   const [cashSubmitted, setCashSubmitted] = useState<number>(75000);
   const [toast, setToast] = useState<string | null>(null);
@@ -167,6 +173,39 @@ export default function DeliveryDashboard() {
     notify(`Commande ${stop.order_ref} marquée comme : ${status === 'absent' ? 'Client Absent' : 'Refusée'}. Retour stock programmé.`);
   }
 
+  function openReturnModal(stop: DeliveryStop) {
+    setReturnStop(stop);
+    setReturnReason('Produit endommagé');
+    setReturnNotes('');
+    const items = STOP_LINES[stop.order_ref] || [];
+    const initQtys: Record<string, number> = {};
+    items.forEach((item) => {
+      initQtys[item.sku] = item.qty_delivered || item.qty_ordered;
+    });
+    setReturnQtys(initQtys);
+  }
+
+  function handleSaveReturn(e: React.FormEvent) {
+    e.preventDefault();
+    if (!returnStop) return;
+
+    setStops((prev) =>
+      prev.map((s) => {
+        if (s.id === returnStop.id) {
+          return {
+            ...s,
+            status: s.status === 'delivered' ? 'partially_delivered' : 'refused',
+            client_note: `[Retour marchandise: ${returnReason}] ${returnNotes ? `« ${returnNotes} »` : ''}`,
+          };
+        }
+        return s;
+      }),
+    );
+
+    notify(`Retour RET-2026-${returnStop.order_ref.replace('CMD-', '')} enregistré pour ${returnStop.client}. Fiche retour transmise à l’entrepôt.`);
+    setReturnStop(null);
+  }
+
   // Signature canvas handlers
   function startDraw(e: React.MouseEvent<HTMLCanvasElement>) {
     setIsDrawing(true);
@@ -221,13 +260,22 @@ export default function DeliveryDashboard() {
           <h1>Tournée N° TRN-2026-08<span className="title-period">.</span></h1>
           <p>Chauffeur: Mehdi Lahlou · Véhicule: Renault Master 23-A-54321 · Dépôt Casablanca.</p>
         </div>
-        <button
-          className="button-primary"
-          style={{ background: '#0284c7', borderColor: '#0369a1' }}
-          onClick={() => setClosingModal(true)}
-        >
-          <ShieldCheck size={16} /> Clôture de caisse livreur
-        </button>
+        <div className="heading-actions">
+          <button
+            className="button-secondary"
+            onClick={() => (onNavigate ? onNavigate('returns') : setLocation('/delivery/returns'))}
+            title="Consulter le registre des retours marchandises"
+          >
+            <Undo2 size={15} /> Registre des Retours
+          </button>
+          <button
+            className="button-primary"
+            style={{ background: '#0284c7', borderColor: '#0369a1' }}
+            onClick={() => setClosingModal(true)}
+          >
+            <ShieldCheck size={16} /> Clôture de caisse livreur
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -379,6 +427,14 @@ export default function DeliveryDashboard() {
                     title="Consulter et imprimer le Bon de Livraison officiel (BL)"
                   >
                     <FileText size={13} /> Bon de Livraison (BL)
+                  </button>
+                  <button
+                    className="button-secondary"
+                    style={{ height: '32px', padding: '0 10px', gap: '4px', color: '#f59e0b' }}
+                    onClick={() => openReturnModal(stop)}
+                    title="Déclarer un retour de marchandise (avarie, refus client, surplus)"
+                  >
+                    <Undo2 size={13} /> Retour marchandise
                   </button>
                 </div>
 
@@ -662,6 +718,113 @@ export default function DeliveryDashboard() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Return Merchandise Modal for Driver */}
+      {returnStop && (
+        <div className="modal-backdrop" onClick={() => setReturnStop(null)}>
+          <form className="record-modal" onSubmit={handleSaveReturn} onClick={(e) => e.stopPropagation()} style={{ maxWidth: 540 }}>
+            <div className="modal-top">
+              <div>
+                <span className="eyebrow">DÉCLARATION RETOUR · {returnStop.order_ref}</span>
+                <h2>Retour marchandise : {returnStop.client}</h2>
+              </div>
+              <button type="button" className="icon-button" onClick={() => setReturnStop(null)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <p className="modal-note">
+              Enregistrement direct sur smartphone. Les articles retournés seront réceptionnés et réintégrés au stock au retour au dépôt.
+            </p>
+
+            <label className="field-label" style={{ marginTop: 12 }}>
+              Motif du retour
+              <select
+                className="select-compact"
+                style={{ width: '100%', height: '36px' }}
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+              >
+                <option>Produit endommagé</option>
+                <option>Erreur commande</option>
+                <option>Produit périmé</option>
+                <option>Refus client</option>
+                <option>Surplus de livraison</option>
+                <option>Qualité non-conforme</option>
+              </select>
+            </label>
+
+            <div style={{ marginTop: 12 }}>
+              <span className="field-label">Articles de la commande à retourner :</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                {(STOP_LINES[returnStop.order_ref] || []).map((line) => (
+                  <div
+                    key={line.sku}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 10px',
+                      borderRadius: 6,
+                      background: 'var(--navy-2)',
+                      border: '1px solid var(--line)',
+                      fontSize: 12,
+                    }}
+                  >
+                    <div>
+                      <b>{line.name}</b>
+                      <small style={{ display: 'block', color: 'var(--muted)' }}>SKU: {line.sku} · Livré: {line.qty_delivered} {line.unit}</small>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11, color: 'var(--muted)' }}>Qté retour :</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={line.qty_delivered || line.qty_ordered}
+                        value={returnQtys[line.sku] ?? 1}
+                        onChange={(e) => setReturnQtys({ ...returnQtys, [line.sku]: Number(e.target.value) })}
+                        style={{ width: 55, padding: '3px 6px', borderRadius: 4, border: '1px solid var(--line)', background: 'var(--navy-1)', color: 'var(--text)' }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <label className="field-label" style={{ marginTop: 12 }}>
+              Observations & remarques du livreur
+              <textarea
+                rows={3}
+                value={returnNotes}
+                onChange={(e) => setReturnNotes(e.target.value)}
+                placeholder="Ex. 2 bidons percés au déchargement, refusé par le responsable réception."
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: 6,
+                  border: '1px solid var(--line)',
+                  background: 'var(--navy-2)',
+                  color: 'var(--text)',
+                  fontSize: 12,
+                }}
+              />
+            </label>
+
+            <div className="modal-actions" style={{ marginTop: 16 }}>
+              <button type="button" className="button-secondary" onClick={() => setReturnStop(null)}>
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{ background: '#f59e0b', borderColor: '#d97706' }}
+              >
+                <Undo2 size={14} /> Confirmer le retour marchandise
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

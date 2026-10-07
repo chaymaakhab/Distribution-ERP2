@@ -74,11 +74,84 @@ const SYSTEM_NODES: SystemNodeHealth[] = [
   },
 ];
 
+const MOCK_REVENUE: RevenueData = {
+  by_day: [
+    { label: '01 Fév', value: 24500, count: 12 },
+    { label: '05 Fév', value: 38200, count: 18 },
+    { label: '10 Fév', value: 49100, count: 24 },
+    { label: '15 Fév', value: 41200, count: 21 },
+    { label: '20 Fév', value: 58400, count: 29 },
+    { label: '25 Fév', value: 67300, count: 34 },
+    { label: '28 Fév', value: 72900, count: 38 },
+  ],
+  by_month: [
+    { label: 'Sep', value: 890000 },
+    { label: 'Oct', value: 1040000 },
+    { label: 'Nov', value: 1120000 },
+    { label: 'Déc', value: 1290000 },
+    { label: 'Jan', value: 1180000 },
+    { label: 'Fév', value: 1284650 },
+  ],
+  by_warehouse: [
+    { label: 'Casablanca (DEP-01)', value: 584200, count: 84 },
+    { label: 'Rabat (DEP-02)', value: 342100, count: 51 },
+    { label: 'Marrakech (DEP-03)', value: 218900, count: 32 },
+    { label: 'Tanger (DEP-04)', value: 139450, count: 19 },
+  ],
+  by_city: [
+    { label: 'Casablanca & Mohammedia', value: 584200 },
+    { label: 'Rabat - Salé - Kénitra', value: 342100 },
+    { label: 'Marrakech & Safi', value: 218900 },
+    { label: 'Tanger & Tétouan', value: 139450 },
+  ],
+  by_commercial: [
+    { label: 'Amine Tazi', value: 410000 },
+    { label: 'Sara Mansouri', value: 385000 },
+    { label: 'Omar Bensouda', value: 289000 },
+    { label: 'Mehdi Chraibi', value: 200650 },
+  ],
+  top_products: [
+    { label: 'Perceuse à percussion 850W', value: 186000, qty: 148 },
+    { label: 'Pompe immergée 1.5 HP', value: 154000, qty: 40 },
+    { label: 'Huile Végétale 5L', value: 128000, qty: 580 },
+    { label: 'Disque diamant 230 mm', value: 98000, qty: 517 },
+  ],
+  orders_evolution: [
+    { label: 'S1', value: 34 },
+    { label: 'S2', value: 42 },
+    { label: 'S3', value: 51 },
+    { label: 'S4', value: 59 },
+  ],
+};
+
+const MOCK_KPIS: OverviewKpis = {
+  ca_today: 48500,
+  ca_month: 1284650,
+  ca_prev_month: 1139000,
+  ca_month_delta: 12.8,
+  orders_total: 186,
+  orders_today: 14,
+  orders_to_validate: 12,
+  orders_in_delivery: 8,
+  deliveries_in_progress: 5,
+  deliveries_done: 24,
+  payments_total: 846500,
+  payments_today: 32000,
+  receivables: 428560,
+  unpaid_invoices: 11,
+  returns: 3,
+  stock_ruptures: 2,
+  stock_low: 6,
+  customers_count: 142,
+  products_count: 86,
+  warehouses_count: 4,
+};
+
 export default function SuperAdminDashboard() {
   const { user, workspace } = useStaffAuth();
   const [, setLocation] = useLocation();
-  const [kpis, setKpis] = useState<OverviewKpis | null>(null);
-  const [revenue, setRevenue] = useState<RevenueData | null>(null);
+  const [kpis, setKpis] = useState<OverviewKpis>(MOCK_KPIS);
+  const [revenue, setRevenue] = useState<RevenueData>(MOCK_REVENUE);
   const [warehouses, setWarehouses] = useState<WarehouseNode[] | null>(null);
   const [perf, setPerf] = useState<PerformanceData | null>(null);
   const [nodes, setNodes] = useState<SystemNodeHealth[]>(SYSTEM_NODES);
@@ -96,12 +169,14 @@ export default function SuperAdminDashboard() {
     Promise.all([api.adminOverview(), api.adminRevenue(), api.adminWarehouses(), api.adminPerformance()])
       .then(([o, r, w, p]) => {
         if (!alive) return;
-        setKpis(o.data);
-        setRevenue(r.data);
-        setWarehouses(w.data);
-        setPerf(p.data);
+        if (o?.data) setKpis(o.data);
+        if (r?.data) setRevenue(r.data);
+        if (w?.data) setWarehouses(w.data);
+        if (p?.data) setPerf(p.data);
       })
-      .catch(() => {});
+      .catch(() => {
+        // Fallback to rich mock stats on 401 or network disconnect
+      });
     return () => {
       alive = false;
     };

@@ -30,7 +30,7 @@ import SuppliersManagement from './pages/SuppliersManagement';
 import ReturnsManagement from './pages/ReturnsManagement';
 import ReportsPage from './pages/ReportsPage';
 import SystemMaintenance from './pages/SystemMaintenance';
-import GlobalSearchModal from './components/GlobalSearchModal';
+import GlobalSearchModal, { getErpSearchItems } from './components/GlobalSearchModal';
 import NotificationsDrawer from './components/NotificationsDrawer';
 import LogoutConfirmModal from './components/LogoutConfirmModal';
 import './components/global-search.css';
@@ -87,8 +87,11 @@ function StaffShell({ user }: { user: StaffUser }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(4);
+  const [topbarSearch, setTopbarSearch] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { theme, toggleTheme, isLight } = useTheme();
   const roleRef = useRef<HTMLDivElement>(null);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
 
   const primary = user.roles.find((r) => r.is_primary) ?? user.roles[0];
   const visibleModules = MODULES.filter((m) => hasPermission(m.permission));
@@ -96,6 +99,7 @@ function StaffShell({ user }: { user: StaffUser }) {
   useEffect(() => {
     function onClick(e: MouseEvent) {
       if (roleRef.current && !roleRef.current.contains(e.target as Node)) setRoleMenu(false);
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) setDropdownOpen(false);
     }
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
@@ -132,12 +136,25 @@ function StaffShell({ user }: { user: StaffUser }) {
 
   const activeSegment = location.split('/')[2] || 'dashboard';
 
+  const allSearchItems = getErpSearchItems(go);
+  const qClean = topbarSearch.trim().toLowerCase();
+  const inlineResults = qClean
+    ? allSearchItems.filter(
+        (i) =>
+          i.title.toLowerCase().includes(qClean) ||
+          i.subtitle.toLowerCase().includes(qClean) ||
+          i.category.toLowerCase().includes(qClean) ||
+          (i.keywords && i.keywords.some((k) => k.toLowerCase().includes(qClean) || qClean.includes(k.toLowerCase())))
+      ).slice(0, 8)
+    : [];
+
   return (
     <div className="erp-app sx-app">
       <aside className={`sidebar ${mobileNav ? 'sidebar-open' : ''}`}>
         <button className="icon-button sx-nav-close" onClick={() => setMobileNav(false)} aria-label="Fermer le menu">
           <X size={18} />
         </button>
+
         <Link href={home} className="brand" onClick={() => setMobileNav(false)}>
           <span className="brand-mark"><span>G</span></span>
           <span className="brand-copy"><b>GESTION ERP</b><small>ERP · DISTRIBUTION</small></span>
@@ -243,17 +260,165 @@ function StaffShell({ user }: { user: StaffUser }) {
           </div>
 
           <div className="topbar-right">
-            {/* Quick search input trigger for desktop */}
-            <div
-              className="topbar-search-trigger"
-              onClick={() => setSearchOpen(true)}
-              role="button"
-              tabIndex={0}
-              title="Recherche globale ERP (Ctrl + K)"
-            >
-              <Search size={14} />
-              <span className="search-placeholder">Rechercher commande, client, article…</span>
-              <kbd className="search-kbd">Ctrl K</kbd>
+            {/* Active Live Search Input with Instant Dropdown */}
+            <div className="topbar-search-box" ref={searchBoxRef}>
+              <div className="topbar-search-input-field">
+                <Search size={14} style={{ color: '#38bdf8', flex: 'none' }} />
+                <input
+                  type="text"
+                  value={topbarSearch}
+                  onChange={(e) => {
+                    setTopbarSearch(e.target.value);
+                    setDropdownOpen(true);
+                  }}
+                  onFocus={() => {
+                    if (topbarSearch.trim()) setDropdownOpen(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (inlineResults.length > 0) {
+                        inlineResults[0].action();
+                        setDropdownOpen(false);
+                        setTopbarSearch('');
+                      } else {
+                        setSearchOpen(true);
+                      }
+                    } else if (e.key === 'Escape') {
+                      setDropdownOpen(false);
+                    }
+                  }}
+                  placeholder="Rechercher commande, client, article, livreur..."
+                />
+                {topbarSearch && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTopbarSearch('');
+                      setDropdownOpen(false);
+                    }}
+                    style={{ background: 'transparent', border: 0, color: 'var(--muted)', cursor: 'pointer', padding: 2, display: 'grid', placeItems: 'center' }}
+                    title="Effacer"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+                <kbd
+                  className="search-kbd"
+                  onClick={() => setSearchOpen(true)}
+                  style={{ cursor: 'pointer' }}
+                  title="Ouvrir la palette complète (Ctrl + K)"
+                >
+                  Ctrl K
+                </kbd>
+              </div>
+
+              {/* Instant Dropdown when typing */}
+              {dropdownOpen && topbarSearch.trim().length > 0 && (
+                <div className="topbar-search-dropdown">
+                  <div
+                    style={{
+                      padding: '6px 10px',
+                      fontSize: '10.5px',
+                      fontWeight: 800,
+                      color: 'var(--muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      borderBottom: '1px solid var(--line)',
+                      marginBottom: '4px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span>Résultats ({inlineResults.length})</span>
+                    <span
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        setSearchOpen(true);
+                      }}
+                      style={{ color: '#38bdf8', cursor: 'pointer', textTransform: 'none', fontWeight: 600 }}
+                    >
+                      Ouvrir en grand ↗
+                    </span>
+                  </div>
+
+                  {inlineResults.length === 0 ? (
+                    <div style={{ padding: '16px 12px', textAlign: 'center', color: 'var(--muted)', fontSize: '12px' }}>
+                      Aucun résultat pour « {topbarSearch} »
+                    </div>
+                  ) : (
+                    inlineResults.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="topbar-search-dropdown-item"
+                          onClick={() => {
+                            item.action();
+                            setDropdownOpen(false);
+                            setTopbarSearch('');
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: 6,
+                              background: 'rgba(56, 189, 248, 0.1)',
+                              color: '#38bdf8',
+                              display: 'grid',
+                              placeItems: 'center',
+                              flex: 'none',
+                            }}
+                          >
+                            <Icon size={14} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                color: 'var(--text)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {item.title}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '10.5px',
+                                color: 'var(--muted)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {item.subtitle}
+                            </div>
+                          </div>
+                          {item.badge && (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                padding: '2px 6px',
+                                borderRadius: 4,
+                                background: item.badgeColor ? `${item.badgeColor}20` : 'rgba(255,255,255,0.08)',
+                                color: item.badgeColor || 'var(--text)',
+                                fontWeight: 700,
+                                flex: 'none',
+                              }}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
 
             <button
@@ -332,6 +497,7 @@ function StaffShell({ user }: { user: StaffUser }) {
         isOpen={searchOpen}
         onClose={() => setSearchOpen(false)}
         onNavigate={go}
+        initialQuery={topbarSearch}
       />
 
       <NotificationsDrawer

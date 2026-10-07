@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   PackageCheck, Scan, CheckCircle2, AlertTriangle, Barcode,
   ArrowRight, Check, X, ShieldAlert, Truck, FileText, Printer,
+  Camera, CameraOff, RefreshCw, Volume2,
 } from 'lucide-react';
 import DeliverySlipDocumentModal, { type DeliverySlipData } from '../components/DeliverySlipDocumentModal';
 
@@ -72,10 +73,108 @@ export default function PreparationDashboard() {
   const [activeBlOrder, setActiveBlOrder] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
+  // Camera Barcode Scanning States
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<'environment' | 'user'>('environment');
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const scanIntervalRef = useRef<any>(null);
+
   function notify(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   }
+
+  function playBeep() {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(920, ctx.currentTime);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.16);
+    } catch {}
+  }
+
+  async function startCamera(facing: 'environment' | 'user' = cameraFacing) {
+    setCameraError(null);
+    try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
+      setCameraActive(true);
+
+      // Web BarcodeDetector API if available
+      if ('BarcodeDetector' in window) {
+        try {
+          const detector = new (window as any).BarcodeDetector({
+            formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code'],
+          });
+          clearInterval(scanIntervalRef.current);
+          scanIntervalRef.current = setInterval(async () => {
+            if (videoRef.current && videoRef.current.readyState >= 2) {
+              try {
+                const barcodes = await detector.detect(videoRef.current);
+                if (barcodes.length > 0) {
+                  const val = barcodes[0].rawValue;
+                  handleScan(val);
+                }
+              } catch {}
+            }
+          }, 500);
+        } catch {}
+      }
+    } catch (err: any) {
+      setCameraError("Accès caméra refusé ou non supporté. Veuillez autoriser la caméra dans votre navigateur.");
+      setCameraActive(false);
+    }
+  }
+
+  function stopCamera() {
+    clearInterval(scanIntervalRef.current);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  }
+
+  function toggleCameraFacing() {
+    const next = cameraFacing === 'environment' ? 'user' : 'environment';
+    setCameraFacing(next);
+    if (cameraActive) {
+      startCamera(next);
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      clearInterval(scanIntervalRef.current);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, []);
 
   function handleScan(codeToTest?: string) {
     const code = (codeToTest || scannedCode).trim();
@@ -83,6 +182,7 @@ export default function PreparationDashboard() {
 
     const match = items.find((it) => it.barcode === code || it.barcode.endsWith(code));
     if (match) {
+      playBeep();
       setItems((prev) =>
         prev.map((it) => {
           if (it.id === match.id) {
@@ -206,7 +306,7 @@ export default function PreparationDashboard() {
         </div>
       </div>
 
-      {/* Interactive Barcode Scanner Box */}
+      {/* Interactive Barcode Scanner Box & Live Camera Viewfinder */}
       <section
         className="panel"
         style={{
@@ -216,43 +316,244 @@ export default function PreparationDashboard() {
           borderColor: 'rgba(59,130,246,0.25)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#3b82f6', color: '#fff', display: 'grid', placeItems: 'center' }}>
-              <Barcode size={22} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: cameraActive ? '#22c55e' : '#3b82f6', color: '#fff', display: 'grid', placeItems: 'center', transition: 'background 0.2s ease' }}>
+              {cameraActive ? <Camera size={22} /> : <Barcode size={22} />}
             </div>
             <div>
-              <b style={{ fontSize: '13px', display: 'block' }}>Scan Code-Barres Douchette / Caméra</b>
-              <small style={{ color: 'var(--muted)' }}>Scannez ou cliquez sur les boutons de simulation rapide pour tester.</small>
+              <b style={{ fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                Scan Code-Barres & Caméra Préparateur
+                {cameraActive && (
+                  <span className="status-pill status-green" style={{ fontSize: '10px' }}>
+                    <i /> Caméra en direct
+                  </span>
+                )}
+              </b>
+              <small style={{ color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Volume2 size={12} style={{ color: '#22c55e' }} /> Bip sonore actif · Viseur optique EAN-13 & QR
+              </small>
             </div>
           </div>
 
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 300px' }}>
-            <input
-              type="text"
-              value={scannedCode}
-              onChange={(e) => setScannedCode(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-              placeholder="Scanner ou saisir code EAN..."
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className={cameraActive ? 'button-secondary' : 'button-primary'}
+              onClick={cameraActive ? stopCamera : () => startCamera()}
               style={{
-                flex: 1,
                 height: '38px',
-                borderRadius: '6px',
-                padding: '0 12px',
-                border: '1px solid var(--line)',
-                background: 'var(--navy-2)',
-                color: 'var(--text)',
+                padding: '0 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                background: cameraActive ? '#ef4444' : '#22c55e',
+                borderColor: cameraActive ? '#dc2626' : '#16a34a',
+                color: '#fff',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
               }}
-            />
-            <button className="button-primary" onClick={() => handleScan()}>
-              <Scan size={14} /> Valider scan
+            >
+              {cameraActive ? (
+                <>
+                  <CameraOff size={15} /> Couper la Caméra
+                </>
+              ) : (
+                <>
+                  <Camera size={15} /> Activer Caméra Scanner
+                </>
+              )}
             </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <input
+                type="text"
+                value={scannedCode}
+                onChange={(e) => setScannedCode(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleScan()}
+                placeholder="Scanner EAN manuel..."
+                style={{
+                  height: '38px',
+                  width: '180px',
+                  borderRadius: '6px',
+                  padding: '0 10px',
+                  border: '1px solid var(--line)',
+                  background: 'var(--navy-2)',
+                  color: 'var(--text)',
+                  fontSize: '12px',
+                }}
+              />
+              <button className="button-primary" onClick={() => handleScan()} style={{ height: '38px', padding: '0 12px' }}>
+                <Scan size={14} /> Scanner
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Live Camera Viewfinder Overlay */}
+        {cameraActive && (
+          <div
+            style={{
+              marginTop: '14px',
+              borderRadius: '10px',
+              overflow: 'hidden',
+              position: 'relative',
+              background: '#0a0f18',
+              border: '2px solid #22c55e',
+              maxWidth: '560px',
+              marginInline: 'auto',
+              boxShadow: '0 8px 30px rgba(34, 197, 94, 0.2)',
+            }}
+          >
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{
+                width: '100%',
+                height: '280px',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
+
+            {/* Viewfinder Target Box with animated Laser */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'grid',
+                placeItems: 'center',
+                pointerEvents: 'none',
+              }}
+            >
+              <div
+                style={{
+                  width: '260px',
+                  height: '140px',
+                  border: '2px dashed #22c55e',
+                  borderRadius: '12px',
+                  position: 'relative',
+                  boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.45)',
+                }}
+              >
+                {/* Laser scan line */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    background: '#22c55e',
+                    boxShadow: '0 0 10px #22c55e, 0 0 20px #22c55e',
+                    animation: 'laserScan 1.6s ease-in-out infinite alternate',
+                  }}
+                />
+                <style>{`
+                  @keyframes laserScan {
+                    0% { top: 6px; opacity: 0.8; }
+                    50% { opacity: 1; }
+                    100% { top: 132px; opacity: 0.8; }
+                  }
+                `}</style>
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '-28px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    whiteSpace: 'nowrap',
+                    fontSize: '11px',
+                    color: '#e2e8f0',
+                    background: 'rgba(0,0,0,0.7)',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    fontWeight: 600,
+                  }}
+                >
+                  Centrez le code-barres dans le cadre
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom floating camera controls */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '10px',
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '8px',
+                zIndex: 5,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={toggleCameraFacing}
+                style={{
+                  height: '32px',
+                  fontSize: '11px',
+                  padding: '0 10px',
+                  background: 'rgba(15, 23, 42, 0.85)',
+                  backdropFilter: 'blur(4px)',
+                  color: '#fff',
+                  border: '1px solid #475569',
+                }}
+                title="Changer d'objectif caméra"
+              >
+                <RefreshCw size={13} /> {cameraFacing === 'environment' ? 'Caméra Arrière' : 'Caméra Avant'}
+              </button>
+              <button
+                type="button"
+                className="button-primary"
+                onClick={() => {
+                  // Capture simulate current pending item in view
+                  const pending = items.find((i) => i.prepared_qty < i.requested_qty) || items[0];
+                  if (pending) handleScan(pending.barcode);
+                }}
+                style={{
+                  height: '32px',
+                  fontSize: '11px',
+                  padding: '0 12px',
+                  background: '#22c55e',
+                  borderColor: '#16a34a',
+                  color: '#fff',
+                  fontWeight: 700,
+                }}
+              >
+                <Scan size={13} /> Capturer le code visé
+              </button>
+            </div>
+          </div>
+        )}
+
+        {cameraError && (
+          <div
+            style={{
+              marginTop: '10px',
+              padding: '10px 14px',
+              borderRadius: '6px',
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#f87171',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <AlertTriangle size={16} />
+            <span>{cameraError}</span>
+          </div>
+        )}
+
         {/* Quick simulator buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '11px', color: 'var(--muted)' }}>Simuler scan article :</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '11px', color: 'var(--muted)' }}>Simulateur rapide code-barres :</span>
           {items.map((it) => (
             <button
               key={it.id}

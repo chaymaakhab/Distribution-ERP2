@@ -964,199 +964,257 @@ export default function WarehouseDashboard({
       {/* ════════════════════ MODAL : NOUVEAU LIVREUR ════════════════════ */}
       {newDriverModal && (
         <div className="modal-backdrop" onClick={() => setNewDriverModal(false)}>
-          <form className="record-modal" onSubmit={handleCreateDriver} onClick={(e) => e.stopPropagation()} style={{ maxWidth: 540 }}>
-            <div className="modal-top">
+          <form
+            className="record-modal"
+            onSubmit={handleCreateDriver}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 580,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid var(--line)',
+                margin: 0,
+              }}
+            >
               <div>
                 <span className="eyebrow">AFFECTATION DU PERSONNEL · FLOTTE</span>
-                <h2>Ajouter un livreur au dépôt</h2>
+                <h2 style={{ margin: '4px 0 0', fontSize: 16 }}>Ajouter un livreur au dépôt</h2>
               </div>
               <button type="button" className="icon-button" onClick={() => setNewDriverModal(false)}>
                 <X size={16} />
               </button>
             </div>
 
-            <p className="modal-note">
-              Sélectionnez le type de livreur selon sa mission opérationnelle : livraison client final ou navette inter-dépôts par ville.
-            </p>
+            {/* Scrollable Form Body */}
+            <div
+              style={{
+                padding: '18px 20px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <p className="modal-note" style={{ margin: 0 }}>
+                Sélectionnez le type de livreur selon sa mission opérationnelle : livraison client final ou navette inter-dépôts par ville.
+              </p>
 
-            {/* Selector: Driver Type (Crucial user request!) */}
-            <div style={{ margin: '14px 0' }}>
-              <span className="field-label" style={{ marginBottom: 6 }}>
-                Type de chauffeur (Requis) :
-              </span>
+              {/* Selector: Driver Type (Crucial user request!) */}
+              <div>
+                <span className="field-label" style={{ marginBottom: 6, display: 'block' }}>
+                  Type de chauffeur (Requis) :
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div
+                    onClick={() => {
+                      setFormType('depot_to_client');
+                      if (!formRoute || formRoute.includes('↔')) setFormRoute('Grand Casablanca & Ain Sebaâ');
+                      if (!formVehicle || formVehicle.includes('Volvo')) setFormVehicle('Renault Master 3.5T');
+                      if (!formCapacity || formCapacity.includes('12.0')) setFormCapacity('3.5 T / 4 Palettes');
+                    }}
+                    style={{
+                      padding: 14,
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      border: formType === 'depot_to_client' ? '2px solid #38bdf8' : '1px solid var(--line)',
+                      background: formType === 'depot_to_client' ? 'rgba(56,189,248,0.12)' : 'var(--navy-2)',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700, fontSize: 13 }}>
+                        <Truck size={16} />
+                        <span>Type 1 : Dépôt → Client</span>
+                      </div>
+                      {formType === 'depot_to_client' && <Check size={16} style={{ color: '#38bdf8' }} />}
+                    </div>
+                    <small style={{ display: 'block', color: 'var(--muted)', marginTop: 6, fontSize: 11, lineHeight: 1.4 }}>
+                      Distribution locale directe aux magasins, épiceries, clients finaux & chantiers.
+                    </small>
+                  </div>
+
+                  <div
+                    onClick={() => {
+                      setFormType('depot_to_depot');
+                      if (!formRoute || !formRoute.includes('↔')) setFormRoute('Casablanca ↔ Berrechid ↔ Settat (Ligne 2)');
+                      if (!formVehicle || formVehicle.includes('Renault')) setFormVehicle('Volvo FL 12T');
+                      if (!formCapacity || formCapacity.includes('3.5')) setFormCapacity('12.0 T / 16 Palettes');
+                    }}
+                    style={{
+                      padding: 14,
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      border: formType === 'depot_to_depot' ? '2px solid #a855f7' : '1px solid var(--line)',
+                      background: formType === 'depot_to_depot' ? 'rgba(168,85,247,0.12)' : 'var(--navy-2)',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#c084fc', fontWeight: 700, fontSize: 13 }}>
+                        <Building2 size={16} />
+                        <span>Type 2 : Navette Dépôt → Dépôt</span>
+                      </div>
+                      {formType === 'depot_to_depot' && <Check size={16} style={{ color: '#c084fc' }} />}
+                    </div>
+                    <small style={{ display: 'block', color: 'var(--muted)', marginTop: 6, fontSize: 11, lineHeight: 1.4 }}>
+                      Liaisons régulières et transferts de palettes entre dépôts régionaux selon les lignes.
+                    </small>
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10 }}>
+                <label className="field-label">
+                  Nom complet du livreur *
+                  <input
+                    required
+                    placeholder="Ex. Youssef Berrada"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                  />
+                </label>
+
+                <label className="field-label">
+                  N° Téléphone *
+                  <input
+                    required
+                    placeholder="+212 6..."
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                  />
+                </label>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div
-                  onClick={() => {
-                    setFormType('depot_to_client');
-                    if (!formRoute || formRoute.includes('↔')) setFormRoute('Grand Casablanca & Ain Sebaâ');
-                    if (!formVehicle || formVehicle.includes('Volvo')) setFormVehicle('Renault Master 3.5T');
-                    if (!formCapacity || formCapacity.includes('12.0')) setFormCapacity('3.5 T / 4 Palettes');
-                  }}
-                  style={{
-                    padding: 14,
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    border: formType === 'depot_to_client' ? '2px solid #38bdf8' : '1px solid var(--line)',
-                    background: formType === 'depot_to_client' ? 'rgba(56,189,248,0.12)' : 'var(--navy-2)',
-                    transition: 'all 0.15s ease',
-                    position: 'relative',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700, fontSize: 13 }}>
-                      <Truck size={16} />
-                      <span>Type 1 : Dépôt → Client</span>
-                    </div>
-                    {formType === 'depot_to_client' && <Check size={16} style={{ color: '#38bdf8' }} />}
-                  </div>
-                  <small style={{ display: 'block', color: 'var(--muted)', marginTop: 6, fontSize: 11, lineHeight: 1.4 }}>
-                    Distribution locale directe aux magasins, épiceries, clients finaux & chantiers.
-                  </small>
-                </div>
+                <label className="field-label">
+                  N° CIN
+                  <input
+                    placeholder="Ex. BK451290"
+                    value={formCin}
+                    onChange={(e) => setFormCin(e.target.value)}
+                  />
+                </label>
 
-                <div
-                  onClick={() => {
-                    setFormType('depot_to_depot');
-                    if (!formRoute || !formRoute.includes('↔')) setFormRoute('Casablanca ↔ Berrechid ↔ Settat (Ligne 2)');
-                    if (!formVehicle || formVehicle.includes('Renault')) setFormVehicle('Volvo FL 12T');
-                    if (!formCapacity || formCapacity.includes('3.5')) setFormCapacity('12.0 T / 16 Palettes');
-                  }}
-                  style={{
-                    padding: 14,
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    border: formType === 'depot_to_depot' ? '2px solid #a855f7' : '1px solid var(--line)',
-                    background: formType === 'depot_to_depot' ? 'rgba(168,85,247,0.12)' : 'var(--navy-2)',
-                    transition: 'all 0.15s ease',
-                    position: 'relative',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#c084fc', fontWeight: 700, fontSize: 13 }}>
-                      <Building2 size={16} />
-                      <span>Type 2 : Navette Dépôt → Dépôt</span>
-                    </div>
-                    {formType === 'depot_to_depot' && <Check size={16} style={{ color: '#c084fc' }} />}
-                  </div>
-                  <small style={{ display: 'block', color: 'var(--muted)', marginTop: 6, fontSize: 11, lineHeight: 1.4 }}>
-                    Liaisons régulières et transferts de palettes entre dépôts régionaux selon les lignes.
-                  </small>
-                </div>
+                <label className="field-label">
+                  N° Permis de conduire
+                  <input
+                    placeholder="Ex. PERM-88214"
+                    value={formLicense}
+                    onChange={(e) => setFormLicense(e.target.value)}
+                  />
+                </label>
+              </div>
+
+              {/* Depot & Route */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label">
+                  Dépôt d'attache
+                  <select
+                    className="select-compact"
+                    style={{ width: '100%', height: 38 }}
+                    value={formBaseDepot}
+                    onChange={(e) => setFormBaseDepot(e.target.value)}
+                  >
+                    <option>DEP-01 Casablanca Central</option>
+                    <option>DEP-02 Mohammedia</option>
+                    <option>DEP-03 Berrechid</option>
+                    <option>DEP-04 Settat</option>
+                  </select>
+                </label>
+
+                <label className="field-label">
+                  {formType === 'depot_to_client' ? 'Zone / Ville de livraison client *' : 'Ligne / Villes reliées *'}
+                  <input
+                    required
+                    placeholder={
+                      formType === 'depot_to_client'
+                        ? 'Ex. Grand Casablanca & Ain Sebaâ'
+                        : 'Ex. Casablanca ↔ Berrechid (Ligne 2)'
+                    }
+                    value={formRoute}
+                    onChange={(e) => setFormRoute(e.target.value)}
+                  />
+                </label>
+              </div>
+
+              {/* Vehicle Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 10 }}>
+                <label className="field-label">
+                  Modèle du véhicule
+                  <input
+                    placeholder="Ex. Renault Master 3.5T"
+                    value={formVehicle}
+                    onChange={(e) => setFormVehicle(e.target.value)}
+                  />
+                </label>
+
+                <label className="field-label">
+                  Immatriculation *
+                  <input
+                    required
+                    placeholder="Ex. 23-A-54321"
+                    value={formPlate}
+                    onChange={(e) => setFormPlate(e.target.value)}
+                  />
+                </label>
+
+                <label className="field-label">
+                  Capacité utile
+                  <input
+                    placeholder="Ex. 3.5 T / 4 Pal."
+                    value={formCapacity}
+                    onChange={(e) => setFormCapacity(e.target.value)}
+                  />
+                </label>
               </div>
             </div>
 
-            {/* Personal Details */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10 }}>
-              <label className="field-label">
-                Nom complet du livreur
-                <input
-                  required
-                  placeholder="Ex. Youssef Berrada"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                />
-              </label>
-
-              <label className="field-label">
-                N° Téléphone
-                <input
-                  required
-                  placeholder="+212 6..."
-                  value={formPhone}
-                  onChange={(e) => setFormPhone(e.target.value)}
-                />
-              </label>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
-              <label className="field-label">
-                N° CIN
-                <input
-                  placeholder="Ex. BK451290"
-                  value={formCin}
-                  onChange={(e) => setFormCin(e.target.value)}
-                />
-              </label>
-
-              <label className="field-label">
-                N° Permis de conduire
-                <input
-                  placeholder="Ex. PERM-88214"
-                  value={formLicense}
-                  onChange={(e) => setFormLicense(e.target.value)}
-                />
-              </label>
-            </div>
-
-            {/* Depot & Route */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
-              <label className="field-label">
-                Dépôt d'attache
-                <select
-                  className="select-compact"
-                  style={{ width: '100%', height: 38 }}
-                  value={formBaseDepot}
-                  onChange={(e) => setFormBaseDepot(e.target.value)}
-                >
-                  <option>DEP-01 Casablanca Central</option>
-                  <option>DEP-02 Mohammedia</option>
-                  <option>DEP-03 Berrechid</option>
-                  <option>DEP-04 Settat</option>
-                </select>
-              </label>
-
-              <label className="field-label">
-                {formType === 'depot_to_client' ? 'Zone / Ville de livraison client' : 'Ligne / Villes reliées'}
-                <input
-                  required
-                  placeholder={
-                    formType === 'depot_to_client'
-                      ? 'Ex. Grand Casablanca & Ain Sebaâ'
-                      : 'Ex. Casablanca ↔ Berrechid (Ligne 2)'
-                  }
-                  value={formRoute}
-                  onChange={(e) => setFormRoute(e.target.value)}
-                />
-              </label>
-            </div>
-
-            {/* Vehicle Details */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 10, marginTop: 8 }}>
-              <label className="field-label">
-                Modèle du véhicule
-                <input
-                  placeholder="Ex. Renault Master 3.5T"
-                  value={formVehicle}
-                  onChange={(e) => setFormVehicle(e.target.value)}
-                />
-              </label>
-
-              <label className="field-label">
-                Immatriculation
-                <input
-                  required
-                  placeholder="Ex. 23-A-54321"
-                  value={formPlate}
-                  onChange={(e) => setFormPlate(e.target.value)}
-                />
-              </label>
-
-              <label className="field-label">
-                Capacité utile
-                <input
-                  placeholder="Ex. 3.5 T / 4 Pal."
-                  value={formCapacity}
-                  onChange={(e) => setFormCapacity(e.target.value)}
-                />
-              </label>
-            </div>
-
-            <div className="modal-actions" style={{ marginTop: 18 }}>
-              <button type="button" className="button-secondary" onClick={() => setNewDriverModal(false)}>
+            {/* STICKY Actions Footer */}
+            <div
+              className="modal-actions"
+              style={{
+                margin: 0,
+                padding: '14px 20px',
+                borderTop: '1px solid var(--line)',
+                background: 'var(--navy-2)',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                zIndex: 10,
+              }}
+            >
+              <button type="button" className="button-secondary" onClick={() => setNewDriverModal(false)} style={{ height: 38 }}>
                 Annuler
               </button>
-              <button type="submit" className="button-primary">
-                <Plus size={14} /> Enregistrer le livreur
+              <button
+                type="submit"
+                className="button-primary"
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 7,
+                }}
+              >
+                <Plus size={16} /> Enregistrer le livreur
               </button>
             </div>
           </form>

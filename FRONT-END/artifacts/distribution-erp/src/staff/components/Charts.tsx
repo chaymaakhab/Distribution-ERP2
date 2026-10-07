@@ -23,12 +23,22 @@ export function AreaChart({
   const H = height;
   const pad = 8;
 
+  if (!data || data.length === 0) {
+    return (
+      <div className="sx-chart sx-chart-empty" style={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span className="sx-empty-inline" style={{ color: 'var(--muted)', fontSize: '11px' }}>
+          Aucune donnée disponible sur la période sélectionnée.
+        </span>
+      </div>
+    );
+  }
+
   const values = data.map((d) => d.value);
   const max = Math.max(1, ...values);
   const min = Math.min(0, ...values);
   const span = max - min || 1;
 
-  const x = (i: number) => (data.length <= 1 ? 0 : (i / (data.length - 1)) * W);
+  const x = (i: number) => (data.length <= 1 ? W / 2 : (i / (data.length - 1)) * W);
   const y = (v: number) => pad + (1 - (v - min) / span) * (H - pad * 2);
 
   const line = data.map((d, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)} ${y(d.value).toFixed(1)}`).join(' ');
@@ -74,8 +84,8 @@ export function BarList({
   valueFormat?: (v: number) => string;
   showMeta?: 'count' | 'qty' | null;
 }) {
+  if (!data || data.length === 0) return <div className="sx-empty-inline">Aucune donnée sur la période.</div>;
   const max = Math.max(1, ...data.map((d) => d.value));
-  if (data.length === 0) return <div className="sx-empty-inline">Aucune donnée sur la période.</div>;
 
   return (
     <div className="sx-barlist">
@@ -95,6 +105,7 @@ export function BarList({
 
 /** Compact vertical columns for the orders-per-day evolution. */
 export function ColumnChart({ data, color = '#53c29a' }: { data: SeriesPoint[]; color?: string }) {
+  if (!data || data.length === 0) return <div className="sx-empty-inline">Aucune donnée disponible.</div>;
   const max = Math.max(1, ...data.map((d) => d.value));
   return (
     <div className="sx-columns">

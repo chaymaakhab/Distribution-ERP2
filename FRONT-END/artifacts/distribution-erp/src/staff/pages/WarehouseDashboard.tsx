@@ -4,6 +4,7 @@ import {
   AlertTriangle, CheckCircle2, Clock, Plus, Download, ShieldCheck,
   Calendar, Layers, X, Truck, User, Phone, MapPin, Building2,
   Navigation, Search, Filter, MessageSquare, ChevronRight, Check,
+  Upload, Image as ImageIcon,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 
@@ -23,6 +24,7 @@ interface StockItem {
   unit_price: number;
   lot_number?: string;
   expiry_date?: string;
+  image?: string;
 }
 
 export type DriverType = 'depot_to_client' | 'depot_to_depot' | 'pre_seller';
@@ -60,6 +62,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 1249,
     lot_number: 'LOT-2025-019',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 2,
@@ -75,6 +78,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 3840,
     lot_number: 'LOT-2025-004',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 3,
@@ -90,6 +94,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 189.5,
     lot_number: 'LOT-2024-890',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 4,
@@ -105,6 +110,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 12.8,
     lot_number: 'LOT-CAB-2025',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 5,
@@ -120,6 +126,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 8950,
     lot_number: 'LOT-GEN-99',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 6,
@@ -135,6 +142,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 15.5,
     lot_number: 'LOT-QUI-2025',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=300&q=80',
   },
 ];
 
@@ -306,6 +314,85 @@ export default function WarehouseDashboard({
   const [formPlate, setFormPlate] = useState('');
   const [formCapacity, setFormCapacity] = useState('3.5 T / 4 Palettes');
 
+  // New Stock Item Modal State
+  const [showAddStockModal, setShowAddStockModal] = useState(false);
+  const [stockSku, setStockSku] = useState('');
+  const [stockName, setStockName] = useState('');
+  const [stockCategory, setStockCategory] = useState('Outillage');
+  const [stockWarehouse, setStockWarehouse] = useState<'Casablanca (DEP-01)' | 'Rabat (DEP-02)'>('Casablanca (DEP-01)');
+  const [stockPhysical, setStockPhysical] = useState<number>(50);
+  const [stockMinThreshold, setStockMinThreshold] = useState<number>(10);
+  const [stockUnit, setStockUnit] = useState('Pièce');
+  const [stockUnitPrice, setStockUnitPrice] = useState<number>(250);
+  const [stockLot, setStockLot] = useState('LOT-2026-001');
+  const [stockExpiry, setStockExpiry] = useState('N/A');
+  const [stockImage, setStockImage] = useState('');
+
+  const PRESET_STOCK_IMAGES = [
+    { label: 'Outillage', url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Pompe/Plomberie', url: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Disque/Matériel', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Câble électrique', url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Énergie', url: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Quincaillerie', url: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=300&q=80' },
+  ];
+
+  function handleStockImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        notify('La photo ne doit pas dépasser 5 Mo.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setStockImage(reader.result);
+          notify('Photo chargée avec succès !');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function handleCreateStockItem(e: React.FormEvent) {
+    e.preventDefault();
+    if (!stockSku.trim() || !stockName.trim()) {
+      notify('Veuillez renseigner le SKU et le nom de l\'article.');
+      return;
+    }
+    const newItem: StockItem = {
+      id: Date.now(),
+      sku: stockSku.trim().toUpperCase(),
+      name: stockName.trim(),
+      category: stockCategory,
+      warehouse: stockWarehouse,
+      physical: Number(stockPhysical) || 0,
+      reserved: 0,
+      available: Number(stockPhysical) || 0,
+      min_threshold: Number(stockMinThreshold) || 5,
+      unit: stockUnit.trim() || 'Pièce',
+      unit_price: Number(stockUnitPrice) || 0,
+      lot_number: stockLot.trim() || 'LOT-2026-N',
+      expiry_date: stockExpiry.trim() || 'N/A',
+      image: stockImage.trim() || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80',
+    };
+
+    setStocks((prev) => [newItem, ...prev]);
+    setShowAddStockModal(false);
+    notify(`Article « ${newItem.name} » (${newItem.sku}) ajouté au stock avec photo !`);
+
+    // Reset
+    setStockSku('');
+    setStockName('');
+    setStockCategory('Outillage');
+    setStockPhysical(50);
+    setStockMinThreshold(10);
+    setStockUnit('Pièce');
+    setStockUnitPrice(250);
+    setStockImage('');
+  }
+
   function notify(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -410,6 +497,14 @@ export default function WarehouseDashboard({
           <p>Supervision des stocks disponibles, réapprovisionnements et gestion des 2 types de livreurs (Clients & Navettes Inter-Dépôts).</p>
         </div>
         <div className="heading-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            className="button-primary"
+            style={{ background: '#10b981', borderColor: '#059669', fontWeight: 600 }}
+            onClick={() => setShowAddStockModal(true)}
+            title="Ajouter un nouvel article au stock avec sa photo"
+          >
+            <Plus size={15} /> + Ajouter article en stock
+          </button>
           <button
             className="button-primary"
             style={{ background: '#0284c7', borderColor: '#0369a1', fontWeight: 600 }}
@@ -596,7 +691,7 @@ export default function WarehouseDashboard({
                 <span className="eyebrow">INVENTAIRE TEMPS RÉEL</span>
                 <h2>Articles en stock ({filteredStocks.length})</h2>
               </div>
-              <div className="table-tools" style={{ padding: 0 }}>
+              <div className="table-tools" style={{ padding: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div className="table-tabs">
                   {(['all', 'Casablanca (DEP-01)', 'Rabat (DEP-02)'] as const).map((dp) => (
                     <button
@@ -608,6 +703,13 @@ export default function WarehouseDashboard({
                     </button>
                   ))}
                 </div>
+                <button
+                  className="button-primary"
+                  onClick={() => setShowAddStockModal(true)}
+                  style={{ height: 32, fontSize: 12, padding: '0 12px', background: '#10b981', borderColor: '#059669', gap: 5 }}
+                >
+                  <Plus size={13} /> + Ajouter article
+                </button>
               </div>
             </div>
 
@@ -616,7 +718,7 @@ export default function WarehouseDashboard({
                 <thead>
                   <tr>
                     <th>RÉFÉRENCE / SKU</th>
-                    <th>DÉSIGNATION ARTICLE</th>
+                    <th>ARTICLE & PHOTO</th>
                     <th>DÉPÔT</th>
                     <th>PHYSIQUE</th>
                     <th>RÉSERVÉ</th>
@@ -631,8 +733,24 @@ export default function WarehouseDashboard({
                     <tr key={s.id}>
                       <td><code className="table-ref">{s.sku}</code></td>
                       <td>
-                        <b className="table-main">{s.name}</b>
-                        <small style={{ display: 'block', color: 'var(--muted)' }}>{s.category} · Lot: {s.lot_number}</small>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <img
+                            src={s.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80'}
+                            alt={s.name}
+                            style={{
+                              width: 38,
+                              height: 38,
+                              borderRadius: 6,
+                              objectFit: 'cover',
+                              border: '1px solid #cbd5e1',
+                              flexShrink: 0,
+                            }}
+                          />
+                          <div>
+                            <b className="table-main">{s.name}</b>
+                            <small style={{ display: 'block', color: 'var(--muted)', fontSize: 11 }}>{s.category} · Lot: {s.lot_number}</small>
+                          </div>
+                        </div>
                       </td>
                       <td><span className="table-secondary">{s.warehouse}</span></td>
                       <td><b>{s.physical}</b> <small>{s.unit}</small></td>
@@ -1768,6 +1886,331 @@ export default function WarehouseDashboard({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Modal Nouvel Article en Stock avec Photo ── */}
+      {showAddStockModal && (
+        <div className="modal-backdrop" onClick={() => setShowAddStockModal(false)}>
+          <form
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={handleCreateStockItem}
+            style={{
+              maxWidth: 620,
+              width: '95%',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            {/* Modal Top */}
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 24px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#10b981', fontWeight: 700, fontSize: 11 }}>
+                  LOGISTIQUE · NOUVEL ARTICLE
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Ajouter un article au stock
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setShowAddStockModal(false)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div
+              style={{
+                padding: '18px 24px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                background: '#ffffff',
+              }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Référence / SKU *
+                  <input
+                    required
+                    value={stockSku}
+                    onChange={(e) => setStockSku(e.target.value)}
+                    placeholder="Ex. PRD-8900"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 600 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Désignation de l'article *
+                  <input
+                    required
+                    value={stockName}
+                    onChange={(e) => setStockName(e.target.value)}
+                    placeholder="Ex. Meuleuse d'angle 125mm"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Catégorie
+                  <select
+                    value={stockCategory}
+                    onChange={(e) => setStockCategory(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  >
+                    <option value="Outillage">Outillage</option>
+                    <option value="Plomberie">Plomberie</option>
+                    <option value="Électricité">Électricité</option>
+                    <option value="Énergie">Énergie</option>
+                    <option value="Quincaillerie">Quincaillerie</option>
+                    <option value="Agroalimentaire">Agroalimentaire</option>
+                    <option value="Autre">Autre</option>
+                  </select>
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Dépôt de stockage
+                  <select
+                    value={stockWarehouse}
+                    onChange={(e) => setStockWarehouse(e.target.value as any)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  >
+                    <option value="Casablanca (DEP-01)">Casablanca (DEP-01)</option>
+                    <option value="Rabat (DEP-02)">Rabat (DEP-02)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Stock physique *
+                  <input
+                    type="number"
+                    min={0}
+                    required
+                    value={stockPhysical}
+                    onChange={(e) => setStockPhysical(Number(e.target.value))}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, textAlign: 'center' }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Seuil min. alerte
+                  <input
+                    type="number"
+                    min={1}
+                    value={stockMinThreshold}
+                    onChange={(e) => setStockMinThreshold(Number(e.target.value))}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, textAlign: 'center' }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Unité
+                  <input
+                    value={stockUnit}
+                    onChange={(e) => setStockUnit(e.target.value)}
+                    placeholder="Pièce, Carton..."
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Prix unitaire HT (DH)
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={stockUnitPrice}
+                    onChange={(e) => setStockUnitPrice(Number(e.target.value))}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, textAlign: 'right', fontWeight: 600 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  N° de Lot
+                  <input
+                    value={stockLot}
+                    onChange={(e) => setStockLot(e.target.value)}
+                    placeholder="LOT-2026-..."
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Date d'expiration
+                  <input
+                    value={stockExpiry}
+                    onChange={(e) => setStockExpiry(e.target.value)}
+                    placeholder="N/A ou date JJ/MM/AAAA"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  />
+                </label>
+              </div>
+
+              {/* Photo du produit (File upload / URL / Presets) */}
+              <div style={{ background: '#f8fafc', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0', marginTop: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <label className="field-label" style={{ color: '#1e293b', fontWeight: 700, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                    <ImageIcon size={15} style={{ color: '#10b981' }} /> Photo de l'article en stock
+                  </label>
+                  <label
+                    style={{
+                      background: '#10b981',
+                      color: '#ffffff',
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      padding: '5px 12px',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Upload size={13} /> Parcourir une photo...
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleStockImageUpload}
+                    />
+                  </label>
+                </div>
+
+                <input
+                  value={stockImage}
+                  onChange={(e) => setStockImage(e.target.value)}
+                  placeholder="Ou collez ici une URL directe d'image (https://...)"
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 12,
+                  }}
+                />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                  <span style={{ fontSize: 11, color: '#64748b' }}>Exemples :</span>
+                  {PRESET_STOCK_IMAGES.map((p) => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => setStockImage(p.url)}
+                      style={{
+                        background: stockImage === p.url ? '#dcfce7' : '#ffffff',
+                        border: `1px solid ${stockImage === p.url ? '#10b981' : '#cbd5e1'}`,
+                        color: stockImage === p.url ? '#059669' : '#475569',
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        fontSize: 11,
+                        cursor: 'pointer',
+                        fontWeight: stockImage === p.url ? 700 : 500,
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {stockImage && (
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12, background: '#ffffff', padding: 8, borderRadius: 6, border: '1px solid #cbd5e1' }}>
+                    <img
+                      src={stockImage}
+                      alt="Aperçu article"
+                      style={{ width: 56, height: 56, borderRadius: 6, objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#16a34a', fontWeight: 700, fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Check size={13} /> Photo prête pour cet article
+                      </div>
+                      <small style={{ color: '#64748b', fontSize: 11 }}>
+                        {stockImage.startsWith('data:') ? 'Fichier image importé depuis le poste' : stockImage.slice(0, 50) + '...'}
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStockImage('')}
+                      style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 24px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setShowAddStockModal(false)}
+                style={{ height: 38, padding: '0 16px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 13 }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  background: '#10b981',
+                  borderColor: '#059669',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <Plus size={16} /> Enregistrer l'article en stock
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

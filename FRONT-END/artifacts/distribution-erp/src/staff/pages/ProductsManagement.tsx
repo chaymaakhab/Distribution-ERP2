@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   Package, Search, Filter, Plus, Download, CheckCircle2,
   Boxes, Edit2, Tag, X, Barcode, Trash2, Check, AlertCircle,
+  Upload, Image as ImageIcon,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 
@@ -170,6 +171,33 @@ export default function ProductsManagement() {
     const random10 = Math.floor(1000000000 + Math.random() * 9000000000);
     setFormBarcode(`611${random10}`);
   }
+
+  function handleImageFileUpload(e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        notify('La taille du fichier ne doit pas dépasser 5 Mo.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setter(reader.result);
+          notify('Photo chargée avec succès !');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  const PRESET_PRODUCT_IMAGES = [
+    { label: 'Outillage', url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Disque/Matériel', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Plomberie', url: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Électricité', url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Énergie', url: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Quincaillerie', url: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=300&q=80' },
+  ];
 
   function openEditModal(prd: ProductItem) {
     setEditingProduct(prd);
@@ -859,35 +887,98 @@ export default function ProductsManagement() {
                 </button>
               </div>
 
-              {/* Photo / Image URL */}
-              <div style={{ marginTop: 14 }}>
-                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
-                  URL de la photo du produit (Optionnel)
-                  <input
-                    value={formImage}
-                    onChange={(e) => setFormImage(e.target.value)}
-                    placeholder="https://images.unsplash.com/... (ou lien photo de l'article)"
+              {/* Photo du produit (Fichier local ou URL) */}
+              <div style={{ marginTop: 14, background: '#f8fafc', padding: '14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <label className="field-label" style={{ color: '#1e293b', fontWeight: 700, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                    <ImageIcon size={15} style={{ color: '#0284c7' }} /> Photo du produit
+                  </label>
+                  <label
                     style={{
-                      width: '100%',
-                      height: 38,
-                      padding: '0 10px',
+                      background: '#0284c7',
+                      color: '#ffffff',
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      padding: '5px 12px',
                       borderRadius: 6,
-                      border: '1px solid #cbd5e1',
-                      background: '#ffffff',
-                      color: '#0f172a',
-                      fontSize: 12,
-                      marginTop: 4,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
                     }}
-                  />
-                </label>
+                  >
+                    <Upload size={13} /> Parcourir un fichier...
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => handleImageFileUpload(e, setFormImage)}
+                    />
+                  </label>
+                </div>
+
+                <input
+                  value={formImage}
+                  onChange={(e) => setFormImage(e.target.value)}
+                  placeholder="Ou collez ici une URL directe d'image (https://...)"
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 12,
+                  }}
+                />
+
+                {/* Preset Suggestions */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                  <span style={{ fontSize: 11, color: '#64748b' }}>Suggestions rapides :</span>
+                  {PRESET_PRODUCT_IMAGES.map((p) => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => setFormImage(p.url)}
+                      style={{
+                        background: formImage === p.url ? '#e0f2fe' : '#ffffff',
+                        border: `1px solid ${formImage === p.url ? '#0284c7' : '#cbd5e1'}`,
+                        color: formImage === p.url ? '#0284c7' : '#475569',
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        fontSize: 11,
+                        cursor: 'pointer',
+                        fontWeight: formImage === p.url ? 700 : 500,
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
                 {formImage && (
-                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12, background: '#ffffff', padding: 8, borderRadius: 6, border: '1px solid #cbd5e1' }}>
                     <img
                       src={formImage}
-                      alt="Aperçu"
-                      style={{ width: 50, height: 50, borderRadius: 6, objectFit: 'cover', border: '1px solid #cbd5e1' }}
+                      alt="Aperçu produit"
+                      style={{ width: 56, height: 56, borderRadius: 6, objectFit: 'cover', border: '1px solid #e2e8f0' }}
                     />
-                    <small style={{ color: '#16a34a', fontWeight: 600, fontSize: 11 }}>Aperçu image chargé</small>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#16a34a', fontWeight: 700, fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Check size={13} /> Photo associée prête
+                      </div>
+                      <small style={{ color: '#64748b', fontSize: 11, display: 'block', wordBreak: 'break-all' }}>
+                        {formImage.startsWith('data:') ? 'Image importée depuis votre ordinateur' : formImage.slice(0, 50) + '...'}
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormImage('')}
+                      style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}
+                    >
+                      Supprimer
+                    </button>
                   </div>
                 )}
               </div>
@@ -1128,15 +1219,65 @@ export default function ProductsManagement() {
                     style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
                   />
                 </label>
-                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
-                  URL photo du produit
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12, margin: 0 }}>
+                      Photo du produit
+                    </label>
+                    <label
+                      style={{
+                        background: '#0284c7',
+                        color: '#ffffff',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        padding: '4px 10px',
+                        borderRadius: 5,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                      }}
+                    >
+                      <Upload size={12} /> Parcourir...
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleImageFileUpload(e, setEditImage)}
+                      />
+                    </label>
+                  </div>
                   <input
                     value={editImage}
                     onChange={(e) => setEditImage(e.target.value)}
-                    placeholder="https://..."
+                    placeholder="URL d'image ou fichier..."
                     style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
                   />
-                </label>
+                </div>
+              </div>
+
+              {/* Edit Image Presets & Preview */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, color: '#64748b' }}>Suggestions :</span>
+                {PRESET_PRODUCT_IMAGES.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => setEditImage(p.url)}
+                    style={{
+                      background: editImage === p.url ? '#e0f2fe' : '#ffffff',
+                      border: `1px solid ${editImage === p.url ? '#0284c7' : '#cbd5e1'}`,
+                      color: editImage === p.url ? '#0284c7' : '#475569',
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                      fontSize: 11,
+                      cursor: 'pointer',
+                      fontWeight: editImage === p.url ? 700 : 500,
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                ))}
               </div>
 
               {editImage && (
@@ -1144,9 +1285,21 @@ export default function ProductsManagement() {
                   <img
                     src={editImage}
                     alt="Aperçu"
-                    style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover' }}
+                    style={{ width: 48, height: 48, borderRadius: 6, objectFit: 'cover', border: '1px solid #cbd5e1' }}
                   />
-                  <small style={{ color: '#64748b', fontSize: 11 }}>Aperçu de la photo de l'article</small>
+                  <div style={{ flex: 1 }}>
+                    <small style={{ color: '#16a34a', fontWeight: 600, fontSize: 11, display: 'block' }}>Photo actuelle chargée</small>
+                    <small style={{ color: '#64748b', fontSize: 10.5 }}>
+                      {editImage.startsWith('data:') ? 'Image importée depuis votre appareil' : editImage.slice(0, 45) + '...'}
+                    </small>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditImage('')}
+                    style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}
+                  >
+                    Supprimer
+                  </button>
                 </div>
               )}
             </div>

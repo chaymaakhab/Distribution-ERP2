@@ -200,20 +200,25 @@ export default function UsersManagement() {
     api.getUsers()
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          const mapped: StaffUserItem[] = data.map((u: any) => ({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            phone: u.phone || '+212 522 00 00 00',
-            password: 'password',
-            roles: Array.isArray(u.roles) ? u.roles.map((r: any) => r.code || r) : [u.role || 'commercial'],
-            primary_role: u.primary_role || 'commercial',
-            permissions: u.permissions || (DEFAULT_ROLE_PERMS as any)[u.primary_role || 'commercial'] || [],
-            is_active: u.is_active ?? true,
-            warehouse_id: u.warehouse?.id ?? 1,
-            warehouse_name: u.warehouse?.name ?? 'Casablanca Central',
-            created_at: u.created_at || '01/10/2026',
-          }));
+          const mapped: StaffUserItem[] = data.map((u: any) => {
+            const pRole = u.primary_role || (Array.isArray(u.roles) && u.roles[0]?.code) || 'commercial';
+            const roleObj = AVAILABLE_ROLES.find((r) => r.code === pRole);
+            return {
+              id: u.id,
+              name: u.name,
+              email: u.email || 'user@hercules-erp.ma',
+              phone: u.phone || '+212 522 00 00 00',
+              roles: Array.isArray(u.roles) ? u.roles.map((r: any) => r.code || r) : [pRole],
+              primary_role: pRole,
+              role_label: roleObj?.label || pRole,
+              role_labels: [roleObj?.label || pRole],
+              custom_permissions: u.permissions || (DEFAULT_ROLE_PERMS as any)[pRole] || [],
+              warehouse_name: u.warehouse?.name ?? 'Casablanca Central',
+              is_active: u.is_active ?? true,
+              last_login: 'Récent',
+            };
+          });
+
           setUsers(mapped);
           saveStoredStaffUsers(mapped);
         }

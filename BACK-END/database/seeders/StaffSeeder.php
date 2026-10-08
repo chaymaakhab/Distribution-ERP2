@@ -36,6 +36,7 @@ class StaffSeeder extends Seeder
             ['commercial', 'Youssef Bennani', 'commercial@hercules-erp.ma', null],
             ['preparation', 'Karim Ouazzani', 'preparation@hercules-erp.ma', $casa?->id],
             ['delivery', 'Mehdi Lahlou', 'livreur@hercules-erp.ma', $casa?->id],
+            ['pre_seller', 'Hamid El Meskini (Livreur-pré-vendeur)', 'prevendeur@hercules-erp.ma', $casa?->id],
             ['accounting', 'Sofia Cherkaoui', 'compta@hercules-erp.ma', null],
         ];
 
@@ -62,6 +63,9 @@ class StaffSeeder extends Seeder
         // A multi-role demo user: Commercial + Livreur.
         $commercial = Role::where('code', 'commercial')->first();
         $delivery = Role::where('code', 'delivery')->first();
+        $warehouseRole = Role::where('code', 'warehouse')->first();
+        $prepRole = Role::where('code', 'preparation')->first();
+
         $multi = User::updateOrCreate(
             ['email' => 'terrain@hercules-erp.ma'],
             [
@@ -77,6 +81,23 @@ class StaffSeeder extends Seeder
             $delivery->id => ['is_primary' => false],
         ]);
 
-        $this->command?->info('Staff seeded. Logins: superadmin@/admin@/depot@/commercial@/preparation@/livreur@/compta@/terrain@ hercules-erp.ma — password: "password"');
+        // Responsable dépôt + Préparateur + Livreur polyvalent
+        $polyvalent = User::updateOrCreate(
+            ['email' => 'polyvalent@hercules-erp.ma'],
+            [
+                'name' => 'Tariq Polyvalent (Dépôt + Prépa + Livreur)',
+                'password' => Hash::make('password'),
+                'is_active' => true,
+                'locale' => 'fr',
+                'warehouse_id' => $casa?->id,
+            ]
+        );
+        $polyvalent->roles()->sync([
+            $warehouseRole->id => ['is_primary' => true],
+            $prepRole->id => ['is_primary' => false],
+            $delivery->id => ['is_primary' => false],
+        ]);
+
+        $this->command?->info('Staff seeded. Logins: superadmin@/admin@/depot@/commercial@/preparation@/livreur@/prevendeur@/compta@/terrain@/polyvalent@ hercules-erp.ma — password: "password"');
     }
 }

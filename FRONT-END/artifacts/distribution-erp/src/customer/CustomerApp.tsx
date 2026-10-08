@@ -2,10 +2,11 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, Route, Switch, useLocation } from 'wouter';
 import {
   ShoppingCart, Home as HomeIcon, LayoutGrid, Package, Receipt, User as UserIcon,
-  LogOut, Menu, X, Search, Bell, ChevronRight, Store, Sun, Moon, LogIn,
+  LogOut, Menu, X, Search, Bell, ChevronRight, Store, Sun, Moon, LogIn, Languages,
 } from 'lucide-react';
 import { useTheme } from '../lib/theme';
 import { CartProvider, useCart } from './cart';
+import { I18nProvider, useI18n } from './i18n';
 import { api, clearSession, getStoredUser, getToken, type CustomerUser } from './api';
 import CustomerLogin from './pages/Login';
 import Home from './pages/Home';
@@ -18,19 +19,13 @@ import Invoices from './pages/Invoices';
 import Profile from './pages/Profile';
 import './customer.css';
 
-const NAV = [
-  { href: '/customer/home', label: 'Accueil', icon: HomeIcon },
-  { href: '/customer/catalog', label: 'Catalogue', icon: LayoutGrid },
-  { href: '/customer/orders', label: 'Mes commandes', icon: Package },
-  { href: '/customer/invoices', label: 'Factures & solde', icon: Receipt },
-  { href: '/customer/profile', label: 'Profil', icon: UserIcon },
-];
-
 export default function CustomerApp() {
   return (
-    <CartProvider>
-      <CustomerRoot />
-    </CartProvider>
+    <I18nProvider>
+      <CartProvider>
+        <CustomerRoot />
+      </CartProvider>
+    </I18nProvider>
   );
 }
 
@@ -82,6 +77,15 @@ function CustomerShell({ user, onLogout, onUpdated }: { user: CustomerUser; onLo
   const [mobileNav, setMobileNav] = useState(false);
   const { count } = useCart();
   const { theme, toggleTheme, isLight } = useTheme();
+  const { lang, setLang, t, isAr } = useI18n();
+
+  const navItems = [
+    { href: '/customer/home', label: t('nav.home'), icon: HomeIcon },
+    { href: '/customer/catalog', label: t('nav.catalog'), icon: LayoutGrid },
+    { href: '/customer/orders', label: t('nav.orders'), icon: Package },
+    { href: '/customer/invoices', label: t('nav.invoices'), icon: Receipt },
+    { href: '/customer/profile', label: t('nav.profile'), icon: UserIcon },
+  ];
 
   async function handleLogout() {
     try {
@@ -104,12 +108,12 @@ function CustomerShell({ user, onLogout, onUpdated }: { user: CustomerUser; onLo
           <span className="cx-brand-mark"><Store size={16} /></span>
           <span className="cx-brand-copy">
             <b>GESTION ERP</b>
-            <small>Espace client · {user.company || user.name}</small>
+            <small>{t('nav.space_client')} · {user.company || user.name}</small>
           </span>
         </Link>
 
         <nav className="cx-topnav">
-          {NAV.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = location === item.href || location.startsWith(item.href + '/');
             return (
@@ -121,6 +125,25 @@ function CustomerShell({ user, onLogout, onUpdated }: { user: CustomerUser; onLo
         </nav>
 
         <div className="cx-top-actions">
+          {/* FR / AR Language Selector */}
+          <div className="cx-lang-switcher" title="Changer de langue / تغيير اللغة">
+            <button
+              type="button"
+              className={`cx-lang-btn ${lang === 'fr' ? 'active' : ''}`}
+              onClick={() => setLang('fr')}
+            >
+              FR
+            </button>
+            <span className="cx-lang-sep">|</span>
+            <button
+              type="button"
+              className={`cx-lang-btn ${lang === 'ar' ? 'active' : ''}`}
+              onClick={() => setLang('ar')}
+            >
+              العربية
+            </button>
+          </div>
+
           <button
             className="cx-icon-btn"
             onClick={toggleTheme}
@@ -137,13 +160,13 @@ function CustomerShell({ user, onLogout, onUpdated }: { user: CustomerUser; onLo
             <span className="cx-avatar">{initials(user.name)}</span>
             <span className="cx-user-meta">
               <b>{user.name}</b>
-              <small>Tarif {user.price_tier}</small>
+              <small>{t('nav.tier')} {user.price_tier}</small>
             </span>
           </div>
           <Link href="/login" className="cx-icon-btn" title="Changer de rôle / Portail ERP" aria-label="Portail ERP">
             <LogIn size={17} />
           </Link>
-          <button className="cx-icon-btn" onClick={handleLogout} title="Se déconnecter" aria-label="Se déconnecter">
+          <button className="cx-icon-btn" onClick={handleLogout} title={t('nav.logout')} aria-label="Se déconnecter">
             <LogOut size={18} />
           </button>
         </div>
@@ -160,8 +183,30 @@ function CustomerShell({ user, onLogout, onUpdated }: { user: CustomerUser; onLo
               </div>
               <button className="cx-icon-btn" onClick={() => setMobileNav(false)} aria-label="Fermer"><X size={18} /></button>
             </div>
+
+            {/* Mobile Language Switcher */}
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0 10px' }}>
+              <div className="cx-lang-switcher">
+                <button
+                  type="button"
+                  className={`cx-lang-btn ${lang === 'fr' ? 'active' : ''}`}
+                  onClick={() => setLang('fr')}
+                >
+                  Français (FR)
+                </button>
+                <span className="cx-lang-sep">|</span>
+                <button
+                  type="button"
+                  className={`cx-lang-btn ${lang === 'ar' ? 'active' : ''}`}
+                  onClick={() => setLang('ar')}
+                >
+                  العربية (AR)
+                </button>
+              </div>
+            </div>
+
             <nav className="cx-drawer-nav">
-              {NAV.map((item) => {
+              {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link key={item.href} href={item.href} onClick={() => setMobileNav(false)} className="cx-drawer-link">
@@ -170,10 +215,10 @@ function CustomerShell({ user, onLogout, onUpdated }: { user: CustomerUser; onLo
                 );
               })}
               <Link href="/customer/cart" onClick={() => setMobileNav(false)} className="cx-drawer-link">
-                <ShoppingCart size={17} /> Panier {count > 0 && <span className="cx-pill">{count}</span>}
+                <ShoppingCart size={17} /> {t('nav.cart')} {count > 0 && <span className="cx-pill">{count}</span>}
               </Link>
             </nav>
-            <button className="cx-drawer-logout" onClick={handleLogout}><LogOut size={16} /> Se déconnecter</button>
+            <button className="cx-drawer-logout" onClick={handleLogout}><LogOut size={16} /> {t('nav.logout')}</button>
           </aside>
         </div>
       )}

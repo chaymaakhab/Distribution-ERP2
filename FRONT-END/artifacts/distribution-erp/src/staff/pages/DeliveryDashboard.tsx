@@ -4,6 +4,7 @@ import {
   Truck, MapPin, Phone, MessageSquare, CheckCircle2, AlertTriangle,
   Clock, DollarSign, Camera, FileCheck2, ShieldCheck, ChevronRight,
   User, RefreshCw, XCircle, PenTool, X, FileText, Printer, Undo2,
+  Plus, ShoppingBag, Store, Check,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 import DeliverySlipDocumentModal, { type BLLineItem } from '../components/DeliverySlipDocumentModal';
@@ -89,6 +90,70 @@ const STOP_LINES: Record<string, BLLineItem[]> = {
   ],
 };
 
+const VAN_INVENTORY = [
+  {
+    sku: 'HRC-0850',
+    name: 'Perceuse à percussion 850W',
+    unit: 'Carton 4 pcs',
+    price_ht: 1040.83,
+    vat_rate: 20,
+    van_stock: 12,
+    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    sku: 'CUT-230D',
+    name: 'Disque diamant 230 mm',
+    unit: 'Boîte 10 pcs',
+    price_ht: 157.92,
+    vat_rate: 20,
+    van_stock: 35,
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    sku: 'CAB-3G25',
+    name: 'Câble électrique 3G2.5',
+    unit: 'Couronne 100m',
+    price_ht: 1067.0,
+    vat_rate: 20,
+    van_stock: 8,
+    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    sku: 'PMP-15HP',
+    name: 'Pompe immergée 1.5 HP',
+    unit: 'Pièce',
+    price_ht: 3368.42,
+    vat_rate: 14,
+    van_stock: 4,
+    image: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    sku: 'CHA-100I',
+    name: 'Charnière inox 100 mm',
+    unit: 'Lot 6 pcs',
+    price_ht: 77.52,
+    vat_rate: 20,
+    van_stock: 20,
+    image: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    sku: 'GEN-5000',
+    name: 'Groupe électrogène 5 kVA',
+    unit: 'Pièce',
+    price_ht: 7458.33,
+    vat_rate: 20,
+    van_stock: 2,
+    image: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=300&q=80',
+  },
+];
+
+const HANOUT_CLIENTS = [
+  { name: 'Droguerie Al Amal', owner: 'Si Mohamed', phone: '+212 661 22 33 44', address: 'Derb Omar N° 14', city: 'Casablanca' },
+  { name: 'Quincaillerie Nassim', owner: 'Si Rachid', phone: '+212 663 44 55 66', address: 'Bd Al Qods N° 82', city: 'Casablanca' },
+  { name: 'Épicerie & Droguerie El Wafae', owner: 'Si Hassan', phone: '+212 662 11 99 88', address: 'Hay Mohammadi Rue 12', city: 'Casablanca' },
+  { name: 'Magasin Bricolage Benali', owner: 'Si Aziz', phone: '+212 665 77 88 99', address: 'Sidi Bernoussi Lot 4', city: 'Casablanca' },
+];
+
 export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segment: string) => void } = {}) {
   const [, setLocation] = useLocation();
   const [stops, setStops] = useState<DeliveryStop[]>(INITIAL_STOPS);
@@ -101,6 +166,24 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
   const [closingModal, setClosingModal] = useState(false);
   const [cashSubmitted, setCashSubmitted] = useState<number>(75000);
   const [toast, setToast] = useState<string | null>(null);
+  const [stopFilter, setStopFilter] = useState<'all' | 'pending' | 'in_route' | 'delivered' | 'van_sales' | 'issues'>('all');
+
+  // Pre-seller / Van Sales state
+  const [showVanSaleModal, setShowVanSaleModal] = useState(false);
+  const [vanClientMode, setVanClientMode] = useState<'existing' | 'new'>('existing');
+  const [selectedHanout, setSelectedHanout] = useState(HANOUT_CLIENTS[0].name);
+  const [newHanoutName, setNewHanoutName] = useState('');
+  const [newHanoutOwner, setNewHanoutOwner] = useState('');
+  const [newHanoutPhone, setNewHanoutPhone] = useState('');
+  const [newHanoutAddress, setNewHanoutAddress] = useState('');
+  const [vanSaleType, setVanSaleType] = useState<'immediate' | 'preorder'>('immediate');
+  const [vanPayMethod, setVanPayMethod] = useState<'especes' | 'cheque'>('especes');
+  const [vanChequeNum, setVanChequeNum] = useState('');
+  const [vanChequeBank, setVanChequeBank] = useState('Attijariwafa Bank');
+  const [vanLines, setVanLines] = useState<Array<{ sku: string; qty: number }>>([
+    { sku: 'HRC-0850', qty: 1 },
+    { sku: 'CUT-230D', qty: 2 },
+  ]);
 
   // Signature canvas
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -245,36 +328,252 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
     setHasSigned(false);
   }
 
-  // Cash calculations
+  // Van sales helpers
+  function handleAddVanLine(sku: string) {
+    const existing = vanLines.find((l) => l.sku === sku);
+    if (existing) {
+      setVanLines((prev) => prev.map((l) => (l.sku === sku ? { ...l, qty: l.qty + 1 } : l)));
+    } else {
+      setVanLines((prev) => [...prev, { sku, qty: 1 }]);
+    }
+  }
+
+  function handleRemoveVanLine(sku: string) {
+    setVanLines((prev) => prev.filter((l) => l.sku !== sku));
+  }
+
+  function handleUpdateVanLineQty(sku: string, qty: number) {
+    if (qty <= 0) {
+      handleRemoveVanLine(sku);
+      return;
+    }
+    setVanLines((prev) => prev.map((l) => (l.sku === sku ? { ...l, qty } : l)));
+  }
+
+  // Calculate totals for van sales
+  const vanLinesDetailed = vanLines.map((vl) => {
+    const item = VAN_INVENTORY.find((p) => p.sku === vl.sku) || VAN_INVENTORY[0];
+    const totalHt = item.price_ht * vl.qty;
+    const totalVat = totalHt * (item.vat_rate / 100);
+    const totalTtc = totalHt + totalVat;
+    return { ...vl, item, totalHt, totalVat, totalTtc };
+  });
+
+  const vanTotalHt = vanLinesDetailed.reduce((acc, l) => acc + l.totalHt, 0);
+  const vanTotalVat = vanLinesDetailed.reduce((acc, l) => acc + l.totalVat, 0);
+  const vanTotalTtc = vanLinesDetailed.reduce((acc, l) => acc + l.totalTtc, 0);
+
+  function handleSaveVanSale(e: React.FormEvent) {
+    e.preventDefault();
+    if (vanLines.length === 0) {
+      alert('Veuillez sélectionner au moins un article dans le camion.');
+      return;
+    }
+
+    const clientName = vanClientMode === 'existing'
+      ? selectedHanout
+      : (newHanoutName.trim() || 'Droguerie Hanout Direct');
+    const clientPhone = vanClientMode === 'existing'
+      ? (HANOUT_CLIENTS.find((h) => h.name === selectedHanout)?.phone || '+212 661 00 00 00')
+      : (newHanoutPhone.trim() || '+212 661 00 00 00');
+    const clientAddress = vanClientMode === 'existing'
+      ? (HANOUT_CLIENTS.find((h) => h.name === selectedHanout)?.address || 'Quartier commerçant')
+      : (newHanoutAddress.trim() || 'Boutique de proximité');
+    const receiver = vanClientMode === 'existing'
+      ? (HANOUT_CLIENTS.find((h) => h.name === selectedHanout)?.owner || 'Gérant')
+      : (newHanoutOwner.trim() || 'Gérant du Hanout');
+
+    const newRef = `CMD-VAN-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const newBLLines: BLLineItem[] = vanLinesDetailed.map((vl) => ({
+      sku: vl.sku,
+      name: vl.item.name,
+      qty_ordered: vl.qty,
+      qty_delivered: vl.qty,
+      unit: vl.item.unit,
+    }));
+
+    STOP_LINES[newRef] = newBLLines;
+
+    const newStop: DeliveryStop = {
+      id: Date.now(),
+      order_ref: newRef,
+      client: clientName,
+      address: clientAddress,
+      city: 'Casablanca',
+      phone: clientPhone,
+      whatsapp: clientPhone.replace(/[^0-9]/g, ''),
+      amount_to_collect: vanTotalTtc,
+      client_note: vanSaleType === 'immediate'
+        ? 'Vente directe au camion (Van Sales) — Encaissé au comptoir'
+        : 'Prise de commande pré-vendeur — À préparer pour prochaine tournée',
+      status: vanSaleType === 'immediate' ? 'delivered' : 'pending',
+      paid_amount: vanSaleType === 'immediate' ? vanTotalTtc : undefined,
+      payment_method: vanSaleType === 'immediate' ? vanPayMethod : undefined,
+      cheque_number: vanPayMethod === 'cheque' ? vanChequeNum : undefined,
+      cheque_bank: vanPayMethod === 'cheque' ? vanChequeBank : undefined,
+      receiver_name: receiver,
+      signature: vanSaleType === 'immediate' ? 'Signature électronique (Validé)' : undefined,
+    };
+
+    setStops((prev) => [newStop, ...prev]);
+    setShowVanSaleModal(false);
+
+    if (vanSaleType === 'immediate') {
+      notify(`Vente directe au camion enregistrée pour ${clientName} (${formatMoney(vanTotalTtc)} DH) !`);
+      setActiveBlStop(newStop);
+    } else {
+      notify(`Prise de commande ${newRef} enregistrée pour ${clientName} (${formatMoney(vanTotalTtc)} DH) !`);
+    }
+
+    setNewHanoutName('');
+    setNewHanoutOwner('');
+    setNewHanoutPhone('');
+    setNewHanoutAddress('');
+    setVanLines([
+      { sku: 'HRC-0850', qty: 1 },
+      { sku: 'CUT-230D', qty: 2 },
+    ]);
+  }
+
+  // Cash calculations & Visualizations
+  const deliveredCount = stops.filter((s) => s.status === 'delivered').length;
+  const deliveryPct = stops.length > 0 ? Math.round((deliveredCount / stops.length) * 100) : 0;
+  const totalTourAmount = stops.reduce((acc, s) => acc + s.amount_to_collect, 0);
   const totalExpectedCash = stops
     .filter((s) => s.status === 'delivered')
     .reduce((acc, s) => acc + (s.paid_amount || 0), 0);
   const diffCash = cashSubmitted - totalExpectedCash;
+  const cashPct = totalTourAmount > 0 ? Math.min(100, Math.round((totalExpectedCash / totalTourAmount) * 100)) : 0;
+  const totalVanStockUnits = VAN_INVENTORY.reduce((acc, p) => acc + p.van_stock, 0);
+
+  // Filtered stops
+  const filteredStops = stops.filter((s) => {
+    if (stopFilter === 'all') return true;
+    if (stopFilter === 'pending') return s.status === 'pending';
+    if (stopFilter === 'in_route') return s.status === 'in_route' || s.status === 'arrived';
+    if (stopFilter === 'delivered') return s.status === 'delivered';
+    if (stopFilter === 'van_sales') return s.order_ref.startsWith('CMD-VAN');
+    if (stopFilter === 'issues') return s.status === 'absent' || s.status === 'refused' || s.status === 'partially_delivered';
+    return true;
+  });
 
   return (
     <div className="dashboard-page delivery-workspace">
       {/* Header */}
       <div className="page-heading dash-heading">
         <div>
-          <span className="eyebrow">APPLICATION LIVREUR (MOBILE-FIRST) <span className="eyebrow-sep">/</span> TOURNÉE DU JOUR</span>
+          <span className="eyebrow">APPLICATION LIVREUR & PRÉ-VENDEUR <span className="eyebrow-sep">/</span> TOURNÉE DE DISTRIBUTION DU JOUR</span>
           <h1>Tournée N° TRN-2026-08<span className="title-period">.</span></h1>
-          <p>Chauffeur: Mehdi Lahlou · Véhicule: Renault Master 23-A-54321 · Dépôt Casablanca.</p>
+          <p>Chauffeur & Pré-vendeur: Mehdi Lahlou · Véhicule: Renault Master 23-A-54321 · Dépôt Casablanca.</p>
         </div>
-        <div className="heading-actions">
+        <div className="heading-actions" style={{ flexWrap: 'wrap', gap: 8 }}>
+          <button
+            className="button-primary"
+            style={{ background: '#0284c7', borderColor: '#0369a1', fontWeight: 700 }}
+            onClick={() => setShowVanSaleModal(true)}
+            title="Livreur pré-vendeur : Ajouter une commande ou vente directe au camion"
+          >
+            <Plus size={16} /> Nouvelle Vente / Commande Terrain (Van Sales)
+          </button>
           <button
             className="button-secondary"
             onClick={() => (onNavigate ? onNavigate('returns') : setLocation('/delivery/returns'))}
             title="Consulter le registre des retours marchandises"
           >
-            <Undo2 size={15} /> Registre des Retours
+            <Undo2 size={15} /> Registre Retours
           </button>
           <button
-            className="button-primary"
-            style={{ background: '#0284c7', borderColor: '#0369a1' }}
+            className="button-secondary"
+            style={{ borderColor: '#22c55e', color: '#22c55e' }}
             onClick={() => setClosingModal(true)}
           >
-            <ShieldCheck size={16} /> Clôture de caisse livreur
+            <ShieldCheck size={16} /> Clôture caisse
           </button>
+        </div>
+      </div>
+
+      {/* Visual Progression Bars & Van Overview */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12, marginBottom: 16 }}>
+        {/* Route Progression Card */}
+        <div style={{ background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: 10, padding: '14px 18px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)' }}>
+              Progression de la tournée
+            </span>
+            <b style={{ fontSize: 13, color: '#38bdf8' }}>{deliveredCount} / {stops.length} arrêts ({deliveryPct}%)</b>
+          </div>
+          <div style={{ height: 8, background: 'rgba(56,189,248,0.15)', borderRadius: 4, overflow: 'hidden' }}>
+            <div
+              style={{
+                width: `${deliveryPct}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #0284c7, #38bdf8)',
+                borderRadius: 4,
+                transition: 'width 0.4s ease',
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--muted)', marginTop: 6 }}>
+            <span>{stops.filter((s) => s.status !== 'delivered').length} arrêt(s) restant(s)</span>
+            <span>Objectif 100% fin de journée</span>
+          </div>
+        </div>
+
+        {/* Financial Collection Meter */}
+        <div style={{ background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: 10, padding: '14px 18px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)' }}>
+              Encaissements perçus
+            </span>
+            <b style={{ fontSize: 13, color: '#22c55e' }}>{formatMoney(totalExpectedCash)} / {formatMoney(totalTourAmount)} DH ({cashPct}%)</b>
+          </div>
+          <div style={{ height: 8, background: 'rgba(34,197,94,0.15)', borderRadius: 4, overflow: 'hidden' }}>
+            <div
+              style={{
+                width: `${cashPct}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #16a34a, #22c55e)',
+                borderRadius: 4,
+                transition: 'width 0.4s ease',
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--muted)', marginTop: 6 }}>
+            <span>Reste à percevoir: {formatMoney(Math.max(0, totalTourAmount - totalExpectedCash))} DH</span>
+            <span>Espèces & Chèques certifiés</span>
+          </div>
+        </div>
+
+        {/* Van Stock Status */}
+        <div style={{ background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: 10, padding: '14px 18px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)' }}>
+              Stock embarqué Camion (Van)
+            </span>
+            <b style={{ fontSize: 13, color: '#f59e0b' }}>{totalVanStockUnits} unités · 6 réf.</b>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+            {VAN_INVENTORY.slice(0, 4).map((p) => (
+              <span
+                key={p.sku}
+                style={{
+                  fontSize: 10.5,
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid var(--line)',
+                  color: 'var(--text-soft)',
+                }}
+              >
+                {p.sku}: {p.van_stock} un.
+              </span>
+            ))}
+            <span style={{ fontSize: 10.5, padding: '2px 6px', color: '#38bdf8' }}>+2 autres</span>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 6 }}>
+            Prêt pour vente directe au comptoir chez l'épicier / quincaillier.
+          </div>
         </div>
       </div>
 
@@ -288,7 +587,7 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
             </div>
           </div>
           <div className="metric-number">
-            {stops.filter((s) => s.status === 'delivered').length} / {stops.length} <small>arrêts</small>
+            {deliveredCount} / {stops.length} <small>arrêts</small>
           </div>
           <div className="metric-foot">
             <span>Reste à livrer : {stops.filter((s) => s.status !== 'delivered').length}</span>
@@ -304,7 +603,7 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
           </div>
           <div className="metric-number">{formatMoney(totalExpectedCash)} <small>DH</small></div>
           <div className="metric-foot">
-            <span className="metric-change change-up">Attendu du jour</span>
+            <span className="metric-change change-up">{cashPct}% du total tournée</span>
           </div>
         </div>
 
@@ -316,16 +615,16 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
             </div>
           </div>
           <div className="metric-number" style={{ fontSize: '18px' }}>
-            {stops.find((s) => s.status === 'in_route' || s.status === 'arrived')?.client || 'En attente'}
+            {stops.find((s) => s.status === 'in_route' || s.status === 'arrived')?.client || 'Tous arrêts terminés'}
           </div>
           <div className="metric-foot">
-            <span>Arrêt 2 sur 3</span>
+            <span>Client en cours</span>
           </div>
         </div>
 
         <div className="metric-card metric-cyan">
           <div className="metric-top">
-            <span>Preuves POD Enregistrées</span>
+            <span>Preuves POD Signées</span>
             <div className="metric-icon" style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4' }}>
               <FileCheck2 size={16} />
             </div>
@@ -334,22 +633,54 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
             {stops.filter((s) => s.signature).length} <small>signatures</small>
           </div>
           <div className="metric-foot">
-            <span>Horodatage et géolocalisation</span>
+            <span>Horodatage et preuve de livraison</span>
           </div>
         </div>
       </div>
 
-      {/* Ordered Stops List */}
+      {/* Ordered Stops List with Interactive Filter Tabs */}
       <section className="panel list-panel" style={{ marginTop: '16px' }}>
         <div className="list-panel-heading">
           <div>
-            <span className="eyebrow">FEUILLE DE ROUTE ORDONNÉE</span>
-            <h2>Arrêts de la tournée ({stops.length} clients)</h2>
+            <span className="eyebrow">FEUILLE DE ROUTE & COMMANDES TERRAIN</span>
+            <h2>Arrêts et Ventes au Camion ({filteredStops.length} sur {stops.length})</h2>
           </div>
+          <button
+            className="button-primary"
+            style={{ fontSize: 12, height: 32, background: '#0284c7', borderColor: '#0369a1' }}
+            onClick={() => setShowVanSaleModal(true)}
+          >
+            <Plus size={14} /> + Vente / Commande Terrain
+          </button>
+        </div>
+
+        {/* Filter tabs */}
+        <div style={{ display: 'flex', gap: 6, padding: '10px 16px', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
+          {[
+            { key: 'all', label: `Tous les arrêts (${stops.length})` },
+            { key: 'in_route', label: `En cours / En route (${stops.filter((s) => s.status === 'in_route' || s.status === 'arrived').length})` },
+            { key: 'delivered', label: `Livrés & Encaissés (${deliveredCount})` },
+            { key: 'van_sales', label: `Ventes directes Camion (${stops.filter((s) => s.order_ref.startsWith('CMD-VAN')).length})` },
+            { key: 'issues', label: `Retours & Absences (${stops.filter((s) => s.status === 'absent' || s.status === 'refused' || s.status === 'partially_delivered').length})` },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              className={`table-tab ${stopFilter === tab.key ? 'active-tab' : ''}`}
+              onClick={() => setStopFilter(tab.key as any)}
+              style={{ fontSize: 12 }}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '16px' }}>
-          {stops.map((stop, idx) => (
+          {filteredStops.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--muted)' }}>
+              Aucun arrêt dans cette catégorie.
+            </div>
+          ) : (
+            filteredStops.map((stop, idx) => (
             <div
               key={stop.id}
               style={{
@@ -478,7 +809,8 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
                 </div>
               </div>
             </div>
-          ))}
+          ))
+        )}
         </div>
       </section>
 
@@ -822,6 +1154,399 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
                 style={{ background: '#f59e0b', borderColor: '#d97706' }}
               >
                 <Undo2 size={14} /> Confirmer le retour marchandise
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ── Modal Vente Directe / Commande Hanout (Livreur-Pré-vendeur) ── */}
+      {showVanSaleModal && (
+        <div className="modal-backdrop" onClick={() => setShowVanSaleModal(false)}>
+          <form
+            className="record-modal"
+            onSubmit={handleSaveVanSale}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 680,
+              width: '95%',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            {/* Header */}
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  LIVREUR-PRÉ-VENDEUR (VAN SALES) · VENTE DIRECTE AU CAMION
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Prise de Commande & Vente Directe au Camion
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setShowVanSaleModal(false)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div style={{ padding: '18px 22px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Type of operation */}
+              <div style={{ background: '#f0f9ff', padding: 12, borderRadius: 8, border: '1px solid #bae6fd' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#0369a1', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+                  Type d'opération terrain :
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 12px',
+                      borderRadius: 6,
+                      background: vanSaleType === 'immediate' ? '#0284c7' : '#ffffff',
+                      color: vanSaleType === 'immediate' ? '#ffffff' : '#0f172a',
+                      cursor: 'pointer',
+                      border: '1px solid #cbd5e1',
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="vanSaleType"
+                      checked={vanSaleType === 'immediate'}
+                      onChange={() => setVanSaleType('immediate')}
+                      style={{ accentColor: '#ffffff' }}
+                    />
+                    Vente directe immédiate (Emporté & Encaissé)
+                  </label>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '8px 12px',
+                      borderRadius: 6,
+                      background: vanSaleType === 'preorder' ? '#0284c7' : '#ffffff',
+                      color: vanSaleType === 'preorder' ? '#ffffff' : '#0f172a',
+                      cursor: 'pointer',
+                      border: '1px solid #cbd5e1',
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="vanSaleType"
+                      checked={vanSaleType === 'preorder'}
+                      onChange={() => setVanSaleType('preorder')}
+                      style={{ accentColor: '#ffffff' }}
+                    />
+                    Prise de commande (À livrer prochainement)
+                  </label>
+                </div>
+              </div>
+
+              {/* Client selection: existing vs new */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>Client / Commerce de proximité :</span>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      type="button"
+                      onClick={() => setVanClientMode('existing')}
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: 11,
+                        borderRadius: 4,
+                        border: '1px solid #cbd5e1',
+                        background: vanClientMode === 'existing' ? '#0f172a' : '#f8fafc',
+                        color: vanClientMode === 'existing' ? '#ffffff' : '#475569',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Client existant
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVanClientMode('new')}
+                      style={{
+                        padding: '3px 8px',
+                        fontSize: 11,
+                        borderRadius: 4,
+                        border: '1px solid #cbd5e1',
+                        background: vanClientMode === 'new' ? '#0f172a' : '#f8fafc',
+                        color: vanClientMode === 'new' ? '#ffffff' : '#475569',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      + Nouveau Point de Vente
+                    </button>
+                  </div>
+                </div>
+
+                {vanClientMode === 'existing' ? (
+                  <select
+                    value={selectedHanout}
+                    onChange={(e) => setSelectedHanout(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  >
+                    {HANOUT_CLIENTS.map((h) => (
+                      <option key={h.name} value={h.name}>
+                        {h.name} · {h.owner} ({h.address}, {h.phone})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, background: '#f8fafc', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                    <div>
+                      <span style={{ fontSize: 11, color: '#64748b' }}>Nom de l'établissement *</span>
+                      <input
+                        required
+                        value={newHanoutName}
+                        onChange={(e) => setNewHanoutName(e.target.value)}
+                        placeholder="Ex. Quincaillerie Bab Marrakech"
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 12 }}
+                      />
+                    </div>
+                    <div>
+                      <span style={{ fontSize: 11, color: '#64748b' }}>Responsable / Gérant *</span>
+                      <input
+                        required
+                        value={newHanoutOwner}
+                        onChange={(e) => setNewHanoutOwner(e.target.value)}
+                        placeholder="Ex. Si Bouchaib"
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 12 }}
+                      />
+                    </div>
+                    <div>
+                      <span style={{ fontSize: 11, color: '#64748b' }}>Téléphone *</span>
+                      <input
+                        required
+                        value={newHanoutPhone}
+                        onChange={(e) => setNewHanoutPhone(e.target.value)}
+                        placeholder="Ex. +212 661 99 88 77"
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 12 }}
+                      />
+                    </div>
+                    <div>
+                      <span style={{ fontSize: 11, color: '#64748b' }}>Adresse / Quartier</span>
+                      <input
+                        value={newHanoutAddress}
+                        onChange={(e) => setNewHanoutAddress(e.target.value)}
+                        placeholder="Ex. Derb Sultan Rue 14"
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 12 }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Product catalog available in van */}
+              <div>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#334155', display: 'block', marginBottom: 8 }}>
+                  Articles disponibles dans la camionnette ({VAN_INVENTORY.length} références) :
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 8 }}>
+                  {VAN_INVENTORY.map((item) => {
+                    const line = vanLines.find((l) => l.sku === item.sku);
+                    const qty = line?.qty || 0;
+                    return (
+                      <div
+                        key={item.sku}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: 8,
+                          borderRadius: 8,
+                          border: qty > 0 ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
+                          background: qty > 0 ? '#f0f9ff' : '#ffffff',
+                        }}
+                      >
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', flex: 'none', border: '1px solid #e2e8f0' }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <b style={{ fontSize: 12, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {item.name}
+                          </b>
+                          <small style={{ color: '#64748b', fontSize: 11 }}>
+                            {item.sku} · {formatMoney(item.price_ht * (1 + item.vat_rate / 100))} DH TTC
+                          </small>
+                          <div style={{ fontSize: 10.5, color: item.van_stock < 5 ? '#e11d48' : '#16a34a', fontWeight: 600 }}>
+                            Stock camion: {item.van_stock} un.
+                          </div>
+                        </div>
+
+                        {/* Stepper */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateVanLineQty(item.sku, qty - 1)}
+                            disabled={qty === 0}
+                            style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: 4,
+                              border: '1px solid #cbd5e1',
+                              background: '#ffffff',
+                              cursor: qty > 0 ? 'pointer' : 'default',
+                              fontWeight: 700,
+                              color: '#0f172a',
+                            }}
+                          >
+                            -
+                          </button>
+                          <span style={{ minWidth: 20, textAlign: 'center', fontSize: 13, fontWeight: 700 }}>
+                            {qty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleAddVanLine(item.sku)}
+                            disabled={qty >= item.van_stock}
+                            style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: 4,
+                              border: '1px solid #0284c7',
+                              background: '#0284c7',
+                              color: '#ffffff',
+                              cursor: qty < item.van_stock ? 'pointer' : 'default',
+                              fontWeight: 700,
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Selected items summary */}
+              {vanLines.length > 0 && (
+                <div style={{ background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: '#475569', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+                    Récapitulatif de la commande terrain :
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {vanLinesDetailed.map((vl) => (
+                      <div key={vl.sku} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span>
+                          {vl.item.name} × <b>{vl.qty}</b>
+                        </span>
+                        <span style={{ fontWeight: 600 }}>{formatMoney(vl.totalTtc)} DH TTC</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTop: '1px solid #cbd5e1' }}>
+                    <div>
+                      <span style={{ fontSize: 11, color: '#64748b' }}>Total HT: {formatMoney(vanTotalHt)} DH · TVA: {formatMoney(vanTotalVat)} DH</span>
+                      <b style={{ fontSize: 15, display: 'block', color: '#0f172a' }}>
+                        Net à payer : {formatMoney(vanTotalTtc)} DH TTC
+                      </b>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Section (if immediate) */}
+              {vanSaleType === 'immediate' && (
+                <div style={{ background: '#ecfdf5', padding: 12, borderRadius: 8, border: '1px solid #a7f3d0' }}>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: '#065f46', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+                    Règlement immédiat au camion :
+                  </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div>
+                      <span style={{ fontSize: 11, color: '#047857' }}>Mode d'encaissement</span>
+                      <select
+                        value={vanPayMethod}
+                        onChange={(e) => setVanPayMethod(e.target.value as any)}
+                        style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 12 }}
+                      >
+                        <option value="especes">Espèces au comptoir</option>
+                        <option value="cheque">Chèque certifié</option>
+                      </select>
+                    </div>
+                    {vanPayMethod === 'cheque' && (
+                      <div>
+                        <span style={{ fontSize: 11, color: '#047857' }}>N° Chèque & Banque</span>
+                        <input
+                          required
+                          value={vanChequeNum}
+                          onChange={(e) => setVanChequeNum(e.target.value)}
+                          placeholder="Ex. CHQ-928401 (Attijari)"
+                          style={{ width: '100%', padding: '6px 8px', borderRadius: 4, border: '1px solid #cbd5e1', fontSize: 12 }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div
+              style={{
+                padding: '12px 22px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 8,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setShowVanSaleModal(false)}
+                style={{ background: '#ffffff', border: '1px solid #cbd5e1', color: '#475569' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{ background: '#0284c7', borderColor: '#0369a1' }}
+              >
+                <Check size={14} /> Enregistrer & Générer le Bon (BL / BC)
               </button>
             </div>
           </form>

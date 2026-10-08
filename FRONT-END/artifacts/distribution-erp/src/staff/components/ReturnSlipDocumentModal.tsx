@@ -47,7 +47,7 @@ export default function ReturnSlipDocumentModal({
   function handleDownload() {
     const driverTypeStr =
       slip.driver_type === 'pre_seller'
-        ? 'Livreur-pré-vendeur (Hwanet)'
+        ? 'Livreur-pré-vendeur (Van Sales)'
         : slip.driver_type === 'depot_to_depot'
         ? 'Navette Inter-Dépôts'
         : 'Livreur Dépôt → Client';
@@ -157,7 +157,7 @@ Observations : ${slip.notes || 'Aucune observation particulière'}
                     }}
                   >
                     {slip.driver_type === 'pre_seller'
-                      ? 'Livreur-pré-vendeur (Hwanet)'
+                      ? 'Livreur-pré-vendeur (Van Sales)'
                       : slip.driver_type === 'depot_to_depot'
                       ? 'Navette Inter-Dépôts'
                       : 'Livreur Dépôt → Client'}

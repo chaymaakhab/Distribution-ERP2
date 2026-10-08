@@ -28,9 +28,9 @@ export interface ReturnLine {
 export interface ReturnAdminValidation {
   validated_by: string;
   validated_at: string;
-  motif_constate: string; // "chno sbab dyalo"
-  circonstance_cause: string; // "3lach kan"
-  decision_qualite: 'reintegre_stock' | 'mis_au_rebut_perte' | 'refuse'; // "wach produit saleh yrje3 l stock wela ba9i"
+  motif_constate: string; // motif exact
+  circonstance_cause: string; // cause racine
+  decision_qualite: 'reintegre_stock' | 'mis_au_rebut_perte' | 'refuse'; // sort du stock & verdict qualité
   decision_label: string;
   decision_stock_qty: number;
   visa_notes?: string;
@@ -155,7 +155,7 @@ const INITIAL_RETURNS: ReturnRequest[] = [
     id: 6,
     ref: 'RET-2026-019',
     order_ref: 'CMD-HW-2026-089',
-    client: 'Épicerie Al Baraka (Hwanet)',
+    client: 'Épicerie Al Baraka (Commerce de proximité)',
     client_ice: '002981726000045',
     client_city: 'Casablanca (Derb Sultan)',
     driver: 'Hamid El Meskini',
@@ -168,7 +168,7 @@ const INITIAL_RETURNS: ReturnRequest[] = [
     lines: [
       { product: 'Perceuse à percussion 850W', qty: 1, unit_price: 1249, reintegrate: true, reason_detail: 'Client a commandé version sans percussion' },
     ],
-    notes: 'Récupéré lors de la tournée Hwanet Derb Sultan par le livreur-pré-vendeur Hamid El Meskini. Emballage d’origine scellé.',
+    notes: 'Récupéré lors de la tournée Derb Sultan par le livreur-pré-vendeur Hamid El Meskini. Emballage d’origine scellé.',
   },
 ];
 
@@ -535,7 +535,7 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
               <option value="all">Tous types chauffeurs</option>
               <option value="depot_to_client">Livreur Dépôt → Client</option>
               <option value="depot_to_depot">Navette Dépôt → Dépôt</option>
-              <option value="pre_seller">Livreur-pré-vendeur (Hwanet)</option>
+              <option value="pre_seller">Livreur-pré-vendeur (Van Sales / Proximité)</option>
             </select>
 
             {/* Search Input */}
@@ -622,7 +622,7 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                         }}
                       >
                         {isPreSeller
-                          ? 'Livreur-pré-vendeur (Hwanet)'
+                          ? 'Livreur-pré-vendeur (Van Sales)'
                           : isNavette
                           ? 'Navette Inter-Dépôts'
                           : 'Dépôt → Client'}
@@ -796,15 +796,15 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12 }}>
                   <div>
-                    <span style={{ color: '#64748b', display: 'block', fontWeight: 600 }}>1. Motif constaté (Sbab dyalo) :</span>
+                    <span style={{ color: '#64748b', display: 'block', fontWeight: 600 }}>1. Motif constaté :</span>
                     <b style={{ color: '#0f172a' }}>{selected.admin_validation.motif_constate}</b>
                   </div>
                   <div>
-                    <span style={{ color: '#64748b', display: 'block', fontWeight: 600 }}>2. Circonstance & Cause (3lach kan) :</span>
+                    <span style={{ color: '#64748b', display: 'block', fontWeight: 600 }}>2. Circonstance & Cause :</span>
                     <span style={{ color: '#334155' }}>{selected.admin_validation.circonstance_cause}</span>
                   </div>
                   <div style={{ gridColumn: '1/-1', borderTop: '1px solid #e2e8f0', paddingTop: 8 }}>
-                    <span style={{ color: '#64748b', display: 'block', fontWeight: 600 }}>3. Sort du Stock & Qualité (Wach saleh yrje3 l stock) :</span>
+                    <span style={{ color: '#64748b', display: 'block', fontWeight: 600 }}>3. Sort du Stock & Qualité :</span>
                     <span
                       className={`status-pill ${
                         selected.admin_validation.decision_qualite === 'reintegre_stock'
@@ -958,9 +958,9 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                 </div>
               </div>
 
-              {/* 1. Motif exact (Sbab dyalo) */}
+              {/* 1. Motif exact */}
               <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
-                1. Motif exact constaté (Sbab dyalo) *
+                1. Motif exact constaté *
                 <select
                   required
                   style={{
@@ -986,9 +986,9 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                 </select>
               </label>
 
-              {/* 2. Circonstance & Cause racine (3lach kan) */}
+              {/* 2. Circonstance & Cause racine */}
               <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
-                2. Circonstance & Cause racine constatée (3lach kan) *
+                2. Circonstance & Cause racine constatée *
                 <textarea
                   required
                   rows={2}
@@ -1008,10 +1008,10 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                 />
               </label>
 
-              {/* 3. Verdict Qualité & Stock (Wach produit saleh yrje3 l stock wela ba9i) */}
+              {/* 3. Sort du Stock & Décision Qualité */}
               <div>
                 <span className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12, marginBottom: 6, display: 'block' }}>
-                  3. Sort du Stock & Décision Qualité (Wach produit saleh yrje3 l stock wela ba9i) *
+                  3. Sort du Stock & Décision Qualité *
                 </span>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
                   {/* Option A: Reintegration */}
@@ -1038,7 +1038,7 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                     />
                     <div>
                       <b style={{ color: '#15803d', fontSize: 12.5 }}>
-                        ✓ Saleh yrje3 l stock : Réintégrer en stock vendable (+{arbitrationModal.lines[0]?.qty || 1} unités)
+                        ✓ Conforme : Réintégrer en stock vendable (+{arbitrationModal.lines[0]?.qty || 1} unités)
                       </b>
                       <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
                         Marchandise conforme, saine et scellée. Réintégrée physiquement et comptablement dans le stock disponible du dépôt.
@@ -1070,7 +1070,7 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                     />
                     <div>
                       <b style={{ color: '#b45309', fontSize: 12.5 }}>
-                        ✗ Ghir saleh (Avarie / Rebut) : Mise au rebut & Perte comptable (0 stock vendable)
+                        ✗ Non conforme (Avarie / Rebut) : Mise au rebut & Perte comptable (0 stock vendable)
                       </b>
                       <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
                         Marchandise avariée, détruite ou impropre à la vente. NON réintégrée dans le stock disponible. PV de destruction & enregistrement de la perte.
@@ -1394,7 +1394,7 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                   >
                     <option value="depot_to_client">Livreur Dépôt → Client</option>
                     <option value="depot_to_depot">Navette Dépôt → Dépôt</option>
-                    <option value="pre_seller">Livreur-pré-vendeur (Van Sales Hwanet)</option>
+                    <option value="pre_seller">Livreur-pré-vendeur (Van Sales / Proximité)</option>
                   </select>
                 </label>
               </div>

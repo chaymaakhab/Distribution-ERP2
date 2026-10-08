@@ -264,7 +264,7 @@ export const DEFAULT_STAFF_USERS: StaffUserRecord[] = [
     phone: '+212 661 88 77 66',
     roles: ['pre_seller', 'delivery'],
     primary_role: 'pre_seller',
-    role_label: 'Livreur-pré-vendeur (Hwanet)',
+    role_label: 'Livreur-pré-vendeur (Van Sales)',
     role_labels: ['Livreur-pré-vendeur', 'Livreur Dépôt'],
     custom_permissions: Array.from(
       new Set([...ROLE_PERMISSIONS.pre_seller, ...ROLE_PERMISSIONS.delivery])

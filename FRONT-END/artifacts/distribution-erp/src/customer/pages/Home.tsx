@@ -8,11 +8,13 @@ import {
 } from 'lucide-react';
 import { api, type CustomerUser, type OrderSummary, type Product, type Balance } from '../api';
 import { formatMoney, useCart } from '../cart';
+import { useI18n } from '../i18n';
 import ProductCard from '../components/ProductCard';
 
 export default function Home({ user }: { user: CustomerUser }) {
   const [, setLocation] = useLocation();
   const { add, addMany } = useCart();
+  const { t, isAr } = useI18n();
   const [products, setProducts] = useState<Product[] | null>(null);
   const [orders, setOrders] = useState<OrderSummary[] | null>(null);
   const [balance, setBalance] = useState<Balance | null>(null);
@@ -63,13 +65,13 @@ export default function Home({ user }: { user: CustomerUser }) {
       >
         <div style={{ maxWidth: '640px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, marginBottom: '8px' }}>
-            <Sparkles size={14} /> OFFRES B2B REVENDEURS · TARIF {user.price_tier.toUpperCase()}
+            <Sparkles size={14} /> {t('home.badge')} · {t('nav.tier')} {user.price_tier.toUpperCase()}
           </div>
           <h1 style={{ margin: '0 0 6px', fontSize: 'clamp(20px, 2.2vw, 26px)', fontWeight: 800 }}>
-            Commandez vos articles de quincaillerie & outillage au meilleur prix grossiste
+            {t('home.title')}
           </h1>
           <p style={{ margin: 0, fontSize: '13px', opacity: 0.9 }}>
-            Livraison express 24-48h sur Casablanca, Rabat & partout au Maroc · Paiement sécurisé à la livraison.
+            {t('home.subtitle')}
           </p>
         </div>
 
@@ -86,7 +88,7 @@ export default function Home({ user }: { user: CustomerUser }) {
               border: 0,
             }}
           >
-            <Repeat size={16} /> Ma commande habituelle
+            <Repeat size={16} /> {t('home.habitual_order')}
           </button>
           <button
             className="cx-btn"
@@ -97,7 +99,7 @@ export default function Home({ user }: { user: CustomerUser }) {
               border: '1px solid rgba(255,255,255,0.4)',
             }}
           >
-            <ShoppingBag size={15} /> Découvrir tout le catalogue
+            <ShoppingBag size={15} /> {t('home.browse_catalog')}
           </button>
         </div>
       </div>

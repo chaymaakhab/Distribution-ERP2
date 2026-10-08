@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   Building2, Search, Plus, Phone, Mail, MapPin, X, Eye,
   Package, TrendingUp, CheckCircle2, RefreshCw, FileText, ShoppingCart,
+  Edit2, Trash2, Check,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 import NewPurchaseOrderModal from '../components/NewPurchaseOrderModal';
@@ -153,6 +154,74 @@ export default function SuppliersManagement() {
   const [showNewPo, setShowNewPo] = useState<boolean>(false);
   const [targetSupplierForPo, setTargetSupplierForPo] = useState<Supplier | null>(null);
   const [viewPoData, setViewPoData] = useState<PurchaseOrderData | null>(null);
+
+  // Edit Supplier Modal State
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [editSuppName, setEditSuppName] = useState('');
+  const [editSuppContact, setEditSuppContact] = useState('');
+  const [editSuppPhone, setEditSuppPhone] = useState('');
+  const [editSuppEmail, setEditSuppEmail] = useState('');
+  const [editSuppCity, setEditSuppCity] = useState('');
+  const [editSuppAddress, setEditSuppAddress] = useState('');
+  const [editSuppIce, setEditSuppIce] = useState('');
+  const [editSuppRc, setEditSuppRc] = useState('');
+  const [editSuppStatus, setEditSuppStatus] = useState<Supplier['status']>('Actif');
+  const [editSuppCategories, setEditSuppCategories] = useState('');
+  const [editSuppPaymentTerms, setEditSuppPaymentTerms] = useState('');
+
+  // Delete Confirm State
+  const [deleteConfirmSupplier, setDeleteConfirmSupplier] = useState<Supplier | null>(null);
+
+  function openEditSupplier(s: Supplier) {
+    setEditingSupplier(s);
+    setEditSuppName(s.name);
+    setEditSuppContact(s.contact);
+    setEditSuppPhone(s.phone);
+    setEditSuppEmail(s.email);
+    setEditSuppCity(s.city);
+    setEditSuppAddress(s.address);
+    setEditSuppIce(s.ice);
+    setEditSuppRc(s.rc);
+    setEditSuppStatus(s.status);
+    setEditSuppCategories(s.categories.join(', '));
+    setEditSuppPaymentTerms(s.payment_terms);
+  }
+
+  function handleSaveEditSupplier(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingSupplier) return;
+
+    setSuppliers(prev =>
+      prev.map(s => {
+        if (s.id === editingSupplier.id) {
+          return {
+            ...s,
+            name: editSuppName.trim(),
+            contact: editSuppContact.trim(),
+            phone: editSuppPhone.trim(),
+            email: editSuppEmail.trim(),
+            city: editSuppCity.trim(),
+            address: editSuppAddress.trim(),
+            ice: editSuppIce.trim(),
+            rc: editSuppRc.trim(),
+            status: editSuppStatus,
+            categories: editSuppCategories.split(',').map(c => c.trim()).filter(Boolean),
+            payment_terms: editSuppPaymentTerms.trim() || s.payment_terms,
+          };
+        }
+        return s;
+      })
+    );
+
+    notify(`Fiche fournisseur « ${editSuppName} » mise à jour avec succès !`);
+    setEditingSupplier(null);
+  }
+
+  function handleDeleteSupplier(id: number) {
+    setSuppliers(prev => prev.filter(s => s.id !== id));
+    setDeleteConfirmSupplier(null);
+    notify('Fournisseur supprimé du référentiel.');
+  }
 
   // New Supplier Form Modal State
   const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
@@ -355,6 +424,22 @@ export default function SuppliersManagement() {
                       }}
                     >
                       <ShoppingCart size={14} />
+                    </button>
+                    <button
+                      className="row-action"
+                      title="Modifier la fiche fournisseur"
+                      style={{ color: '#0284c7' }}
+                      onClick={() => openEditSupplier(s)}
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      className="row-action"
+                      title="Supprimer ce fournisseur"
+                      style={{ color: '#ef4444' }}
+                      onClick={() => setDeleteConfirmSupplier(s)}
+                    >
+                      <Trash2 size={14} />
                     </button>
                   </td>
                 </tr>
@@ -994,6 +1079,237 @@ export default function SuppliersManagement() {
             notify(`Statut du Bon d'Achat mis à jour: ${status}`);
           }}
         />
+      )}
+
+      {/* ── Modal Modifier Fournisseur ── */}
+      {editingSupplier && (
+        <div className="modal-backdrop" onClick={() => setEditingSupplier(null)}>
+          <form
+            className="record-modal"
+            onSubmit={handleSaveEditSupplier}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 640,
+              width: '95%',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  MODIFICATION FOURNISSEUR · {editingSupplier.code}
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Modifier {editingSupplier.name}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setEditingSupplier(null)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Raison sociale *
+                  <input
+                    required
+                    value={editSuppName}
+                    onChange={(e) => setEditSuppName(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Contact commercial *
+                  <input
+                    required
+                    value={editSuppContact}
+                    onChange={(e) => setEditSuppContact(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Ville *
+                  <input
+                    required
+                    value={editSuppCity}
+                    onChange={(e) => setEditSuppCity(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Téléphone direct *
+                  <input
+                    required
+                    value={editSuppPhone}
+                    onChange={(e) => setEditSuppPhone(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Email
+                  <input
+                    value={editSuppEmail}
+                    onChange={(e) => setEditSuppEmail(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  N° ICE Maroc
+                  <input
+                    value={editSuppIce}
+                    onChange={(e) => setEditSuppIce(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  N° RC (Registre de commerce)
+                  <input
+                    value={editSuppRc}
+                    onChange={(e) => setEditSuppRc(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Statut
+                  <select
+                    value={editSuppStatus}
+                    onChange={(e) => setEditSuppStatus(e.target.value as any)}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  >
+                    <option value="Actif">Actif</option>
+                    <option value="Inactif">Inactif</option>
+                    <option value="Suspendu">Suspendu</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Catégories d'articles (séparées par des virgules)
+                  <input
+                    value={editSuppCategories}
+                    onChange={(e) => setEditSuppCategories(e.target.value)}
+                    placeholder="Sucre, Farine, Huile"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Conditions de paiement
+                  <input
+                    value={editSuppPaymentTerms}
+                    onChange={(e) => setEditSuppPaymentTerms(e.target.value)}
+                    placeholder="30 jours date facture"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: '12px 24px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setEditingSupplier(null)}
+                style={{ height: 38, padding: '0 16px', background: '#ffffff', border: '1px solid #cbd5e1' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{ height: 38, padding: '0 20px', background: '#0284c7', borderColor: '#0369a1' }}
+              >
+                <Check size={14} /> Mettre à jour le fournisseur
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ── Modal Confirmation Suppression Fournisseur ── */}
+      {deleteConfirmSupplier && (
+        <div className="modal-backdrop" onClick={() => setDeleteConfirmSupplier(null)}>
+          <div
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 440,
+              width: '90%',
+              padding: '24px',
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#fee2e2', color: '#ef4444', display: 'grid', placeItems: 'center', margin: '0 auto 14px' }}>
+              <Trash2 size={24} />
+            </div>
+            <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 8px', color: '#0f172a' }}>
+              Supprimer le fournisseur {deleteConfirmSupplier.code} ?
+            </h3>
+            <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 20px' }}>
+              Êtes-vous certain de vouloir supprimer le fournisseur <b>« {deleteConfirmSupplier.name} »</b> ? Les bons d'achat historiques associés resteront archivés.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setDeleteConfirmSupplier(null)}
+                style={{ padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="button-primary"
+                onClick={() => handleDeleteSupplier(deleteConfirmSupplier.id)}
+                style={{ padding: '8px 16px', background: '#ef4444', borderColor: '#dc2626', color: '#ffffff' }}
+              >
+                Confirmer la suppression
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {toast && <div className="toast-note"><CheckCircle2 size={16} />{toast}</div>}

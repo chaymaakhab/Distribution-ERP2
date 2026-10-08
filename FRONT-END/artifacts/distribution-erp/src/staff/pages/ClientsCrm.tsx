@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Users, Search, Filter, Phone, MessageSquare, ShieldAlert,
   ArrowUpRight, Building2, CheckCircle2, ChevronRight, Download, Plus,
-  CreditCard, ExternalLink, X,
+  CreditCard, ExternalLink, X, Edit2, Trash2, Check,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 
@@ -143,6 +143,71 @@ export default function ClientsCrm() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedClient, setSelectedClient] = useState<CrmClient | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Edit Client Modal State
+  const [editingClient, setEditingClient] = useState<CrmClient | null>(null);
+  const [editCompany, setEditCompany] = useState('');
+  const [editName, setEditName] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editWhatsapp, setEditWhatsapp] = useState('');
+  const [editIce, setEditIce] = useState('');
+  const [editCommercial, setEditCommercial] = useState('Youssef Bennani');
+  const [editPriceTier, setEditPriceTier] = useState<CrmClient['price_tier']>('revendeur');
+  const [editCreditLimit, setEditCreditLimit] = useState<number>(50000);
+  const [editStatus, setEditStatus] = useState<CrmClient['status']>('Actif');
+
+  // Delete Confirm State
+  const [deleteConfirmClient, setDeleteConfirmClient] = useState<CrmClient | null>(null);
+
+  function openEditClient(client: CrmClient) {
+    setEditingClient(client);
+    setEditCompany(client.company);
+    setEditName(client.name);
+    setEditCity(client.city);
+    setEditPhone(client.phone);
+    setEditWhatsapp(client.whatsapp);
+    setEditIce(client.ice);
+    setEditCommercial(client.commercial_name);
+    setEditPriceTier(client.price_tier);
+    setEditCreditLimit(client.credit_limit);
+    setEditStatus(client.status);
+  }
+
+  function handleSaveEditClient(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingClient) return;
+
+    setClients((prev) =>
+      prev.map((c) => {
+        if (c.id === editingClient.id) {
+          return {
+            ...c,
+            company: editCompany.trim(),
+            name: editName.trim(),
+            city: editCity.trim(),
+            phone: editPhone.trim(),
+            whatsapp: editWhatsapp.trim() || editPhone.replace(/[^0-9]/g, ''),
+            ice: editIce.trim(),
+            commercial_name: editCommercial,
+            price_tier: editPriceTier,
+            credit_limit: Number(editCreditLimit) || c.credit_limit,
+            status: editStatus,
+          };
+        }
+        return c;
+      })
+    );
+
+    notify(`Fiche client « ${editCompany} » mise à jour avec succès !`);
+    setEditingClient(null);
+  }
+
+  function handleDeleteClient(id: number) {
+    setClients((prev) => prev.filter((c) => c.id !== id));
+    setDeleteConfirmClient(null);
+    notify('Compte client supprimé avec succès.');
+  }
 
   // New Client Form State
   const [showAddClientModal, setShowAddClientModal] = useState(false);
@@ -412,6 +477,22 @@ export default function ClientsCrm() {
                         >
                           <Phone size={14} />
                         </a>
+                        <button
+                          className="row-action"
+                          title="Modifier la fiche client"
+                          style={{ color: '#0284c7' }}
+                          onClick={() => openEditClient(c)}
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          className="row-action"
+                          title="Supprimer ce client"
+                          style={{ color: '#ef4444' }}
+                          onClick={() => setDeleteConfirmClient(c)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                         <button
                           className="row-action"
                           title="Fiche complète"
@@ -867,6 +948,238 @@ export default function ClientsCrm() {
                 }}
               >
                 Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Modifier Client ── */}
+      {editingClient && (
+        <div className="modal-backdrop" onClick={() => setEditingClient(null)}>
+          <form
+            className="record-modal"
+            onSubmit={handleSaveEditClient}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 640,
+              width: '95%',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  MODIFICATION COMPTE CLIENT · {editingClient.code}
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Modifier {editingClient.company}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setEditingClient(null)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Raison sociale *
+                  <input
+                    required
+                    value={editCompany}
+                    onChange={(e) => setEditCompany(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Contact principal *
+                  <input
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Ville *
+                  <input
+                    required
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Téléphone *
+                  <input
+                    required
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  N° ICE Maroc
+                  <input
+                    value={editIce}
+                    onChange={(e) => setEditIce(e.target.value)}
+                    placeholder="001524389000045"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Commercial assigné
+                  <select
+                    value={editCommercial}
+                    onChange={(e) => setEditCommercial(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  >
+                    <option value="Youssef Bennani">Youssef Bennani (Casablanca)</option>
+                    <option value="Ahmed Idrissi">Ahmed Idrissi (Marrakech / Sud)</option>
+                    <option value="Salma Benjelloun">Salma Benjelloun (Rabat / Nord)</option>
+                  </select>
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Grille tarifaire
+                  <select
+                    value={editPriceTier}
+                    onChange={(e) => setEditPriceTier(e.target.value as any)}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  >
+                    <option value="revendeur">Tarif Revendeur</option>
+                    <option value="grossiste">Tarif Grossiste</option>
+                    <option value="chantier">Tarif Chantier</option>
+                    <option value="standard">Tarif Standard</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Plafond d'encours autorisé (DH)
+                  <input
+                    type="number"
+                    value={editCreditLimit}
+                    onChange={(e) => setEditCreditLimit(Number(e.target.value))}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Statut du compte
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as any)}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  >
+                    <option value="Actif">Actif (Autorisé)</option>
+                    <option value="À surveiller">À surveiller (Plafond proche)</option>
+                    <option value="Bloqué">Bloqué (Impayé)</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: '12px 24px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setEditingClient(null)}
+                style={{ height: 38, padding: '0 16px', background: '#ffffff', border: '1px solid #cbd5e1' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{ height: 38, padding: '0 20px', background: '#0284c7', borderColor: '#0369a1' }}
+              >
+                <Check size={14} /> Mettre à jour le client
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ── Modal Confirmation Suppression Client ── */}
+      {deleteConfirmClient && (
+        <div className="modal-backdrop" onClick={() => setDeleteConfirmClient(null)}>
+          <div
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 440,
+              width: '90%',
+              padding: '24px',
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#fee2e2', color: '#ef4444', display: 'grid', placeItems: 'center', margin: '0 auto 14px' }}>
+              <Trash2 size={24} />
+            </div>
+            <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 8px', color: '#0f172a' }}>
+              Supprimer le client {deleteConfirmClient.code} ?
+            </h3>
+            <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 20px' }}>
+              Êtes-vous certain de vouloir supprimer le compte client de <b>« {deleteConfirmClient.company} »</b> ? Cette opération supprimera la fiche de la base CRM.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setDeleteConfirmClient(null)}
+                style={{ padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="button-primary"
+                onClick={() => handleDeleteClient(deleteConfirmClient.id)}
+                style={{ padding: '8px 16px', background: '#ef4444', borderColor: '#dc2626', color: '#ffffff' }}
+              >
+                Confirmer la suppression
               </button>
             </div>
           </div>

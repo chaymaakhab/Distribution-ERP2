@@ -426,3 +426,59 @@ body:not(.light-theme) .cx-empty { background: #111a28; border-color: #1e2c3f; }
   .cx-order-total { min-width: auto; }
   .cx-main { padding: 18px 14px 30px; }
 }
+
+/* ---------- Language Switcher (FR / AR) ---------- */
+.cx-lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: var(--cx-brand-soft);
+  padding: 3px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  gap: 3px;
+}
+.cx-lang-btn {
+  background: transparent;
+  border: none;
+  color: var(--cx-muted);
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 11.5px;
+  line-height: 1.2;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+.cx-lang-btn:hover {
+  color: var(--cx-brand);
+}
+.cx-lang-btn.active {
+  background: var(--cx-brand);
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(2, 132, 199, 0.35);
+}
+.cx-lang-sep {
+  color: rgba(2, 132, 199, 0.4);
+  font-size: 10px;
+  user-select: none;
+}
+
+/* ---------- RTL (Arabic) Adjustments ---------- */
+[dir="rtl"] .cx-app {
+  direction: rtl;
+  text-align: right;
+}
+[dir="rtl"] .cx-topnav {
+  margin-left: 0;
+  margin-right: 8px;
+}
+[dir="rtl"] .cx-drawer {
+  left: auto;
+  right: 0;
+}
+[dir="rtl"] .cx-pill {
+  margin-left: 0;
+  margin-right: auto;
+}
+

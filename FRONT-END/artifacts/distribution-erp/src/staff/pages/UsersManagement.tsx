@@ -66,8 +66,8 @@ export const AVAILABLE_ROLES: RoleOption[] = [
   {
     code: 'pre_seller',
     label: 'Livreur-pré-vendeur',
-    badge: 'Van Sales / Hwanet',
-    desc: 'Vente directe hwanet/épiceries, prise de commandes directes et encaissement.',
+    badge: 'Van Sales / Proximité',
+    desc: 'Vente directe aux commerces de proximité & épiceries, prise de commandes directes et encaissement.',
     color: '#0284c7',
   },
   {
@@ -216,7 +216,7 @@ export default function UsersManagement() {
     warehouse: 'Responsable Dépôt',
     preparation: 'Préparateur',
     delivery: 'Livreur Dépôt',
-    pre_seller: 'Livreur-pré-vendeur (Hwanet)',
+    pre_seller: 'Livreur-pré-vendeur (Van Sales)',
     accounting: 'Comptable',
   };
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   ClipboardList, Search, Filter, Plus, CheckCircle2, XCircle,
   Eye, Download, ShoppingBag, Truck, Calendar, ArrowRight,
-  PackageCheck, FileText, Printer, BadgeDollarSign,
+  PackageCheck, FileText, Printer, BadgeDollarSign, Edit2, Trash2, X, Check,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 import InvoiceDocumentModal, { type InvoiceData } from '../components/InvoiceDocumentModal';
@@ -57,8 +57,59 @@ export default function OrdersManagement() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeInvoiceOrder, setActiveInvoiceOrder] = useState<OrderItemRow | null>(null);
   const [activeBlOrder, setActiveBlOrder] = useState<OrderItemRow | null>(null);
+  const [activeBcOrder, setActiveBcOrder] = useState<OrderItemRow | null>(null);
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Edit Order Modal State
+  const [editingOrder, setEditingOrder] = useState<OrderItemRow | null>(null);
+  const [editCustomer, setEditCustomer] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editTotal, setEditTotal] = useState<number>(0);
+  const [editStatus, setEditStatus] = useState<OrderItemRow['status']>('Confirmée');
+  const [editSource, setEditSource] = useState('Commercial');
+
+  // Delete Confirm State
+  const [deleteConfirmOrder, setDeleteConfirmOrder] = useState<OrderItemRow | null>(null);
+
+  function openEditOrder(ord: OrderItemRow) {
+    setEditingOrder(ord);
+    setEditCustomer(ord.customer);
+    setEditCity(ord.city);
+    setEditTotal(ord.total);
+    setEditStatus(ord.status);
+    setEditSource(ord.source);
+  }
+
+  function handleSaveEditOrder(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingOrder) return;
+
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (o.ref === editingOrder.ref) {
+          return {
+            ...o,
+            customer: editCustomer.trim(),
+            city: editCity.trim(),
+            total: Number(editTotal) || o.total,
+            status: editStatus,
+            source: editSource,
+          };
+        }
+        return o;
+      })
+    );
+
+    notify(`Commande ${editingOrder.ref} modifiée avec succès !`);
+    setEditingOrder(null);
+  }
+
+  function handleDeleteOrder(ref: string) {
+    setOrders((prev) => prev.filter((o) => o.ref !== ref));
+    setDeleteConfirmOrder(null);
+    notify(`Commande ${ref} supprimée / annulée avec succès.`);
+  }
 
   // New Sales Order Modal State
   const [showNewOrderModal, setShowNewOrderModal] = useState(false);
@@ -305,6 +356,14 @@ export default function OrdersManagement() {
                       )}
                       <button
                         className="row-action"
+                        title="Consulter le Bon de Commande (BC)"
+                        style={{ color: '#f59e0b' }}
+                        onClick={() => setActiveBcOrder(ord)}
+                      >
+                        <ClipboardList size={14} />
+                      </button>
+                      <button
+                        className="row-action"
                         title="Éditer / Imprimer le Bon de Livraison (BL)"
                         style={{ color: '#38bdf8' }}
                         onClick={() => setActiveBlOrder(ord)}
@@ -321,10 +380,19 @@ export default function OrdersManagement() {
                       </button>
                       <button
                         className="row-action"
-                        title="Voir détail"
-                        onClick={() => notify(`Détail commande ${ord.ref} · Client ${ord.customer}.`)}
+                        title="Modifier cette commande"
+                        style={{ color: '#0284c7' }}
+                        onClick={() => openEditOrder(ord)}
                       >
-                        <ArrowRight size={14} />
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        className="row-action"
+                        title="Supprimer / Annuler cette commande"
+                        style={{ color: '#ef4444' }}
+                        onClick={() => setDeleteConfirmOrder(ord)}
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
@@ -797,14 +865,304 @@ export default function OrdersManagement() {
         </div>
       )}
 
-      {/* ── New Invoice Modal ── */}
-      {showNewInvoiceModal && (
-        <NewInvoiceModal
-          onClose={() => setShowNewInvoiceModal(false)}
-          onCreate={(inv) => {
-            notify(`Facture ${inv.ref} créée avec succès pour ${inv.client} !`);
-          }}
-        />
+      {/* ── Modal Modifier Commande ── */}
+      {editingOrder && (
+        <div className="modal-backdrop" onClick={() => setEditingOrder(null)}>
+          <form
+            className="record-modal"
+            onSubmit={handleSaveEditOrder}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 580,
+              width: '95%',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  MODIFICATION COMMANDE CLIENT · {editingOrder.ref}
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Modifier {editingOrder.ref}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setEditingOrder(null)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Client destinataire *
+                  <input
+                    required
+                    value={editCustomer}
+                    onChange={(e) => setEditCustomer(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Ville *
+                  <input
+                    required
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Montant total TTC (DH) *
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={editTotal}
+                    onChange={(e) => setEditTotal(Number(e.target.value))}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Statut de la commande
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as any)}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  >
+                    <option value="À valider">À valider</option>
+                    <option value="Confirmée">Confirmée</option>
+                    <option value="En préparation">En préparation</option>
+                    <option value="Préparée">Préparée</option>
+                    <option value="En livraison">En livraison</option>
+                    <option value="Livrée">Livrée</option>
+                    <option value="Annulée">Annulée</option>
+                  </select>
+                </label>
+              </div>
+
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                Canal / Source
+                <select
+                  value={editSource}
+                  onChange={(e) => setEditSource(e.target.value)}
+                  style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                >
+                  <option value="Commercial">Commercial (Vente terrain)</option>
+                  <option value="Portail client">Portail client B2B</option>
+                  <option value="Téléphone">Téléphone / WhatsApp</option>
+                  <option value="Livreur-pré-vendeur">Livreur-pré-vendeur (Van Sales)</option>
+                </select>
+              </label>
+            </div>
+
+            <div
+              style={{
+                padding: '12px 24px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setEditingOrder(null)}
+                style={{ height: 38, padding: '0 16px', background: '#ffffff', border: '1px solid #cbd5e1' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{ height: 38, padding: '0 20px', background: '#0284c7', borderColor: '#0369a1' }}
+              >
+                <Check size={14} /> Mettre à jour la commande
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ── Modal Confirmation Suppression Commande ── */}
+      {deleteConfirmOrder && (
+        <div className="modal-backdrop" onClick={() => setDeleteConfirmOrder(null)}>
+          <div
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 440,
+              width: '90%',
+              padding: '24px',
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#fee2e2', color: '#ef4444', display: 'grid', placeItems: 'center', margin: '0 auto 14px' }}>
+              <Trash2 size={24} />
+            </div>
+            <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 8px', color: '#0f172a' }}>
+              Supprimer la commande {deleteConfirmOrder.ref} ?
+            </h3>
+            <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 20px' }}>
+              Êtes-vous certain de vouloir annuler et supprimer la commande de <b>« {deleteConfirmOrder.customer} »</b> pour un montant de <b>{formatMoney(deleteConfirmOrder.total)} DH</b> ?
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setDeleteConfirmOrder(null)}
+                style={{ padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1' }}
+              >
+                Garder la commande
+              </button>
+              <button
+                type="button"
+                className="button-primary"
+                onClick={() => handleDeleteOrder(deleteConfirmOrder.ref)}
+                style={{ padding: '8px 16px', background: '#ef4444', borderColor: '#dc2626', color: '#ffffff' }}
+              >
+                Confirmer l'annulation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Visualisation Bon de Commande (BC) ── */}
+      {activeBcOrder && (
+        <div className="modal-backdrop" onClick={() => setActiveBcOrder(null)}>
+          <div
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 600,
+              width: '95%',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  DOCUMENT OFFICIEL · BON DE COMMANDE
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Bon de Commande {activeBcOrder.ref}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setActiveBcOrder(null)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <div>
+                  <span style={{ fontSize: 11, color: '#64748b' }}>Client</span>
+                  <b style={{ fontSize: 13, display: 'block', color: '#0f172a' }}>{activeBcOrder.customer}</b>
+                  <span style={{ fontSize: 11, color: '#64748b' }}>Ville: {activeBcOrder.city}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: 11, color: '#64748b' }}>Date & Source</span>
+                  <b style={{ fontSize: 13, display: 'block', color: '#0f172a' }}>{activeBcOrder.date}</b>
+                  <span style={{ fontSize: 11, color: '#0284c7' }}>Canal: {activeBcOrder.source}</span>
+                </div>
+              </div>
+
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: '#475569', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                  Lignes du Bon de Commande ({activeBcOrder.items_count} articles) :
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {ORDER_PRODUCTS_CATALOG.slice(0, activeBcOrder.items_count || 3).map((item, idx) => (
+                    <div key={item.sku} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0', borderBottom: '1px dashed #f1f5f9' }}>
+                      <span>{item.name} (×{idx + 1})</span>
+                      <b style={{ color: '#0f172a' }}>{formatMoney(item.price_ht * (idx + 1) * 1.2)} DH TTC</b>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTop: '1px solid #cbd5e1' }}>
+                  <span style={{ fontSize: 12, color: '#64748b' }}>Statut: <b>{activeBcOrder.status}</b></span>
+                  <strong style={{ fontSize: 16, color: '#0284c7' }}>
+                    Total TTC : {formatMoney(activeBcOrder.total)} DH
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: '12px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => {
+                  window.print();
+                }}
+                style={{ background: '#ffffff', border: '1px solid #cbd5e1', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              >
+                <Printer size={14} /> Imprimer le Bon de Commande
+              </button>
+              <button
+                type="button"
+                className="button-primary"
+                onClick={() => setActiveBcOrder(null)}
+                style={{ background: '#0284c7', borderColor: '#0369a1' }}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {toast && (

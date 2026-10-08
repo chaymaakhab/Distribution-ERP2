@@ -34,9 +34,9 @@ export interface PendingOperation {
   notes_initiales: string;
   status: 'en_attente' | 'arbitre';
   decision_admin?: {
-    motif_constate: string; // "chno sbab dyalo"
-    circonstance_cause: string; // "3lach kan"
-    decision_qualite: 'reintegre_stock' | 'mis_au_rebut_perte' | 'refuse'; // "wach produit saleh yrje3 l stock"
+    motif_constate: string; // motif exact
+    circonstance_cause: string; // cause racine
+    decision_qualite: 'reintegre_stock' | 'mis_au_rebut_perte' | 'refuse'; // sort du stock & verdict qualité
     decision_label: string;
     validated_at: string;
     visa_notes?: string;
@@ -85,7 +85,7 @@ const INITIAL_PENDING_OPS: PendingOperation[] = [
     op_type: 'retour',
     ref: 'RET-2026-019',
     order_ref: 'CMD-HW-2026-089',
-    client: 'Épicerie Al Baraka (Hwanet)',
+    client: 'Épicerie Al Baraka (Commerce de proximité)',
     depot: 'DEP-01 Casablanca Central',
     driver_name: 'Hamid El Meskini',
     driver_role: 'Livreur-pré-vendeur (Van Sales)',
@@ -95,7 +95,7 @@ const INITIAL_PENDING_OPS: PendingOperation[] = [
     total: 1249,
     date: 'Aujourd’hui 09:15',
     motif_initial: 'Erreur commande',
-    notes_initiales: 'Récupéré lors de la tournée Hwanet Derb Sultan par le pré-vendeur. Emballage scellé d’origine.',
+    notes_initiales: 'Récupéré lors de la tournée Derb Sultan par le pré-vendeur. Emballage scellé d’origine.',
     status: 'en_attente',
   },
 ];
@@ -500,7 +500,7 @@ export default function SuperAdminDashboard() {
               Validations des Opérations Sensibles (Retours Marchandises & Avaries)
             </h2>
             <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)' }}>
-              Arbitrage hiérarchique : motif exact (sbab dyalo), circonstance (3lach kan) et verdict qualité / réintégration en stock (wach saleh yrje3 l stock).
+              Arbitrage hiérarchique : motif exact, circonstance et verdict qualité / réintégration en stock.
             </p>
           </div>
           <button
@@ -558,7 +558,7 @@ export default function SuperAdminDashboard() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
                       <span style={{ color: 'var(--muted)' }}>Chauffeur :</span>
                       <span style={{ fontSize: 11, color: isPreSeller ? '#10b981' : undefined }}>
-                        {isPreSeller ? '🚚 Pré-vendeur Hwanet' : '🚚 ' + op.driver_name}
+                        {isPreSeller ? '🚚 Pré-vendeur (Van Sales)' : '🚚 ' + op.driver_name}
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
@@ -576,7 +576,7 @@ export default function SuperAdminDashboard() {
                         <b>Verdict stock :</b> {op.decision_admin.decision_label}
                       </div>
                       <div style={{ marginTop: 2, color: 'var(--muted)' }}>
-                        <b>Sbab :</b> {op.decision_admin.motif_constate} · <b>3lach :</b> {op.decision_admin.circonstance_cause}
+                        <b>Motif :</b> {op.decision_admin.motif_constate} · <b>Circonstance :</b> {op.decision_admin.circonstance_cause}
                       </div>
                     </div>
                   ) : (
@@ -829,14 +829,14 @@ export default function SuperAdminDashboard() {
                 <div>
                   <span style={{ color: '#64748b', display: 'block' }}>Chauffeur :</span>
                   <span style={{ color: '#334155' }}>
-                    {arbitrationModal.driver_type === 'pre_seller' ? '🚚 Pré-vendeur Hwanet' : arbitrationModal.driver_name}
+                    {arbitrationModal.driver_type === 'pre_seller' ? '🚚 Pré-vendeur (Van Sales)' : arbitrationModal.driver_name}
                   </span>
                 </div>
               </div>
 
-              {/* 1. Motif exact (Sbab dyalo) */}
+              {/* 1. Motif exact */}
               <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
-                1. Motif exact constaté (Sbab dyalo) *
+                1. Motif exact constaté *
                 <select
                   required
                   style={{
@@ -862,9 +862,9 @@ export default function SuperAdminDashboard() {
                 </select>
               </label>
 
-              {/* 2. Circonstance & Cause racine (3lach kan) */}
+              {/* 2. Circonstance & Cause racine */}
               <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
-                2. Circonstance & Cause racine constatée (3lach kan) *
+                2. Circonstance & Cause racine constatée *
                 <textarea
                   required
                   rows={2}
@@ -884,10 +884,10 @@ export default function SuperAdminDashboard() {
                 />
               </label>
 
-              {/* 3. Verdict Qualité & Stock (Wach produit saleh yrje3 l stock wela ba9i) */}
+              {/* 3. Sort du Stock & Décision Qualité */}
               <div>
                 <span className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12, marginBottom: 6, display: 'block' }}>
-                  3. Sort du Stock & Décision Qualité (Wach produit saleh yrje3 l stock wela ba9i) *
+                  3. Sort du Stock & Décision Qualité *
                 </span>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
                   {/* Option A: Reintegration */}
@@ -914,7 +914,7 @@ export default function SuperAdminDashboard() {
                     />
                     <div>
                       <b style={{ color: '#15803d', fontSize: 12.5 }}>
-                        ✓ Saleh yrje3 l stock : Réintégrer en stock vendable (+{arbitrationModal.qty} unités)
+                        ✓ Conforme : Réintégrer en stock vendable (+{arbitrationModal.qty} unités)
                       </b>
                       <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
                         Marchandise conforme, saine et scellée. Réintégrée physiquement et comptablement dans le stock disponible du dépôt.
@@ -946,7 +946,7 @@ export default function SuperAdminDashboard() {
                     />
                     <div>
                       <b style={{ color: '#b45309', fontSize: 12.5 }}>
-                        ✗ Ghir saleh (Avarie / Rebut) : Mise au rebut & Perte comptable (0 stock vendable)
+                        ✗ Non conforme (Avarie / Rebut) : Mise au rebut & Perte comptable (0 stock vendable)
                       </b>
                       <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
                         Marchandise avariée, détruite ou impropre à la vente. NON réintégrée dans le stock disponible. PV de destruction & enregistrement de la perte.

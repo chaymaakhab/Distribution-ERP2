@@ -233,12 +233,12 @@ const INITIAL_DRIVERS: WarehouseDriver[] = [
     license_number: 'PERM-55214',
     driver_type: 'pre_seller',
     base_depot: 'DEP-01 Casablanca Central',
-    assigned_city_or_route: 'Tournée Hwanet : Derb Sultan, Garage Allal & Sbata',
+    assigned_city_or_route: 'Tournée Proximité : Derb Sultan, Garage Allal & Sbata',
     vehicle_model: 'Hyundai H350 Fourgonnette 2.5T',
     vehicle_plate: '45-B-11982',
     capacity: '2.5 T / Vente directe embarquée',
     status: 'en_tournee',
-    current_mission: 'Tournée Hwanet TRN-HW-04 (18 épiceries - prises de commandes & vente directe)',
+    current_mission: 'Tournée TRN-HW-04 (18 points de vente - prises de commandes & vente directe)',
   },
   {
     id: 8,
@@ -248,7 +248,7 @@ const INITIAL_DRIVERS: WarehouseDriver[] = [
     license_number: 'PERM-77190',
     driver_type: 'pre_seller',
     base_depot: 'DEP-01 Casablanca Central',
-    assigned_city_or_route: 'Tournée Hwanet : Sidi Moumen, Bernoussi & Tit Mellil',
+    assigned_city_or_route: 'Tournée Proximité : Sidi Moumen, Bernoussi & Tit Mellil',
     vehicle_model: 'Ford Transit Custom 2.2T',
     vehicle_plate: '12-E-90812',
     capacity: '2.2 T / Stock mobile & réassort',
@@ -347,7 +347,7 @@ export default function WarehouseDashboard({
 
     const defaultRoute =
       formType === 'pre_seller'
-        ? 'Tournée Hwanet Grand Casablanca'
+        ? 'Tournée Proximité Grand Casablanca'
         : formType === 'depot_to_client'
         ? 'Grand Casablanca & Ain Sebaâ'
         : 'Casablanca ↔ Mohammedia (Ligne 1)';
@@ -370,7 +370,7 @@ export default function WarehouseDashboard({
     setDrivers((prev) => [newDriver, ...prev]);
     const typeLabel =
       newDriver.driver_type === 'pre_seller'
-        ? 'Type 3 : Livreur-pré-vendeur (Hwanet)'
+        ? 'Type 3 : Livreur-pré-vendeur (Van Sales)'
         : newDriver.driver_type === 'depot_to_client'
         ? 'Type 1 : Dépôt → Client'
         : 'Type 2 : Navette Dépôt → Dépôt';
@@ -778,12 +778,12 @@ export default function WarehouseDashboard({
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#10b981', fontWeight: 700, fontSize: 13 }}>
                   <Truck size={16} />
-                  <span>Type 3 : Livreur-pré-vendeur (Hwanet)</span>
+                  <span>Type 3 : Livreur-pré-vendeur (Van Sales)</span>
                 </div>
                 <span className="status-pill status-green" style={{ fontSize: 11 }}>{preSellerDriversCount} pré-vendeurs</span>
               </div>
               <p style={{ margin: '6px 0 0', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.4 }}>
-                Van Sales / Épiceries de quartier : prise de commande sur place, réassort direct, vente embarquée et encaissement immédiat.
+                Van Sales / Commerces de proximité : prise de commande sur place, réassort direct, vente embarquée et encaissement immédiat.
               </p>
             </div>
           </div>
@@ -837,7 +837,7 @@ export default function WarehouseDashboard({
                   style={{ color: '#10b981' }}
                 >
                   <Truck size={12} style={{ display: 'inline', marginRight: 4 }} />
-                  Livreur-pré-vendeur Hwanet ({preSellerDriversCount})
+                  Livreur-pré-vendeur Van Sales ({preSellerDriversCount})
                 </button>
               </div>
 
@@ -960,7 +960,7 @@ export default function WarehouseDashboard({
                               <Building2 size={12} />
                             )}
                             {driver.driver_type === 'pre_seller'
-                              ? 'Livreur-pré-vendeur (Hwanet)'
+                              ? 'Livreur-pré-vendeur (Van Sales)'
                               : isClientType
                               ? 'Dépôt → Client'
                               : 'Navette Inter-Dépôts'}
@@ -1144,7 +1144,7 @@ export default function WarehouseDashboard({
                   <div
                     onClick={() => {
                       setFormType('depot_to_client');
-                      if (!formRoute || formRoute.includes('↔') || formRoute.includes('Hwanet')) setFormRoute('Grand Casablanca & Ain Sebaâ');
+                      if (!formRoute || formRoute.includes('↔') || formRoute.includes('Proximité')) setFormRoute('Grand Casablanca & Ain Sebaâ');
                       if (!formVehicle || formVehicle.includes('Volvo') || formVehicle.includes('Transit')) setFormVehicle('Renault Master 3.5T');
                       if (!formCapacity || formCapacity.includes('12.0') || formCapacity.includes('2.5')) setFormCapacity('3.5 T / 4 Palettes');
                     }}
@@ -1202,7 +1202,7 @@ export default function WarehouseDashboard({
                   <div
                     onClick={() => {
                       setFormType('pre_seller');
-                      if (!formRoute || formRoute.includes('↔') || !formRoute.includes('Hwanet')) setFormRoute('Tournée Hwanet Derb Sultan & Garage Allal');
+                      if (!formRoute || formRoute.includes('↔') || formRoute.includes('Hwanet')) setFormRoute('Tournée Proximité Derb Sultan & Garage Allal');
                       if (!formVehicle || formVehicle.includes('Volvo') || formVehicle.includes('Master')) setFormVehicle('Hyundai H350 Fourgonnette 2.5T');
                       if (!formCapacity || formCapacity.includes('12.0') || formCapacity.includes('3.5')) setFormCapacity('2.5 T / Vente directe');
                     }}
@@ -1219,12 +1219,12 @@ export default function WarehouseDashboard({
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#10b981', fontWeight: 700, fontSize: 12 }}>
                         <Truck size={15} />
-                        <span>Type 3 : Pré-vendeur Hwanet</span>
+                        <span>Type 3 : Pré-vendeur (Van Sales)</span>
                       </div>
                       {formType === 'pre_seller' && <Check size={15} style={{ color: '#10b981' }} />}
                     </div>
                     <small style={{ display: 'block', color: 'var(--muted)', marginTop: 5, fontSize: 10.5, lineHeight: 1.35 }}>
-                      Tournées épiceries / Hwanet, commande sur place & vente directe.
+                      Tournées commerces de proximité, commande sur place & vente directe.
                     </small>
                   </div>
                 </div>

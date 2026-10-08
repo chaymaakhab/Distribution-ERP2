@@ -90,6 +90,25 @@ function StaffShell({ user }: { user: StaffUser }) {
   const [topbarSearch, setTopbarSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { theme, toggleTheme, isLight } = useTheme();
+  const [staffLang, setStaffLang] = useState<'fr' | 'ar'>(() => {
+    try {
+      return (localStorage.getItem('hercules_staff_lang') as 'fr' | 'ar') || 'fr';
+    } catch {
+      return 'fr';
+    }
+  });
+
+  function handleToggleLang(l: 'fr' | 'ar') {
+    setStaffLang(l);
+    try {
+      localStorage.setItem('hercules_staff_lang', l);
+    } catch {
+      /* ignore */
+    }
+    document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = l;
+  }
+
   const roleRef = useRef<HTMLDivElement>(null);
   const searchBoxRef = useRef<HTMLDivElement>(null);
 
@@ -464,6 +483,25 @@ function StaffShell({ user }: { user: StaffUser }) {
               </div>
             )}
 
+            {/* Staff Language Switcher FR / AR */}
+            <div className="sx-lang-pill" title="Langue / تغيير اللغة">
+              <button
+                type="button"
+                className={`sx-lang-btn ${staffLang === 'fr' ? 'active' : ''}`}
+                onClick={() => handleToggleLang('fr')}
+              >
+                FR
+              </button>
+              <span className="sx-lang-divider">|</span>
+              <button
+                type="button"
+                className={`sx-lang-btn ${staffLang === 'ar' ? 'active' : ''}`}
+                onClick={() => handleToggleLang('ar')}
+              >
+                العربية
+              </button>
+            </div>
+
             <Link href="/login" className="icon-button" title="Changer de rôle / Portail Connexion" aria-label="Portail Connexion">
               <LogIn size={16} />
             </Link>
@@ -527,6 +565,7 @@ function NavButton({ module, active, onClick }: { module: NavModule; active: boo
     >
       <Icon size={17} strokeWidth={1.8} />
       <span>{module.label}</span>
+      {active && <span className="nav-active-pip" />}
     </button>
   );
 }

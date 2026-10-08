@@ -25,7 +25,7 @@ interface StockItem {
   expiry_date?: string;
 }
 
-export type DriverType = 'depot_to_client' | 'depot_to_depot';
+export type DriverType = 'depot_to_client' | 'depot_to_depot' | 'pre_seller';
 
 export interface WarehouseDriver {
   id: number;
@@ -225,6 +225,35 @@ const INITIAL_DRIVERS: WarehouseDriver[] = [
     capacity: '7.5 T / 10 Palettes',
     status: 'en_repos',
   },
+  {
+    id: 7,
+    name: 'Hamid El Meskini',
+    phone: '+212 661 88 77 66',
+    cin: 'BK671243',
+    license_number: 'PERM-55214',
+    driver_type: 'pre_seller',
+    base_depot: 'DEP-01 Casablanca Central',
+    assigned_city_or_route: 'Tournée Hwanet : Derb Sultan, Garage Allal & Sbata',
+    vehicle_model: 'Hyundai H350 Fourgonnette 2.5T',
+    vehicle_plate: '45-B-11982',
+    capacity: '2.5 T / Vente directe embarquée',
+    status: 'en_tournee',
+    current_mission: 'Tournée Hwanet TRN-HW-04 (18 épiceries - prises de commandes & vente directe)',
+  },
+  {
+    id: 8,
+    name: 'Hassan Bouazza',
+    phone: '+212 662 99 11 00',
+    cin: 'BL339012',
+    license_number: 'PERM-77190',
+    driver_type: 'pre_seller',
+    base_depot: 'DEP-01 Casablanca Central',
+    assigned_city_or_route: 'Tournée Hwanet : Sidi Moumen, Bernoussi & Tit Mellil',
+    vehicle_model: 'Ford Transit Custom 2.2T',
+    vehicle_plate: '12-E-90812',
+    capacity: '2.2 T / Stock mobile & réassort',
+    status: 'disponible',
+  },
 ];
 
 const MOVEMENTS = [
@@ -309,11 +338,19 @@ export default function WarehouseDashboard({
 
   const clientDriversCount = drivers.filter((d) => d.driver_type === 'depot_to_client').length;
   const interDepotDriversCount = drivers.filter((d) => d.driver_type === 'depot_to_depot').length;
+  const preSellerDriversCount = drivers.filter((d) => d.driver_type === 'pre_seller').length;
   const onMissionCount = drivers.filter((d) => d.status === 'en_tournee' || d.status === 'en_transit').length;
 
   function handleCreateDriver(e: React.FormEvent) {
     e.preventDefault();
     if (!formName.trim() || !formPlate.trim()) return;
+
+    const defaultRoute =
+      formType === 'pre_seller'
+        ? 'Tournée Hwanet Grand Casablanca'
+        : formType === 'depot_to_client'
+        ? 'Grand Casablanca & Ain Sebaâ'
+        : 'Casablanca ↔ Mohammedia (Ligne 1)';
 
     const newDriver: WarehouseDriver = {
       id: Date.now(),
@@ -323,7 +360,7 @@ export default function WarehouseDashboard({
       license_number: formLicense.trim() || 'PERM-0000',
       driver_type: formType,
       base_depot: formBaseDepot,
-      assigned_city_or_route: formRoute.trim() || (formType === 'depot_to_client' ? 'Grand Casablanca' : 'Casablanca ↔ Mohammedia'),
+      assigned_city_or_route: formRoute.trim() || defaultRoute,
       vehicle_model: formVehicle.trim(),
       vehicle_plate: formPlate.trim(),
       capacity: formCapacity.trim(),
@@ -331,9 +368,13 @@ export default function WarehouseDashboard({
     };
 
     setDrivers((prev) => [newDriver, ...prev]);
-    notify(
-      `Livreur « ${newDriver.name} » ajouté avec succès (${newDriver.driver_type === 'depot_to_client' ? 'Type 1 : Dépôt → Client' : 'Type 2 : Navette Dépôt → Dépôt'}) !`
-    );
+    const typeLabel =
+      newDriver.driver_type === 'pre_seller'
+        ? 'Type 3 : Livreur-pré-vendeur (Hwanet)'
+        : newDriver.driver_type === 'depot_to_client'
+        ? 'Type 1 : Dépôt → Client'
+        : 'Type 2 : Navette Dépôt → Dépôt';
+    notify(`Livreur « ${newDriver.name} » ajouté avec succès (${typeLabel}) !`);
     setNewDriverModal(false);
     setActiveTab('drivers');
 
@@ -675,8 +716,8 @@ export default function WarehouseDashboard({
             </div>
           </div>
 
-          {/* 2 Types de Livreurs - Cartes explicatives interactives */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12, marginTop: 14 }}>
+          {/* 3 Types de Livreurs - Cartes explicatives interactives */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12, marginTop: 14 }}>
             <div
               onClick={() => setDriverTypeFilter(driverTypeFilter === 'depot_to_client' ? 'all' : 'depot_to_client')}
               style={{
@@ -691,12 +732,12 @@ export default function WarehouseDashboard({
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#38bdf8', fontWeight: 700, fontSize: 13 }}>
                   <Truck size={16} />
-                  <span>Type 1 : Livreur Dépôt → Client (Dernier Kilomètre)</span>
+                  <span>Type 1 : Dépôt → Client</span>
                 </div>
                 <span className="status-pill status-blue" style={{ fontSize: 11 }}>{clientDriversCount} livreurs</span>
               </div>
               <p style={{ margin: '6px 0 0', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.4 }}>
-                Distribution locale auprès des commerces, clients B2B, épiceries et chantiers urbains. Véhicules légers (fourgons 3.5T).
+                Distribution locale auprès des commerces, clients B2B et chantiers urbains. Véhicules légers (fourgons 3.5T).
               </p>
             </div>
 
@@ -714,12 +755,35 @@ export default function WarehouseDashboard({
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#c084fc', fontWeight: 700, fontSize: 13 }}>
                   <Building2 size={16} />
-                  <span>Type 2 : Chauffeur Navette Dépôt → Dépôt (Inter-Villes)</span>
+                  <span>Type 2 : Navette Dépôt → Dépôt</span>
                 </div>
                 <span className="status-pill status-violet" style={{ fontSize: 11 }}>{interDepotDriversCount} navettes</span>
               </div>
               <p style={{ margin: '6px 0 0', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.4 }}>
-                Liaisons régulières et acheminement de palettes entre dépôts régionaux (Casablanca, Mohammedia, Berrechid, Settat). Poids lourds (8T - 12T).
+                Liaisons régulières et acheminement de palettes entre dépôts régionaux (Casa, Mohammedia, Berrechid). Poids lourds (8T - 12T).
+              </p>
+            </div>
+
+            <div
+              onClick={() => setDriverTypeFilter(driverTypeFilter === 'pre_seller' ? 'all' : 'pre_seller')}
+              style={{
+                padding: '14px 16px',
+                borderRadius: 8,
+                background: driverTypeFilter === 'pre_seller' ? 'rgba(16,185,129,0.12)' : 'var(--navy-2)',
+                border: driverTypeFilter === 'pre_seller' ? '2px solid #10b981' : '1px solid var(--line)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#10b981', fontWeight: 700, fontSize: 13 }}>
+                  <Truck size={16} />
+                  <span>Type 3 : Livreur-pré-vendeur (Hwanet)</span>
+                </div>
+                <span className="status-pill status-green" style={{ fontSize: 11 }}>{preSellerDriversCount} pré-vendeurs</span>
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.4 }}>
+                Van Sales / Épiceries de quartier : prise de commande sur place, réassort direct, vente embarquée et encaissement immédiat.
               </p>
             </div>
           </div>
@@ -737,7 +801,7 @@ export default function WarehouseDashboard({
                   style={{ background: '#0284c7', borderColor: '#0369a1' }}
                   onClick={() => setNewDriverModal(true)}
                 >
-                  <Plus size={14} /> + Ajouter un livreur (2 Types)
+                  <Plus size={14} /> + Ajouter un livreur (3 Types)
                 </button>
               </div>
             </div>
@@ -765,7 +829,15 @@ export default function WarehouseDashboard({
                   style={{ color: '#a855f7' }}
                 >
                   <Building2 size={12} style={{ display: 'inline', marginRight: 4 }} />
-                  Navette Dépôt → Dépôt ({interDepotDriversCount})
+                  Navette Inter-Dépôts ({interDepotDriversCount})
+                </button>
+                <button
+                  className={`table-tab ${driverTypeFilter === 'pre_seller' ? 'active-tab' : ''}`}
+                  onClick={() => setDriverTypeFilter('pre_seller')}
+                  style={{ color: '#10b981' }}
+                >
+                  <Truck size={12} style={{ display: 'inline', marginRight: 4 }} />
+                  Livreur-pré-vendeur Hwanet ({preSellerDriversCount})
                 </button>
               </div>
 
@@ -820,8 +892,18 @@ export default function WarehouseDashboard({
                                 width: 32,
                                 height: 32,
                                 borderRadius: '50%',
-                                background: isClientType ? 'rgba(56,189,248,0.15)' : 'rgba(168,85,247,0.15)',
-                                color: isClientType ? '#38bdf8' : '#a855f7',
+                                background:
+                                  driver.driver_type === 'pre_seller'
+                                    ? 'rgba(16,185,129,0.15)'
+                                    : isClientType
+                                    ? 'rgba(56,189,248,0.15)'
+                                    : 'rgba(168,85,247,0.15)',
+                                color:
+                                  driver.driver_type === 'pre_seller'
+                                    ? '#10b981'
+                                    : isClientType
+                                    ? '#38bdf8'
+                                    : '#a855f7',
                                 display: 'grid',
                                 placeItems: 'center',
                                 fontWeight: 700,
@@ -840,17 +922,48 @@ export default function WarehouseDashboard({
                         </td>
                         <td>
                           <span
-                            className={`status-pill ${isClientType ? 'status-blue' : 'status-violet'}`}
+                            className={`status-pill ${
+                              driver.driver_type === 'pre_seller'
+                                ? 'status-green'
+                                : isClientType
+                                ? 'status-blue'
+                                : 'status-violet'
+                            }`}
                             style={{
-                              background: isClientType ? 'rgba(56,189,248,0.12)' : 'rgba(168,85,247,0.12)',
-                              color: isClientType ? '#38bdf8' : '#c084fc',
-                              borderColor: isClientType ? 'rgba(56,189,248,0.3)' : 'rgba(168,85,247,0.3)',
+                              background:
+                                driver.driver_type === 'pre_seller'
+                                  ? 'rgba(16,185,129,0.12)'
+                                  : isClientType
+                                  ? 'rgba(56,189,248,0.12)'
+                                  : 'rgba(168,85,247,0.12)',
+                              color:
+                                driver.driver_type === 'pre_seller'
+                                  ? '#10b981'
+                                  : isClientType
+                                  ? '#38bdf8'
+                                  : '#c084fc',
+                              borderColor:
+                                driver.driver_type === 'pre_seller'
+                                  ? 'rgba(16,185,129,0.3)'
+                                  : isClientType
+                                  ? 'rgba(56,189,248,0.3)'
+                                  : 'rgba(168,85,247,0.3)',
                               fontWeight: 700,
                               fontSize: 11,
                             }}
                           >
-                            {isClientType ? <Truck size={12} /> : <Building2 size={12} />}
-                            {isClientType ? 'Dépôt → Client' : 'Dépôt → Dépôt'}
+                            {driver.driver_type === 'pre_seller' ? (
+                              <Truck size={12} />
+                            ) : isClientType ? (
+                              <Truck size={12} />
+                            ) : (
+                              <Building2 size={12} />
+                            )}
+                            {driver.driver_type === 'pre_seller'
+                              ? 'Livreur-pré-vendeur (Hwanet)'
+                              : isClientType
+                              ? 'Dépôt → Client'
+                              : 'Navette Inter-Dépôts'}
                           </span>
                         </td>
                         <td>
@@ -858,7 +971,18 @@ export default function WarehouseDashboard({
                         </td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <MapPin size={13} style={{ color: isClientType ? '#38bdf8' : '#a855f7', flex: 'none' }} />
+                            <MapPin
+                              size={13}
+                              style={{
+                                color:
+                                  driver.driver_type === 'pre_seller'
+                                    ? '#10b981'
+                                    : isClientType
+                                    ? '#38bdf8'
+                                    : '#a855f7',
+                                flex: 'none',
+                              }}
+                            />
                             <b style={{ fontSize: 12 }}>{driver.assigned_city_or_route}</b>
                           </div>
                           {driver.current_mission && (
@@ -1011,21 +1135,21 @@ export default function WarehouseDashboard({
                 Sélectionnez le type de livreur selon sa mission opérationnelle : livraison client final ou navette inter-dépôts par ville.
               </p>
 
-              {/* Selector: Driver Type (Crucial user request!) */}
+              {/* Selector: Driver Type (3 Types: Dépôt→Client, Navette, Livreur-pré-vendeur) */}
               <div>
                 <span className="field-label" style={{ marginBottom: 6, display: 'block' }}>
                   Type de chauffeur (Requis) :
                 </span>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
                   <div
                     onClick={() => {
                       setFormType('depot_to_client');
-                      if (!formRoute || formRoute.includes('↔')) setFormRoute('Grand Casablanca & Ain Sebaâ');
-                      if (!formVehicle || formVehicle.includes('Volvo')) setFormVehicle('Renault Master 3.5T');
-                      if (!formCapacity || formCapacity.includes('12.0')) setFormCapacity('3.5 T / 4 Palettes');
+                      if (!formRoute || formRoute.includes('↔') || formRoute.includes('Hwanet')) setFormRoute('Grand Casablanca & Ain Sebaâ');
+                      if (!formVehicle || formVehicle.includes('Volvo') || formVehicle.includes('Transit')) setFormVehicle('Renault Master 3.5T');
+                      if (!formCapacity || formCapacity.includes('12.0') || formCapacity.includes('2.5')) setFormCapacity('3.5 T / 4 Palettes');
                     }}
                     style={{
-                      padding: 14,
+                      padding: 12,
                       borderRadius: 8,
                       cursor: 'pointer',
                       border: formType === 'depot_to_client' ? '2px solid #38bdf8' : '1px solid var(--line)',
@@ -1035,14 +1159,14 @@ export default function WarehouseDashboard({
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700, fontSize: 13 }}>
-                        <Truck size={16} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700, fontSize: 12 }}>
+                        <Truck size={15} />
                         <span>Type 1 : Dépôt → Client</span>
                       </div>
-                      {formType === 'depot_to_client' && <Check size={16} style={{ color: '#38bdf8' }} />}
+                      {formType === 'depot_to_client' && <Check size={15} style={{ color: '#38bdf8' }} />}
                     </div>
-                    <small style={{ display: 'block', color: 'var(--muted)', marginTop: 6, fontSize: 11, lineHeight: 1.4 }}>
-                      Distribution locale directe aux magasins, épiceries, clients finaux & chantiers.
+                    <small style={{ display: 'block', color: 'var(--muted)', marginTop: 5, fontSize: 10.5, lineHeight: 1.35 }}>
+                      Distribution directe aux magasins, B2B & chantiers.
                     </small>
                   </div>
 
@@ -1050,11 +1174,11 @@ export default function WarehouseDashboard({
                     onClick={() => {
                       setFormType('depot_to_depot');
                       if (!formRoute || !formRoute.includes('↔')) setFormRoute('Casablanca ↔ Berrechid ↔ Settat (Ligne 2)');
-                      if (!formVehicle || formVehicle.includes('Renault')) setFormVehicle('Volvo FL 12T');
-                      if (!formCapacity || formCapacity.includes('3.5')) setFormCapacity('12.0 T / 16 Palettes');
+                      if (!formVehicle || formVehicle.includes('Renault') || formVehicle.includes('Transit')) setFormVehicle('Volvo FL 12T');
+                      if (!formCapacity || formCapacity.includes('3.5') || formCapacity.includes('2.5')) setFormCapacity('12.0 T / 16 Palettes');
                     }}
                     style={{
-                      padding: 14,
+                      padding: 12,
                       borderRadius: 8,
                       cursor: 'pointer',
                       border: formType === 'depot_to_depot' ? '2px solid #a855f7' : '1px solid var(--line)',
@@ -1064,14 +1188,43 @@ export default function WarehouseDashboard({
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#c084fc', fontWeight: 700, fontSize: 13 }}>
-                        <Building2 size={16} />
-                        <span>Type 2 : Navette Dépôt → Dépôt</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#c084fc', fontWeight: 700, fontSize: 12 }}>
+                        <Building2 size={15} />
+                        <span>Type 2 : Navette Dépôt</span>
                       </div>
-                      {formType === 'depot_to_depot' && <Check size={16} style={{ color: '#c084fc' }} />}
+                      {formType === 'depot_to_depot' && <Check size={15} style={{ color: '#c084fc' }} />}
                     </div>
-                    <small style={{ display: 'block', color: 'var(--muted)', marginTop: 6, fontSize: 11, lineHeight: 1.4 }}>
-                      Liaisons régulières et transferts de palettes entre dépôts régionaux selon les lignes.
+                    <small style={{ display: 'block', color: 'var(--muted)', marginTop: 5, fontSize: 10.5, lineHeight: 1.35 }}>
+                      Transferts palettes entre dépôts régionaux (Lignes).
+                    </small>
+                  </div>
+
+                  <div
+                    onClick={() => {
+                      setFormType('pre_seller');
+                      if (!formRoute || formRoute.includes('↔') || !formRoute.includes('Hwanet')) setFormRoute('Tournée Hwanet Derb Sultan & Garage Allal');
+                      if (!formVehicle || formVehicle.includes('Volvo') || formVehicle.includes('Master')) setFormVehicle('Hyundai H350 Fourgonnette 2.5T');
+                      if (!formCapacity || formCapacity.includes('12.0') || formCapacity.includes('3.5')) setFormCapacity('2.5 T / Vente directe');
+                    }}
+                    style={{
+                      padding: 12,
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      border: formType === 'pre_seller' ? '2px solid #10b981' : '1px solid var(--line)',
+                      background: formType === 'pre_seller' ? 'rgba(16,185,129,0.12)' : 'var(--navy-2)',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#10b981', fontWeight: 700, fontSize: 12 }}>
+                        <Truck size={15} />
+                        <span>Type 3 : Pré-vendeur Hwanet</span>
+                      </div>
+                      {formType === 'pre_seller' && <Check size={15} style={{ color: '#10b981' }} />}
+                    </div>
+                    <small style={{ display: 'block', color: 'var(--muted)', marginTop: 5, fontSize: 10.5, lineHeight: 1.35 }}>
+                      Tournées épiceries / Hwanet, commande sur place & vente directe.
                     </small>
                   </div>
                 </div>

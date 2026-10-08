@@ -5,6 +5,7 @@ import {
   Warehouse, BadgeDollarSign, ArrowUpRight, TrendingUp, AlertTriangle,
   RotateCcw, RefreshCw, FileText, CheckCircle2, ChevronRight,
   Settings, Lock, ArrowRight, Layers, BarChart3, HardDrive,
+  Truck, Building2, Check, X, Undo2,
 } from 'lucide-react';
 import {
   api, formatMoney,
@@ -14,6 +15,90 @@ import { useStaffAuth } from '../auth';
 import { AreaChart, BarList, ColumnChart } from '../components/Charts';
 import { MapCanvas, MapLegend } from '../components/MapCanvas';
 import '../admin.css';
+
+export interface PendingOperation {
+  id: number;
+  op_type: 'retour' | 'ajustement' | 'rebut';
+  ref: string;
+  order_ref: string;
+  client: string;
+  depot: string;
+  driver_name: string;
+  driver_role: string;
+  driver_type: 'depot_to_client' | 'depot_to_depot' | 'pre_seller';
+  product: string;
+  qty: number;
+  total: number;
+  date: string;
+  motif_initial: string;
+  notes_initiales: string;
+  status: 'en_attente' | 'arbitre';
+  decision_admin?: {
+    motif_constate: string; // "chno sbab dyalo"
+    circonstance_cause: string; // "3lach kan"
+    decision_qualite: 'reintegre_stock' | 'mis_au_rebut_perte' | 'refuse'; // "wach produit saleh yrje3 l stock"
+    decision_label: string;
+    validated_at: string;
+    visa_notes?: string;
+  };
+}
+
+const INITIAL_PENDING_OPS: PendingOperation[] = [
+  {
+    id: 1,
+    op_type: 'retour',
+    ref: 'RET-2026-018',
+    order_ref: 'CMD-2026-1248',
+    client: 'Épicerie Centrale Saïd',
+    depot: 'DEP-02 Mohammedia',
+    driver_name: 'Hamid Moukrim',
+    driver_role: 'Livreur Dépôt → Client',
+    driver_type: 'depot_to_client',
+    product: 'Huile Végétale 5L',
+    qty: 15,
+    total: 3300,
+    date: 'Aujourd’hui 10:30',
+    motif_initial: 'Produit endommagé',
+    notes_initiales: 'Bidons percés lors du transport. Signalé par le chauffeur au déchargement.',
+    status: 'en_attente',
+  },
+  {
+    id: 2,
+    op_type: 'retour',
+    ref: 'RET-2026-014',
+    order_ref: 'CMD-2026-1184',
+    client: 'Commerce Général Tazi',
+    depot: 'DEP-04 Settat',
+    driver_name: 'Tariq El Ouazzani',
+    driver_role: 'Navette Inter-Dépôts',
+    driver_type: 'depot_to_depot',
+    product: 'Riz Long Grain 50kg',
+    qty: 25,
+    total: 6250,
+    date: 'Hier 16:45',
+    motif_initial: 'Qualité insuffisante',
+    notes_initiales: 'Signalement humidité excessive. Lot en quarantaine quai Settat en attente inspection.',
+    status: 'en_attente',
+  },
+  {
+    id: 3,
+    op_type: 'retour',
+    ref: 'RET-2026-019',
+    order_ref: 'CMD-HW-2026-089',
+    client: 'Épicerie Al Baraka (Hwanet)',
+    depot: 'DEP-01 Casablanca Central',
+    driver_name: 'Hamid El Meskini',
+    driver_role: 'Livreur-pré-vendeur (Van Sales)',
+    driver_type: 'pre_seller',
+    product: 'Perceuse à percussion 850W',
+    qty: 1,
+    total: 1249,
+    date: 'Aujourd’hui 09:15',
+    motif_initial: 'Erreur commande',
+    notes_initiales: 'Récupéré lors de la tournée Hwanet Derb Sultan par le pré-vendeur. Emballage scellé d’origine.',
+    status: 'en_attente',
+  },
+];
 
 interface SystemNodeHealth {
   depot_code: string;
@@ -158,6 +243,60 @@ export default function SuperAdminDashboard() {
   const [periodTab, setPeriodTab] = useState<'jour' | 'mois'>('jour');
   const [isSyncing, setIsSyncing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Super Admin Operation Validations (User requested: "super admin y3ti validation l chaque opiration par exemple reteur chno sbab dyalo o 3lach kan o wach produit saleh yrje3 l stock wela ba9i")
+  const [pendingOps, setPendingOps] = useState<PendingOperation[]>(INITIAL_PENDING_OPS);
+  const [arbitrationModal, setArbitrationModal] = useState<PendingOperation | null>(null);
+  const [arbMotif, setArbMotif] = useState<string>('Produit endommagé');
+  const [arbCause, setArbCause] = useState<string>('');
+  const [arbStockDecision, setArbStockDecision] = useState<'reintegre_stock' | 'mis_au_rebut_perte' | 'refuse'>('reintegre_stock');
+  const [arbNotes, setArbNotes] = useState<string>('');
+
+  function handleOpenArbitration(op: PendingOperation) {
+    setArbitrationModal(op);
+    setArbMotif(op.motif_initial);
+    setArbCause(op.notes_initiales);
+    setArbStockDecision(op.decision_admin ? op.decision_admin.decision_qualite : 'reintegre_stock');
+    setArbNotes(op.decision_admin?.visa_notes || '');
+  }
+
+  function handleSubmitArbitration(e: React.FormEvent) {
+    e.preventDefault();
+    if (!arbitrationModal) return;
+
+    let decisionLabel = '';
+    if (arbStockDecision === 'reintegre_stock') {
+      decisionLabel = `Produit conforme : Réintégré en stock disponible (+${arbitrationModal.qty} unités)`;
+    } else if (arbStockDecision === 'mis_au_rebut_perte') {
+      decisionLabel = 'Avarie constatée : Mis au rebut / Perte comptable (0 stock vendable)';
+    } else {
+      decisionLabel = 'Rejet du litige : Retour non fondé, réexpédition au client';
+    }
+
+    setPendingOps((prev) =>
+      prev.map((op) =>
+        op.id === arbitrationModal.id
+          ? {
+              ...op,
+              status: 'arbitre',
+              decision_admin: {
+                motif_constate: arbMotif,
+                circonstance_cause: arbCause,
+                decision_qualite: arbStockDecision,
+                decision_label: decisionLabel,
+                validated_at: new Date().toLocaleDateString('fr-FR', {
+                  day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                }),
+                visa_notes: arbNotes,
+              },
+            }
+          : op
+      )
+    );
+
+    notify(`Arbitrage Super Admin validé pour ${arbitrationModal.ref} : ${decisionLabel}`);
+    setArbitrationModal(null);
+  }
 
   function notify(msg: string) {
     setToast(msg);
@@ -336,6 +475,140 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
+      {/* ── Super Admin Operational Validations & Arbitrations Widget (User Request) ── */}
+      <section className="panel" style={{ padding: '16px', marginBottom: '16px', border: '1px solid rgba(2, 132, 199, 0.35)', background: 'var(--navy-1)' }}>
+        <div className="panel-heading" style={{ marginBottom: '14px', flexWrap: 'wrap', gap: 10 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Crown size={12} /> ARBITRAGE OPÉRATIONNEL & AUDIT DIRECTION
+              </span>
+              <span
+                style={{
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  borderRadius: 12,
+                  padding: '2px 8px',
+                }}
+              >
+                {pendingOps.filter((o) => o.status === 'en_attente').length} litiges en attente
+              </span>
+            </div>
+            <h2 style={{ margin: '4px 0 0' }}>
+              Validations des Opérations Sensibles (Retours Marchandises & Avaries)
+            </h2>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)' }}>
+              Arbitrage hiérarchique : motif exact (sbab dyalo), circonstance (3lach kan) et verdict qualité / réintégration en stock (wach saleh yrje3 l stock).
+            </p>
+          </div>
+          <button
+            className="button-secondary"
+            onClick={() => setLocation(`/${workspace}/returns`)}
+            style={{ fontSize: 12, height: 34, gap: 6 }}
+          >
+            <Undo2 size={14} /> Registre complet des retours <ArrowRight size={14} />
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
+          {pendingOps.map((op) => {
+            const isArbitrated = op.status === 'arbitre';
+            const isPreSeller = op.driver_type === 'pre_seller';
+            return (
+              <div
+                key={op.id}
+                style={{
+                  border: isArbitrated ? '1px solid #16a34a' : '1px solid var(--line)',
+                  borderRadius: 10,
+                  padding: 14,
+                  background: isArbitrated ? 'rgba(34,197,94,0.05)' : 'var(--navy-2)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                    <div>
+                      <code style={{ color: '#f59e0b', fontWeight: 700, fontSize: 12 }}>{op.ref}</code>
+                      <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 6 }}>({op.order_ref})</span>
+                      <b style={{ display: 'block', fontSize: 13, marginTop: 2 }}>{op.client}</b>
+                    </div>
+                    <span
+                      className={`status-pill ${isArbitrated ? 'status-green' : 'status-amber'}`}
+                      style={{ fontSize: 10.5 }}
+                    >
+                      {isArbitrated ? <CheckCircle2 size={11} /> : <AlertTriangle size={11} />}
+                      {isArbitrated ? 'Arbitré Super Admin' : 'En attente décision'}
+                    </span>
+                  </div>
+
+                  <div style={{ background: 'rgba(0,0,0,0.15)', padding: '8px 10px', borderRadius: 6, fontSize: 12, margin: '8px 0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--muted)' }}>Article litigieux :</span>
+                      <b>{op.product} (×{op.qty})</b>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                      <span style={{ color: 'var(--muted)' }}>Montant avoir :</span>
+                      <b style={{ color: '#0284c7' }}>{formatMoney(op.total)} DH</b>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                      <span style={{ color: 'var(--muted)' }}>Chauffeur :</span>
+                      <span style={{ fontSize: 11, color: isPreSeller ? '#10b981' : undefined }}>
+                        {isPreSeller ? '🚚 Pré-vendeur Hwanet' : '🚚 ' + op.driver_name}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                      <span style={{ color: 'var(--muted)' }}>Dépôt récepteur :</span>
+                      <span>{op.depot}</span>
+                    </div>
+                  </div>
+
+                  {isArbitrated && op.decision_admin ? (
+                    <div style={{ fontSize: 11, padding: 8, background: 'rgba(2,132,199,0.08)', borderRadius: 6, border: '1px solid #bae6fd' }}>
+                      <div style={{ color: '#0284c7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <ShieldCheck size={12} /> Décision validée :
+                      </div>
+                      <div style={{ marginTop: 2, color: 'var(--text)' }}>
+                        <b>Verdict stock :</b> {op.decision_admin.decision_label}
+                      </div>
+                      <div style={{ marginTop: 2, color: 'var(--muted)' }}>
+                        <b>Sbab :</b> {op.decision_admin.motif_constate} · <b>3lach :</b> {op.decision_admin.circonstance_cause}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 11.5, color: 'var(--muted)', fontStyle: 'italic' }}>
+                      « {op.notes_initiales} »
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+                  <button
+                    className="button-primary"
+                    onClick={() => handleOpenArbitration(op)}
+                    style={{
+                      height: 32,
+                      fontSize: 11.5,
+                      padding: '0 12px',
+                      background: isArbitrated ? '#334155' : '#0284c7',
+                      borderColor: isArbitrated ? '#475569' : '#0369a1',
+                      gap: 6,
+                    }}
+                  >
+                    <ShieldCheck size={13} />
+                    {isArbitrated ? 'Modifier l’arbitrage' : 'Arbitrer l’opération'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Multi-Dépôt Performance Grid */}
       <section className="panel" style={{ padding: '16px', marginBottom: '16px' }}>
         <div className="panel-heading" style={{ marginBottom: '12px' }}>
@@ -465,6 +738,327 @@ export default function SuperAdminDashboard() {
           </button>
         </div>
       </section>
+
+      {/* ── Super Admin Arbitration & Operational Validation Modal ── */}
+      {arbitrationModal && (
+        <div className="modal-backdrop" onClick={() => setArbitrationModal(null)}>
+          <form
+            className="record-modal"
+            onSubmit={handleSubmitArbitration}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 640,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Crown size={13} /> ARBITRAGE HIÉRARCHIQUE & DÉCISION SUPER ADMIN
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Validation Opérationnelle · {arbitrationModal.ref}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setArbitrationModal(null)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: '18px 22px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 14,
+                background: '#ffffff',
+              }}
+            >
+              {/* Dossier Summary Box */}
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                  gap: 10,
+                  fontSize: 12,
+                }}
+              >
+                <div>
+                  <span style={{ color: '#64748b', display: 'block' }}>Client :</span>
+                  <b style={{ color: '#0f172a' }}>{arbitrationModal.client}</b>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', display: 'block' }}>Article & Qté :</span>
+                  <b style={{ color: '#0f172a' }}>{arbitrationModal.product} (×{arbitrationModal.qty})</b>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', display: 'block' }}>Montant Avoir :</span>
+                  <b style={{ color: '#0284c7' }}>{formatMoney(arbitrationModal.total)} DH</b>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', display: 'block' }}>Chauffeur :</span>
+                  <span style={{ color: '#334155' }}>
+                    {arbitrationModal.driver_type === 'pre_seller' ? '🚚 Pré-vendeur Hwanet' : arbitrationModal.driver_name}
+                  </span>
+                </div>
+              </div>
+
+              {/* 1. Motif exact (Sbab dyalo) */}
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                1. Motif exact constaté (Sbab dyalo) *
+                <select
+                  required
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 13,
+                    marginTop: 4,
+                  }}
+                  value={arbMotif}
+                  onChange={(e) => setArbMotif(e.target.value)}
+                >
+                  <option value="Produit endommagé">Produit endommagé / Casse ou fuite</option>
+                  <option value="Erreur commande">Erreur commande (référence ou quantité)</option>
+                  <option value="Produit périmé">Produit périmé / DLC insuffisante</option>
+                  <option value="Refus client">Refus client à la livraison</option>
+                  <option value="Surplus">Surplus de livraison / Surstock</option>
+                  <option value="Qualité insuffisante">Qualité insuffisante / Non-conformité</option>
+                </select>
+              </label>
+
+              {/* 2. Circonstance & Cause racine (3lach kan) */}
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                2. Circonstance & Cause racine constatée (3lach kan) *
+                <textarea
+                  required
+                  rows={2}
+                  value={arbCause}
+                  onChange={(e) => setArbCause(e.target.value)}
+                  placeholder="Expliquez en détail les circonstances : avarie durant le trajet, erreur de picking au dépôt, réclamation tardive..."
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 12.5,
+                    marginTop: 4,
+                  }}
+                />
+              </label>
+
+              {/* 3. Verdict Qualité & Stock (Wach produit saleh yrje3 l stock wela ba9i) */}
+              <div>
+                <span className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12, marginBottom: 6, display: 'block' }}>
+                  3. Sort du Stock & Décision Qualité (Wach produit saleh yrje3 l stock wela ba9i) *
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                  {/* Option A: Reintegration */}
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: arbStockDecision === 'reintegre_stock' ? '2px solid #16a34a' : '1px solid #cbd5e1',
+                      background: arbStockDecision === 'reintegre_stock' ? 'rgba(22,163,74,0.08)' : '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="sa_arb_stock"
+                      value="reintegre_stock"
+                      checked={arbStockDecision === 'reintegre_stock'}
+                      onChange={() => setArbStockDecision('reintegre_stock')}
+                      style={{ marginTop: 2, accentColor: '#16a34a' }}
+                    />
+                    <div>
+                      <b style={{ color: '#15803d', fontSize: 12.5 }}>
+                        ✓ Saleh yrje3 l stock : Réintégrer en stock vendable (+{arbitrationModal.qty} unités)
+                      </b>
+                      <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                        Marchandise conforme, saine et scellée. Réintégrée physiquement et comptablement dans le stock disponible du dépôt.
+                      </small>
+                    </div>
+                  </label>
+
+                  {/* Option B: Scrap / Loss */}
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: arbStockDecision === 'mis_au_rebut_perte' ? '2px solid #f59e0b' : '1px solid #cbd5e1',
+                      background: arbStockDecision === 'mis_au_rebut_perte' ? 'rgba(245,158,11,0.08)' : '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="sa_arb_stock"
+                      value="mis_au_rebut_perte"
+                      checked={arbStockDecision === 'mis_au_rebut_perte'}
+                      onChange={() => setArbStockDecision('mis_au_rebut_perte')}
+                      style={{ marginTop: 2, accentColor: '#f59e0b' }}
+                    />
+                    <div>
+                      <b style={{ color: '#b45309', fontSize: 12.5 }}>
+                        ✗ Ghir saleh (Avarie / Rebut) : Mise au rebut & Perte comptable (0 stock vendable)
+                      </b>
+                      <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                        Marchandise avariée, détruite ou impropre à la vente. NON réintégrée dans le stock disponible. PV de destruction & enregistrement de la perte.
+                      </small>
+                    </div>
+                  </label>
+
+                  {/* Option C: Refusal */}
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: arbStockDecision === 'refuse' ? '2px solid #ef4444' : '1px solid #cbd5e1',
+                      background: arbStockDecision === 'refuse' ? 'rgba(239,68,68,0.08)' : '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="sa_arb_stock"
+                      value="refuse"
+                      checked={arbStockDecision === 'refuse'}
+                      onChange={() => setArbStockDecision('refuse')}
+                      style={{ marginTop: 2, accentColor: '#ef4444' }}
+                    />
+                    <div>
+                      <b style={{ color: '#b91c1c', fontSize: 12.5 }}>
+                        ⛔ Refusé : Rejet du retour client (Délai dépassé ou motif irrecevable)
+                      </b>
+                      <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                        Retour rejeté au quai. Aucun avoir accordé au client et réexpédition à sa charge.
+                      </small>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* 4. Visa Super Admin */}
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                Notes complémentaires & Visa Direction
+                <input
+                  value={arbNotes}
+                  onChange={(e) => setArbNotes(e.target.value)}
+                  placeholder="Ex. Contrôle physique validé par Direction Générale · Enregistré au PV #ARB-2026-08"
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 13,
+                    marginTop: 4,
+                  }}
+                />
+              </label>
+            </div>
+
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 22px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setArbitrationModal(null)}
+                style={{
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{
+                  height: 38,
+                  padding: '0 18px',
+                  background: '#0284c7',
+                  borderColor: '#0369a1',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <ShieldCheck size={16} /> Valider la décision Direction
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {toast && (
         <div className="toast-note">

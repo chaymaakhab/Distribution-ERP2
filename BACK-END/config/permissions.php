@@ -145,6 +145,20 @@ return [
             ],
         ],
 
+        'pre_seller' => [
+            'name' => 'Livreur-pré-vendeur',
+            'home' => '/delivery/dashboard',
+            'permissions' => [
+                'dashboard.view',
+                'customers.view', 'customers.create',
+                'orders.view', 'orders.create',
+                'deliveries.view', 'deliveries.start', 'deliveries.complete',
+                'payments.view', 'payments.create',
+                'returns.view', 'returns.create',
+                'cash_closings.view', 'cash_closings.create',
+            ],
+        ],
+
         'accounting' => [
             'name' => 'Comptable',
             'home' => '/accounting/dashboard',

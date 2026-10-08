@@ -3,6 +3,7 @@ import {
   Undo2, Search, Plus, X, CheckCircle2, Eye, AlertTriangle,
   PackageCheck, Clock, Ban, RefreshCw, Printer, ArrowLeft,
   Truck, Building2, FileText, ChevronRight, ShieldAlert,
+  Crown, ShieldCheck, Check,
 } from 'lucide-react';
 import { formatMoney } from '../api';
 import ReturnSlipDocumentModal, { type ReturnSlipData } from '../components/ReturnSlipDocumentModal';
@@ -24,6 +25,17 @@ export interface ReturnLine {
   reason_detail?: string;
 }
 
+export interface ReturnAdminValidation {
+  validated_by: string;
+  validated_at: string;
+  motif_constate: string; // "chno sbab dyalo"
+  circonstance_cause: string; // "3lach kan"
+  decision_qualite: 'reintegre_stock' | 'mis_au_rebut_perte' | 'refuse'; // "wach produit saleh yrje3 l stock wela ba9i"
+  decision_label: string;
+  decision_stock_qty: number;
+  visa_notes?: string;
+}
+
 export interface ReturnRequest {
   id: number;
   ref: string;
@@ -32,7 +44,7 @@ export interface ReturnRequest {
   client_ice?: string;
   client_city?: string;
   driver: string;
-  driver_type: 'depot_to_client' | 'depot_to_depot';
+  driver_type: 'depot_to_client' | 'depot_to_depot' | 'pre_seller';
   depot: string;
   date: string;
   reason: ReturnReason;
@@ -40,6 +52,7 @@ export interface ReturnRequest {
   total: number;
   lines: ReturnLine[];
   notes: string;
+  admin_validation?: ReturnAdminValidation;
 }
 
 const INITIAL_RETURNS: ReturnRequest[] = [
@@ -138,6 +151,25 @@ const INITIAL_RETURNS: ReturnRequest[] = [
     ],
     notes: 'Signalement humidité. Lot en quarantaine au dépôt Settat en attente inspection qualité.',
   },
+  {
+    id: 6,
+    ref: 'RET-2026-019',
+    order_ref: 'CMD-HW-2026-089',
+    client: 'Épicerie Al Baraka (Hwanet)',
+    client_ice: '002981726000045',
+    client_city: 'Casablanca (Derb Sultan)',
+    driver: 'Hamid El Meskini',
+    driver_type: 'pre_seller',
+    depot: 'DEP-01 Casablanca Central',
+    date: '06 Oct 2026',
+    reason: 'Erreur commande',
+    status: 'En cours',
+    total: 1850,
+    lines: [
+      { product: 'Perceuse à percussion 850W', qty: 1, unit_price: 1249, reintegrate: true, reason_detail: 'Client a commandé version sans percussion' },
+    ],
+    notes: 'Récupéré lors de la tournée Hwanet Derb Sultan par le livreur-pré-vendeur Hamid El Meskini. Emballage d’origine scellé.',
+  },
 ];
 
 const STATUS_META: Record<ReturnStatus, { color: string; icon: React.ReactNode }> = {
@@ -157,11 +189,18 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tous');
   const [depotFilter, setDepotFilter] = useState('all');
-  const [driverTypeFilter, setDriverTypeFilter] = useState<'all' | 'depot_to_client' | 'depot_to_depot'>('all');
+  const [driverTypeFilter, setDriverTypeFilter] = useState<'all' | 'depot_to_client' | 'depot_to_depot' | 'pre_seller'>('all');
   const [selected, setSelected] = useState<ReturnRequest | null>(null);
   const [printDoc, setPrintDoc] = useState<ReturnSlipData | null>(null);
   const [newReturnModal, setNewReturnModal] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  // Super Admin Arbitration Modal State (User requested: "super admin y3ti validation l chaque opiration chno sbab dyalo o 3lach kan o wach produit saleh yrje3 l stock wela ba9i")
+  const [arbitrationModal, setArbitrationModal] = useState<ReturnRequest | null>(null);
+  const [arbMotif, setArbMotif] = useState<ReturnReason>('Produit endommagé');
+  const [arbCause, setArbCause] = useState<string>('');
+  const [arbStockDecision, setArbStockDecision] = useState<'reintegre_stock' | 'mis_au_rebut_perte' | 'refuse'>('reintegre_stock');
+  const [arbNotes, setArbNotes] = useState<string>('');
 
   // New return form state
   const [formOrderRef, setFormOrderRef] = useState('CMD-2403');
@@ -169,7 +208,7 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
   const [formClientIce, setFormClientIce] = useState('004128901000092');
   const [formClientCity, setFormClientCity] = useState('Fès');
   const [formDriver, setFormDriver] = useState('Hamid Moukrim');
-  const [formDriverType, setFormDriverType] = useState<'depot_to_client' | 'depot_to_depot'>('depot_to_client');
+  const [formDriverType, setFormDriverType] = useState<'depot_to_client' | 'depot_to_depot' | 'pre_seller'>('depot_to_client');
   const [formDepot, setFormDepot] = useState('DEP-01 Casablanca Central');
   const [formReason, setFormReason] = useState<ReturnReason>('Produit endommagé');
   const [formProduct, setFormProduct] = useState('Huile Végétale 5L');
@@ -227,6 +266,77 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
     if (selected && selected.id === id) {
       setSelected({ ...selected, status: newStatus });
     }
+  }
+
+  function handleOpenArbitration(req: ReturnRequest) {
+    setArbitrationModal(req);
+    setArbMotif(req.reason);
+    setArbCause(req.notes || `Retour marchandise déclaré au quai ${req.depot}.`);
+    setArbStockDecision(req.lines[0]?.reintegrate ? 'reintegre_stock' : 'mis_au_rebut_perte');
+    setArbNotes('');
+  }
+
+  function handleSubmitArbitration(e: React.FormEvent) {
+    e.preventDefault();
+    if (!arbitrationModal) return;
+
+    let newStatus: ReturnStatus = 'Validé';
+    let decisionLabel = '';
+    let reinteg = false;
+
+    if (arbStockDecision === 'reintegre_stock') {
+      newStatus = 'Réintégré';
+      decisionLabel = 'Produit conforme : Réintégré en stock vendable (+X unités)';
+      reinteg = true;
+    } else if (arbStockDecision === 'mis_au_rebut_perte') {
+      newStatus = 'Validé';
+      decisionLabel = 'Produit non conforme / Avarie : Mis au rebut (Perte comptable constatée)';
+      reinteg = false;
+    } else {
+      newStatus = 'Refusé';
+      decisionLabel = 'Retour non fondé : Rejet de la réclamation et renvoi au client';
+      reinteg = false;
+    }
+
+    const validationPayload: ReturnAdminValidation = {
+      validated_by: 'Super Admin',
+      validated_at: new Date().toLocaleDateString('fr-FR', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      }),
+      motif_constate: arbMotif,
+      circonstance_cause: arbCause.trim() || 'Constatation contradictoire effectuée au quai de déchargement.',
+      decision_qualite: arbStockDecision,
+      decision_label: decisionLabel,
+      decision_stock_qty: reinteg ? arbitrationModal.lines[0]?.qty || 1 : 0,
+      visa_notes: arbNotes.trim() || undefined,
+    };
+
+    setReturns((prev) =>
+      prev.map((r) =>
+        r.id === arbitrationModal.id
+          ? {
+              ...r,
+              status: newStatus,
+              reason: arbMotif as ReturnReason,
+              admin_validation: validationPayload,
+              lines: r.lines.map((l) => ({ ...l, reintegrate: reinteg })),
+            }
+          : r
+      )
+    );
+
+    if (selected && selected.id === arbitrationModal.id) {
+      setSelected({
+        ...selected,
+        status: newStatus,
+        reason: arbMotif as ReturnReason,
+        admin_validation: validationPayload,
+        lines: selected.lines.map((l) => ({ ...l, reintegrate: reinteg })),
+      });
+    }
+
+    notify(`Arbitrage Super Admin validé pour ${arbitrationModal.ref} : ${decisionLabel}`);
+    setArbitrationModal(null);
   }
 
   function handleCreateReturn(e: React.FormEvent) {
@@ -425,6 +535,7 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
               <option value="all">Tous types chauffeurs</option>
               <option value="depot_to_client">Livreur Dépôt → Client</option>
               <option value="depot_to_depot">Navette Dépôt → Dépôt</option>
+              <option value="pre_seller">Livreur-pré-vendeur (Hwanet)</option>
             </select>
 
             {/* Search Input */}
@@ -459,6 +570,7 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
               {filtered.map((r) => {
                 const meta = STATUS_META[r.status];
                 const isNavette = r.driver_type === 'depot_to_depot';
+                const isPreSeller = r.driver_type === 'pre_seller';
                 return (
                   <tr key={r.id}>
                     <td>
@@ -472,6 +584,11 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                     <td className="table-main">
                       <strong>{r.client}</strong>
                       {r.client_city && <small style={{ display: 'block', color: 'var(--muted)', fontSize: 11 }}>{r.client_city}</small>}
+                      {r.admin_validation && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, color: '#0284c7', fontWeight: 700, marginTop: 2 }}>
+                          <ShieldCheck size={10} /> Arbitré par {r.admin_validation.validated_by}
+                        </span>
+                      )}
                     </td>
                     <td>
                       <span style={{ fontSize: 11, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -480,7 +597,13 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                     </td>
                     <td className="table-secondary">
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        {isNavette ? <Building2 size={13} style={{ color: '#a855f7' }} /> : <Truck size={13} style={{ color: '#38bdf8' }} />}
+                        {isPreSeller ? (
+                          <Truck size={13} style={{ color: '#10b981' }} />
+                        ) : isNavette ? (
+                          <Building2 size={13} style={{ color: '#a855f7' }} />
+                        ) : (
+                          <Truck size={13} style={{ color: '#38bdf8' }} />
+                        )}
                         <span>{r.driver}</span>
                       </div>
                       <span
@@ -488,13 +611,21 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                           fontSize: 10,
                           padding: '1px 5px',
                           borderRadius: 3,
-                          background: isNavette ? 'rgba(168,85,247,0.1)' : 'rgba(56,189,248,0.1)',
-                          color: isNavette ? '#c084fc' : '#38bdf8',
+                          background: isPreSeller
+                            ? 'rgba(16,185,129,0.1)'
+                            : isNavette
+                            ? 'rgba(168,85,247,0.1)'
+                            : 'rgba(56,189,248,0.1)',
+                          color: isPreSeller ? '#10b981' : isNavette ? '#c084fc' : '#38bdf8',
                           display: 'inline-block',
                           marginTop: 2,
                         }}
                       >
-                        {isNavette ? 'Navette Inter-Dépôts' : 'Dépôt → Client'}
+                        {isPreSeller
+                          ? 'Livreur-pré-vendeur (Hwanet)'
+                          : isNavette
+                          ? 'Navette Inter-Dépôts'
+                          : 'Dépôt → Client'}
                       </span>
                     </td>
                     <td>
@@ -519,6 +650,14 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                           onClick={() => setSelected(r)}
                         >
                           <Eye size={14} />
+                        </button>
+                        <button
+                          className="row-action"
+                          title="Arbitrer / Valider l'opération (Super Admin)"
+                          style={{ color: '#0284c7' }}
+                          onClick={() => handleOpenArbitration(r)}
+                        >
+                          <ShieldCheck size={14} />
                         </button>
                         <button
                           className="row-action"
@@ -634,6 +773,55 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
               </div>
             </div>
 
+            {/* Super Admin Decision Block if already arbitrated */}
+            {selected.admin_validation && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: 14,
+                  borderRadius: 8,
+                  border: '1px solid #bae6fd',
+                  background: 'rgba(2,132,199,0.06)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#0284c7', fontWeight: 700, fontSize: 13 }}>
+                    <ShieldCheck size={16} />
+                    <span>DÉCISION & ARBITRAGE OPÉRATIONNEL SUPER ADMIN</span>
+                  </div>
+                  <span style={{ fontSize: 11, color: '#64748b' }}>
+                    Visa : {selected.admin_validation.validated_by} · {selected.admin_validation.validated_at}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12 }}>
+                  <div>
+                    <span style={{ color: '#64748b', display: 'block', fontWeight: 600 }}>1. Motif constaté (Sbab dyalo) :</span>
+                    <b style={{ color: '#0f172a' }}>{selected.admin_validation.motif_constate}</b>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b', display: 'block', fontWeight: 600 }}>2. Circonstance & Cause (3lach kan) :</span>
+                    <span style={{ color: '#334155' }}>{selected.admin_validation.circonstance_cause}</span>
+                  </div>
+                  <div style={{ gridColumn: '1/-1', borderTop: '1px solid #e2e8f0', paddingTop: 8 }}>
+                    <span style={{ color: '#64748b', display: 'block', fontWeight: 600 }}>3. Sort du Stock & Qualité (Wach saleh yrje3 l stock) :</span>
+                    <span
+                      className={`status-pill ${
+                        selected.admin_validation.decision_qualite === 'reintegre_stock'
+                          ? 'status-green'
+                          : selected.admin_validation.decision_qualite === 'mis_au_rebut_perte'
+                          ? 'status-amber'
+                          : 'status-red'
+                      }`}
+                      style={{ marginTop: 4, display: 'inline-flex' }}
+                    >
+                      {selected.admin_validation.decision_label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="modal-actions" style={{ marginTop: 14 }}>
               <button className="button-secondary" onClick={() => setSelected(null)}>
                 Fermer
@@ -647,6 +835,15 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                 }}
               >
                 <Printer size={14} /> Imprimer Bon de Retour
+              </button>
+              <button
+                className="button-primary"
+                style={{ background: '#0284c7', borderColor: '#0369a1', gap: 6 }}
+                onClick={() => {
+                  handleOpenArbitration(selected);
+                }}
+              >
+                <Crown size={14} /> Arbitrage Super Admin
               </button>
               {selected.status === 'En cours' && (
                 <button className="button-secondary" style={{ color: '#ef4444' }} onClick={() => advanceStatus(selected.id, 'Refusé')}>
@@ -665,6 +862,332 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Super Admin Arbitration & Operational Validation Modal (Crucial user request!) ── */}
+      {arbitrationModal && (
+        <div className="modal-backdrop" onClick={() => setArbitrationModal(null)}>
+          <form
+            className="record-modal"
+            onSubmit={handleSubmitArbitration}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 640,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Crown size={13} /> ARBITRAGE OPÉRATIONNEL & DÉCISION SUPER ADMIN
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Validation du litige · {arbitrationModal.ref}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setArbitrationModal(null)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: '18px 22px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 14,
+                background: '#ffffff',
+              }}
+            >
+              {/* Dossier Summary Box */}
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                  gap: 10,
+                  fontSize: 12,
+                }}
+              >
+                <div>
+                  <span style={{ color: '#64748b', display: 'block' }}>Client :</span>
+                  <b>{arbitrationModal.client}</b>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', display: 'block' }}>Article & Qté :</span>
+                  <b>{arbitrationModal.lines[0]?.product} ({arbitrationModal.lines[0]?.qty} unités)</b>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', display: 'block' }}>Montant Avoir :</span>
+                  <b style={{ color: '#0284c7' }}>{formatMoney(arbitrationModal.total)} DH</b>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b', display: 'block' }}>Chauffeur :</span>
+                  <span>{arbitrationModal.driver}</span>
+                </div>
+              </div>
+
+              {/* 1. Motif exact (Sbab dyalo) */}
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                1. Motif exact constaté (Sbab dyalo) *
+                <select
+                  required
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 13,
+                    marginTop: 4,
+                  }}
+                  value={arbMotif}
+                  onChange={(e) => setArbMotif(e.target.value as ReturnReason)}
+                >
+                  <option value="Produit endommagé">Produit endommagé / Casse ou fuite</option>
+                  <option value="Erreur commande">Erreur commande (référence ou quantité)</option>
+                  <option value="Produit périmé">Produit périmé / DLC insuffisante</option>
+                  <option value="Refus client">Refus client à la livraison</option>
+                  <option value="Surplus">Surplus de livraison / Surstock</option>
+                  <option value="Qualité insuffisante">Qualité insuffisante / Non-conformité</option>
+                </select>
+              </label>
+
+              {/* 2. Circonstance & Cause racine (3lach kan) */}
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                2. Circonstance & Cause racine constatée (3lach kan) *
+                <textarea
+                  required
+                  rows={2}
+                  value={arbCause}
+                  onChange={(e) => setArbCause(e.target.value)}
+                  placeholder="Expliquez en détail les circonstances : avarie durant le trajet, erreur de picking au dépôt, réclamation tardive..."
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 12.5,
+                    marginTop: 4,
+                  }}
+                />
+              </label>
+
+              {/* 3. Verdict Qualité & Stock (Wach produit saleh yrje3 l stock wela ba9i) */}
+              <div>
+                <span className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12, marginBottom: 6, display: 'block' }}>
+                  3. Sort du Stock & Décision Qualité (Wach produit saleh yrje3 l stock wela ba9i) *
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                  {/* Option A: Reintegration */}
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: arbStockDecision === 'reintegre_stock' ? '2px solid #16a34a' : '1px solid #cbd5e1',
+                      background: arbStockDecision === 'reintegre_stock' ? 'rgba(22,163,74,0.08)' : '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="arb_stock"
+                      value="reintegre_stock"
+                      checked={arbStockDecision === 'reintegre_stock'}
+                      onChange={() => setArbStockDecision('reintegre_stock')}
+                      style={{ marginTop: 2, accentColor: '#16a34a' }}
+                    />
+                    <div>
+                      <b style={{ color: '#15803d', fontSize: 12.5 }}>
+                        ✓ Saleh yrje3 l stock : Réintégrer en stock vendable (+{arbitrationModal.lines[0]?.qty || 1} unités)
+                      </b>
+                      <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                        Marchandise conforme, saine et scellée. Réintégrée physiquement et comptablement dans le stock disponible du dépôt.
+                      </small>
+                    </div>
+                  </label>
+
+                  {/* Option B: Scrap / Loss */}
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: arbStockDecision === 'mis_au_rebut_perte' ? '2px solid #f59e0b' : '1px solid #cbd5e1',
+                      background: arbStockDecision === 'mis_au_rebut_perte' ? 'rgba(245,158,11,0.08)' : '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="arb_stock"
+                      value="mis_au_rebut_perte"
+                      checked={arbStockDecision === 'mis_au_rebut_perte'}
+                      onChange={() => setArbStockDecision('mis_au_rebut_perte')}
+                      style={{ marginTop: 2, accentColor: '#f59e0b' }}
+                    />
+                    <div>
+                      <b style={{ color: '#b45309', fontSize: 12.5 }}>
+                        ✗ Ghir saleh (Avarie / Rebut) : Mise au rebut & Perte comptable (0 stock vendable)
+                      </b>
+                      <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                        Marchandise avariée, détruite ou impropre à la vente. NON réintégrée dans le stock disponible. PV de destruction & enregistrement de la perte.
+                      </small>
+                    </div>
+                  </label>
+
+                  {/* Option C: Refusal */}
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 8,
+                      border: arbStockDecision === 'refuse' ? '2px solid #ef4444' : '1px solid #cbd5e1',
+                      background: arbStockDecision === 'refuse' ? 'rgba(239,68,68,0.08)' : '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="arb_stock"
+                      value="refuse"
+                      checked={arbStockDecision === 'refuse'}
+                      onChange={() => setArbStockDecision('refuse')}
+                      style={{ marginTop: 2, accentColor: '#ef4444' }}
+                    />
+                    <div>
+                      <b style={{ color: '#b91c1c', fontSize: 12.5 }}>
+                        ⛔ Refusé : Rejet du retour client (Délai dépassé ou motif irrecevable)
+                      </b>
+                      <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                        Retour rejeté au quai. Aucun avoir accordé au client et réexpédition à sa charge.
+                      </small>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* 4. Visa Super Admin */}
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                Notes complémentaires & Visa Super Admin
+                <input
+                  value={arbNotes}
+                  onChange={(e) => setArbNotes(e.target.value)}
+                  placeholder="Ex. Contrôle effectué par Direction · Réf PV #AV-2026-44"
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 13,
+                    marginTop: 4,
+                  }}
+                />
+              </label>
+            </div>
+
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 22px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setArbitrationModal(null)}
+                style={{
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                className="button-primary"
+                type="submit"
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)',
+                }}
+              >
+                <ShieldCheck size={16} />
+                Valider la décision Super Admin
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -871,6 +1394,7 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                   >
                     <option value="depot_to_client">Livreur Dépôt → Client</option>
                     <option value="depot_to_depot">Navette Dépôt → Dépôt</option>
+                    <option value="pre_seller">Livreur-pré-vendeur (Van Sales Hwanet)</option>
                   </select>
                 </label>
               </div>

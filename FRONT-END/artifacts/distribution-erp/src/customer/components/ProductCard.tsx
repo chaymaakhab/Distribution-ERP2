@@ -1,7 +1,8 @@
 import { Link } from 'wouter';
-import { Check, Plus, Package as PackageIcon } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 import type { Product } from '../api';
 import { formatMoney } from '../cart';
+import ProductArtwork from './ProductArtwork';
 
 export default function ProductCard({
   product,
@@ -19,7 +20,7 @@ export default function ProductCard({
         {product.image ? (
           <img src={product.image} alt={product.name} />
         ) : (
-          <span className="cx-media-ph"><PackageIcon size={26} /></span>
+          <ProductArtwork product={product} />
         )}
         {out && <span className="cx-flag-out">Rupture</span>}
         {!out && product.available_qty <= 10 && <span className="cx-flag-low">Stock faible</span>}

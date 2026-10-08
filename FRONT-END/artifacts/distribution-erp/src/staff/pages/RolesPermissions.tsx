@@ -174,6 +174,18 @@ const ROLES_DEFINITIONS = [
     ],
   },
   {
+    code: 'pre_seller',
+    name: 'Livreur-pré-vendeur',
+    badge: 'Van Sales / Hwanet',
+    color: '#0284c7',
+    home: '/delivery/dashboard',
+    scope: 'Distribution aux épiceries & commerces de proximité (Hwanet) : prise de commande sur place, vente directe embarquée, encaissements et réapprovisionnement.',
+    permissions: [
+      'dashboard.view', 'customers.view', 'customers.create', 'orders.view', 'orders.create',
+      'deliveries.view', 'deliveries.start', 'deliveries.complete', 'payments.create', 'cash_closings.create',
+    ],
+  },
+  {
     code: 'accounting',
     name: 'Comptable',
     badge: 'Finance & Trésorerie',

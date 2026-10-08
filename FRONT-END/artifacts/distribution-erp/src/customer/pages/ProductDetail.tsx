@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { api, type Product } from '../api';
 import { formatMoney, useCart } from '../cart';
+import ProductArtwork from '../components/ProductArtwork';
 
 export default function ProductDetail({ code }: { code: string }) {
   const [, setLocation] = useLocation();
@@ -62,7 +63,7 @@ export default function ProductDetail({ code }: { code: string }) {
           {product.image ? (
             <img src={product.image} alt={product.name} />
           ) : (
-            <span className="cx-media-ph lg"><PackageIcon size={48} /></span>
+            <ProductArtwork product={product} />
           )}
         </div>
 

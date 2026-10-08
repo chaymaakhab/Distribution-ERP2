@@ -21,7 +21,7 @@ export interface ReturnSlipData {
   client_ice?: string;
   client_city?: string;
   driver: string;
-  driver_type?: 'depot_to_client' | 'depot_to_depot';
+  driver_type?: 'depot_to_client' | 'depot_to_depot' | 'pre_seller';
   depot?: string;
   date: string;
   reason: string;
@@ -45,12 +45,18 @@ export default function ReturnSlipDocumentModal({
   }
 
   function handleDownload() {
+    const driverTypeStr =
+      slip.driver_type === 'pre_seller'
+        ? 'Livreur-pré-vendeur (Hwanet)'
+        : slip.driver_type === 'depot_to_depot'
+        ? 'Navette Inter-Dépôts'
+        : 'Livreur Dépôt → Client';
     const content = `BON DE RETOUR MARCHANDISE & CONSTAT DE LITIGE
 Référence : ${slip.ref}
 Commande / BL d'origine : ${slip.order_ref}
 Client : ${slip.client} (ICE: ${slip.client_ice || 'N/A'})
 Dépôt : ${slip.depot || 'DEP-01 Casablanca Central'}
-Chauffeur : ${slip.driver} (${slip.driver_type === 'depot_to_depot' ? 'Navette Inter-Dépôts' : 'Livreur Dépôt → Client'})
+Chauffeur : ${slip.driver} (${driverTypeStr})
 Date : ${slip.date}
 Motif principal : ${slip.reason}
 Statut : ${slip.status}
@@ -139,8 +145,22 @@ Observations : ${slip.notes || 'Aucune observation particulière'}
                 </div>
                 <div>
                   <strong>Type d'acheminement :</strong>{' '}
-                  <span style={{ fontWeight: 600, color: slip.driver_type === 'depot_to_depot' ? '#7e22ce' : '#0369a1' }}>
-                    {slip.driver_type === 'depot_to_depot' ? 'Navette Inter-Dépôts' : 'Livreur Dépôt → Client'}
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      color:
+                        slip.driver_type === 'pre_seller'
+                          ? '#059669'
+                          : slip.driver_type === 'depot_to_depot'
+                          ? '#7e22ce'
+                          : '#0369a1',
+                    }}
+                  >
+                    {slip.driver_type === 'pre_seller'
+                      ? 'Livreur-pré-vendeur (Hwanet)'
+                      : slip.driver_type === 'depot_to_depot'
+                      ? 'Navette Inter-Dépôts'
+                      : 'Livreur Dépôt → Client'}
                   </span>
                 </div>
                 <div><strong>Commande d'origine :</strong> <code style={{ color: '#0f172a' }}>{slip.order_ref}</code></div>

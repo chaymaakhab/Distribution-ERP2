@@ -8,7 +8,10 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../lib/theme';
 import { api as staffApi, setSession as setStaffSession, type StaffUser } from '../staff/api';
-import { createMockStaffUser } from '../staff/mockAuth';
+import {
+  createMockStaffUser, findStaffUserByEmail, staffItemToSessionUser,
+  getStoredStaffUsers, type StaffUserRecord,
+} from '../staff/mockAuth';
 import { api as customerApi, setSession as setCustomerSession, type CustomerUser } from '../customer/api';
 import './unified-login.css';
 
@@ -191,6 +194,14 @@ export default function UnifiedLogin({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [storedUsers] = useState<StaffUserRecord[]>(() => {
+    try {
+      return getStoredStaffUsers();
+    } catch {
+      return [];
+    }
+  });
+
   const activeRole = ALL_ROLES.find((r) => r.id === selectedRoleId) || ALL_ROLES[0];
   const staffRoles = ALL_ROLES.filter((r) => r.category === 'staff');
 
@@ -269,11 +280,17 @@ export default function UnifiedLogin({
             user = res.user;
           }
         } catch {
-          const targetRole =
-            ALL_ROLES.find((r) => r.email === loginId.trim() || r.id === selectedRoleId) ||
-            ALL_ROLES[0];
-          user = createMockStaffUser(targetRole.role_code, loginId.trim());
-          setStaffSession('mock-token-' + targetRole.role_code, user, remember);
+          const clean = loginId.trim();
+          const stored = findStaffUserByEmail(clean);
+          if (stored) {
+            user = staffItemToSessionUser(stored);
+          } else {
+            const targetRole =
+              ALL_ROLES.find((r) => r.email === clean || r.id === selectedRoleId) ||
+              ALL_ROLES[0];
+            user = createMockStaffUser(targetRole.role_code, clean);
+          }
+          setStaffSession('mock-token-' + (user.primary_role || 'staff'), user, remember);
         }
         if (onSuccess) onSuccess();
         setLocation(user.home || '/admin/dashboard');
@@ -391,6 +408,51 @@ export default function UnifiedLogin({
               <div className="login-alert-error" role="alert">
                 <AlertCircle size={15} />
                 <span>{error}</span>
+              </div>
+            )}
+
+            {portalMode === 'staff' && storedUsers.length > 0 && (
+              <div className="field-block" style={{ marginBottom: 12 }}>
+                <label className="field-label-text" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Collaborateurs enregistrés ({storedUsers.length}) :</span>
+                  <small style={{ color: '#0284c7', fontWeight: 600 }}>Comptes & droits en mémoire</small>
+                </label>
+                <div className="field-input-wrap">
+                  <ShieldCheck size={15} className="input-icon" />
+                  <select
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text)',
+                      fontSize: 12.5,
+                      outline: 'none',
+                      padding: '8px 0',
+                      cursor: 'pointer',
+                    }}
+                    value={identifier}
+                    onChange={(e) => {
+                      const selEmail = e.target.value;
+                      if (!selEmail) return;
+                      setIdentifier(selEmail);
+                      setPassword('password');
+                      const userRec = storedUsers.find((u) => u.email === selEmail);
+                      if (userRec) {
+                        const matchRole = ALL_ROLES.find((r) => r.role_code === userRec.primary_role);
+                        if (matchRole) setSelectedRoleId(matchRole.id);
+                      }
+                    }}
+                  >
+                    <option value="" style={{ background: '#0f172a', color: '#fff' }}>
+                      -- Ou choisir un compte enregistré (test rapide) --
+                    </option>
+                    {storedUsers.map((u) => (
+                      <option key={u.id} value={u.email} style={{ background: '#0f172a', color: '#fff' }}>
+                        {u.name} · {u.role_label} ({u.custom_permissions?.includes('*') ? 'Accès total' : `${u.custom_permissions?.length || 0} permissions`})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
 

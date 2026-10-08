@@ -582,7 +582,7 @@ function RoleDashboard({ user, onNavigate }: { user: StaffUser; onNavigate: (seg
   if (role === 'preparation') {
     return <PreparationDashboard />;
   }
-  if (role === 'delivery') {
+  if (role === 'delivery' || role === 'pre_seller') {
     return <DeliveryDashboard onNavigate={onNavigate} />;
   }
   if (role === 'accounting') {

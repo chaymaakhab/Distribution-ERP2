@@ -2,23 +2,15 @@ import { useState } from 'react';
 import {
   UserCheck, Search, Filter, Plus, Edit2, ShieldCheck,
   CheckCircle2, XCircle, Warehouse, Mail, Phone, Lock, X,
-  Check, RefreshCw, CheckSquare, Square, Layers, Sparkles,
+  Check, RefreshCw, CheckSquare, Square, Layers, Sparkles, Trash2,
 } from 'lucide-react';
+import {
+  getStoredStaffUsers, saveStoredStaffUsers, DEFAULT_STAFF_USERS,
+  ROLE_PERMISSIONS as DEFAULT_ROLE_PERMS,
+  type StaffUserRecord as StaffUserItem,
+} from '../mockAuth';
 
-export interface StaffUserItem {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  roles: string[];
-  primary_role: string;
-  role_label: string;
-  role_labels?: string[];
-  custom_permissions: string[];
-  warehouse_name: string;
-  is_active: boolean;
-  last_login: string;
-}
+export type { StaffUserItem };
 
 export interface RoleOption {
   code: string;
@@ -133,15 +125,22 @@ export const PERMISSION_MODULES: PermissionModuleGroup[] = [
   },
   {
     id: 'warehouse',
-    name: 'Entrepôt, Stocks & Préparation',
+    name: 'Entrepôt, Stocks & Achats',
     permissions: [
       { code: 'stock.view', label: 'Consulter les stocks', desc: 'Stocks physiques, réservés et disponibles' },
       { code: 'stock.transfer', label: 'Transferts inter-dépôts', desc: 'Expédition et réception en 2 étapes' },
       { code: 'stock.adjust', label: 'Ajustements & inventaires', desc: 'Régularisations de stock physique' },
+      { code: 'warehouses.view', label: 'Gestion des dépôts', desc: 'Cartographie et indicateurs dépôts' },
+      { code: 'purchases.view', label: 'Consulter les achats', desc: 'Bons de commandes et approvisionnement' },
+      { code: 'purchases.receive', label: 'Réception des achats', desc: 'Contrôle quai réceptions fournisseurs' },
+    ],
+  },
+  {
+    id: 'prep',
+    name: 'Préparation de Commandes',
+    permissions: [
       { code: 'preparation.view', label: 'Bons de préparation', desc: 'Affichage des bons ordonnés par tournée' },
       { code: 'preparation.complete', label: 'Scan & validation préparation', desc: 'Scanning code-barres et clôture' },
-      { code: 'warehouses.view', label: 'Gestion des dépôts', desc: 'Cartographie et indicateurs dépôts' },
-      { code: 'purchases.receive', label: 'Réception des achats', desc: 'Contrôle quai réceptions fournisseurs' },
     ],
   },
   {
@@ -155,12 +154,22 @@ export const PERMISSION_MODULES: PermissionModuleGroup[] = [
     ],
   },
   {
+    id: 'returns',
+    name: 'Retours Marchandises & Avaries',
+    permissions: [
+      { code: 'returns.view', label: 'Consulter les retours', desc: 'Registre complet des retours et motifs' },
+      { code: 'returns.create', label: 'Créer bon de retour', desc: 'Enregistrement de retour quai / camion' },
+      { code: 'returns.confirm', label: 'Valider réintégration stock', desc: 'Verdict conformité et remise en stock' },
+    ],
+  },
+  {
     id: 'finance',
-    name: 'Finance, Facturation & Effets',
+    name: 'Finance, Facturation & Règlements',
     permissions: [
       { code: 'invoices.view', label: 'Consulter les factures', desc: 'Visualisation et export des factures légales' },
       { code: 'invoices.create', label: 'Émettre des factures', desc: 'Facturation légale avec mentions ICE/IF' },
       { code: 'credit_notes.create', label: 'Émettre des factures d’avoir', desc: 'Avoirs suite à retour ou régularisation' },
+      { code: 'payments.view', label: 'Consulter les paiements', desc: 'Historique des règlements encaissés' },
       { code: 'payments.create', label: 'Enregistrer des règlements', desc: 'Paiements espèces, chèques, virements' },
       { code: 'cheques.view', label: 'Registre des chèques & traites', desc: 'Portefeuille et remises bancaires' },
       { code: 'cash_closings.validate', label: 'Valider clôtures de caisse', desc: 'Vérification et verrouillage comptable' },
@@ -178,202 +187,8 @@ export const PERMISSION_MODULES: PermissionModuleGroup[] = [
   },
 ];
 
-const DEFAULT_ROLE_PERMS: Record<string, string[]> = {
-  superadmin: ['*'],
-  admin: [
-    'dashboard.view', 'reports.view',
-    'orders.view', 'orders.create', 'orders.validate', 'quotes.view', 'quotes.create',
-    'visits.view', 'customers.view', 'customers.create',
-    'products.view', 'products.create', 'suppliers.view',
-    'stock.view', 'stock.transfer', 'stock.adjust', 'preparation.view', 'preparation.complete', 'warehouses.view', 'purchases.receive',
-    'deliveries.view', 'deliveries.start', 'deliveries.complete', 'cash_closings.create',
-    'invoices.view', 'invoices.create', 'credit_notes.create', 'payments.create', 'cheques.view', 'cash_closings.validate',
-    'users.view', 'roles.view', 'settings.view', 'audit.view',
-  ],
-  commercial: [
-    'dashboard.view', 'reports.view',
-    'orders.view', 'orders.create', 'orders.validate', 'quotes.view', 'quotes.create',
-    'visits.view', 'customers.view', 'customers.create',
-    'products.view',
-    'invoices.view', 'payments.create',
-  ],
-  warehouse: [
-    'dashboard.view', 'reports.view',
-    'stock.view', 'stock.transfer', 'stock.adjust',
-    'preparation.view', 'preparation.complete',
-    'warehouses.view', 'purchases.receive',
-    'deliveries.view', 'cash_closings.create',
-  ],
-  preparation: [
-    'dashboard.view',
-    'orders.view', 'stock.view',
-    'preparation.view', 'preparation.complete',
-  ],
-  delivery: [
-    'dashboard.view',
-    'orders.view', 'customers.view',
-    'deliveries.view', 'deliveries.start', 'deliveries.complete',
-    'payments.create', 'cash_closings.create',
-  ],
-  pre_seller: [
-    'dashboard.view',
-    'customers.view', 'customers.create',
-    'orders.view', 'orders.create',
-    'deliveries.view', 'deliveries.start', 'deliveries.complete',
-    'payments.create', 'cash_closings.create',
-  ],
-  accounting: [
-    'dashboard.view', 'reports.view',
-    'customers.view', 'suppliers.view',
-    'orders.view', 'orders.create', 'quotes.view', 'quotes.create',
-    'invoices.view', 'invoices.create', 'credit_notes.create',
-    'payments.create', 'cheques.view', 'cash_closings.validate',
-  ],
-};
-
-const INITIAL_USERS: StaffUserItem[] = [
-  {
-    id: 1,
-    name: 'Super Admin',
-    email: 'superadmin@hercules-erp.ma',
-    phone: '+212 522 00 00 00',
-    roles: ['superadmin'],
-    primary_role: 'superadmin',
-    role_label: 'Super Admin',
-    role_labels: ['Super Admin'],
-    custom_permissions: ['*'],
-    warehouse_name: 'Tous les dépôts',
-    is_active: true,
-    last_login: 'Aujourd’hui 17:30',
-  },
-  {
-    id: 2,
-    name: 'Amine El Fassi',
-    email: 'admin@hercules-erp.ma',
-    phone: '+212 661 11 22 33',
-    roles: ['admin'],
-    primary_role: 'admin',
-    role_label: 'Administrateur',
-    role_labels: ['Administrateur'],
-    custom_permissions: DEFAULT_ROLE_PERMS.admin,
-    warehouse_name: 'Casablanca (DEP-01)',
-    is_active: true,
-    last_login: 'Aujourd’hui 16:45',
-  },
-  {
-    id: 3,
-    name: 'Nadia El Amrani',
-    email: 'depot@hercules-erp.ma',
-    phone: '+212 662 33 44 55',
-    // Example requested by user: depot manager who is also preparer and driver!
-    roles: ['warehouse', 'preparation', 'delivery'],
-    primary_role: 'warehouse',
-    role_label: 'Responsable Dépôt + Multi-rôles',
-    role_labels: ['Responsable Dépôt', 'Préparateur', 'Livreur'],
-    custom_permissions: Array.from(
-      new Set([
-        ...DEFAULT_ROLE_PERMS.warehouse,
-        ...DEFAULT_ROLE_PERMS.preparation,
-        ...DEFAULT_ROLE_PERMS.delivery,
-      ])
-    ),
-    warehouse_name: 'Casablanca (DEP-01)',
-    is_active: true,
-    last_login: 'Aujourd’hui 15:20',
-  },
-  {
-    id: 4,
-    name: 'Youssef Bennani',
-    email: 'commercial@hercules-erp.ma',
-    phone: '+212 663 55 66 77',
-    roles: ['commercial'],
-    primary_role: 'commercial',
-    role_label: 'Commercial',
-    role_labels: ['Commercial'],
-    custom_permissions: DEFAULT_ROLE_PERMS.commercial,
-    warehouse_name: 'Casablanca (DEP-01)',
-    is_active: true,
-    last_login: 'Aujourd’hui 14:10',
-  },
-  {
-    id: 5,
-    name: 'Karim Ouazzani',
-    email: 'preparation@hercules-erp.ma',
-    phone: '+212 664 77 88 99',
-    roles: ['preparation', 'warehouse'],
-    primary_role: 'preparation',
-    role_label: 'Préparateur & Dépôt',
-    role_labels: ['Préparateur', 'Responsable Dépôt'],
-    custom_permissions: Array.from(
-      new Set([...DEFAULT_ROLE_PERMS.preparation, ...DEFAULT_ROLE_PERMS.warehouse])
-    ),
-    warehouse_name: 'Casablanca (DEP-01)',
-    is_active: true,
-    last_login: 'Aujourd’hui 11:30',
-  },
-  {
-    id: 6,
-    name: 'Mehdi Lahlou',
-    email: 'livreur@hercules-erp.ma',
-    phone: '+212 665 99 00 11',
-    roles: ['delivery'],
-    primary_role: 'delivery',
-    role_label: 'Livreur Dépôt',
-    role_labels: ['Livreur Dépôt'],
-    custom_permissions: DEFAULT_ROLE_PERMS.delivery,
-    warehouse_name: 'Casablanca (DEP-01)',
-    is_active: true,
-    last_login: 'Aujourd’hui 12:00',
-  },
-  {
-    id: 7,
-    name: 'Hamid El Meskini',
-    email: 'prevendeur@hercules-erp.ma',
-    phone: '+212 661 88 77 66',
-    // New Driver Type: Livreur-pré-vendeur + Livreur Dépôt
-    roles: ['pre_seller', 'delivery'],
-    primary_role: 'pre_seller',
-    role_label: 'Livreur-pré-vendeur (Hwanet)',
-    role_labels: ['Livreur-pré-vendeur', 'Livreur Dépôt'],
-    custom_permissions: Array.from(
-      new Set([...DEFAULT_ROLE_PERMS.pre_seller, ...DEFAULT_ROLE_PERMS.delivery])
-    ),
-    warehouse_name: 'Casablanca (DEP-01)',
-    is_active: true,
-    last_login: 'Aujourd’hui 09:15',
-  },
-  {
-    id: 8,
-    name: 'Sofia Cherkaoui',
-    email: 'compta@hercules-erp.ma',
-    phone: '+212 666 12 34 56',
-    roles: ['accounting'],
-    primary_role: 'accounting',
-    role_label: 'Comptable',
-    role_labels: ['Comptable'],
-    custom_permissions: DEFAULT_ROLE_PERMS.accounting,
-    warehouse_name: 'Siège Casablanca',
-    is_active: true,
-    last_login: 'Aujourd’hui 16:00',
-  },
-  {
-    id: 9,
-    name: 'Salma Idrissi',
-    email: 'salma@hercules-erp.ma',
-    phone: '+212 667 23 45 67',
-    roles: ['commercial'],
-    primary_role: 'commercial',
-    role_label: 'Commercial',
-    role_labels: ['Commercial'],
-    custom_permissions: DEFAULT_ROLE_PERMS.commercial,
-    warehouse_name: 'Rabat (DEP-02)',
-    is_active: true,
-    last_login: 'Hier 18:00',
-  },
-];
-
 export default function UsersManagement() {
-  const [users, setUsers] = useState<StaffUserItem[]>(INITIAL_USERS);
+  const [users, setUsers] = useState<StaffUserItem[]>(() => getStoredStaffUsers());
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
@@ -439,6 +254,20 @@ export default function UsersManagement() {
     setModalOpen(true);
   }
 
+  function syncPermsForRoles(rolesList: string[]) {
+    if (rolesList.includes('superadmin')) {
+      setFormPermissions(['*']);
+      return;
+    }
+    const unionPerms = new Set<string>();
+    rolesList.forEach((r) => {
+      const pList = DEFAULT_ROLE_PERMS[r] || [];
+      pList.forEach((p) => unionPerms.add(p));
+    });
+    unionPerms.add('dashboard.view');
+    setFormPermissions(Array.from(unionPerms));
+  }
+
   function handleToggleRole(roleCode: string) {
     setFormRoles((prev) => {
       let updated: string[];
@@ -451,28 +280,17 @@ export default function UsersManagement() {
       } else {
         updated = [...prev, roleCode];
       }
+      syncPermsForRoles(updated);
       return updated;
     });
   }
 
   function handleSyncPermissions() {
-    const unionPerms = new Set<string>();
-    let hasSuperAdmin = false;
-
-    formRoles.forEach((roleCode) => {
-      if (roleCode === 'superadmin') {
-        hasSuperAdmin = true;
-      }
-      const rolePerms = DEFAULT_ROLE_PERMS[roleCode] || [];
-      rolePerms.forEach((p) => unionPerms.add(p));
-    });
-
-    if (hasSuperAdmin) {
-      setFormPermissions(['*']);
+    syncPermsForRoles(formRoles);
+    if (formRoles.includes('superadmin')) {
       notify('Permissions synchronisées : Accès total accordé (Super Admin).');
     } else {
-      setFormPermissions(Array.from(unionPerms));
-      notify(`Permissions synchronisées : ${unionPerms.size} droits affectés selon les ${formRoles.length} rôles cochés.`);
+      notify(`Permissions synchronisées : droits affectés selon les ${formRoles.length} rôles cochés.`);
     }
   }
 
@@ -488,14 +306,13 @@ export default function UsersManagement() {
   }
 
   function handleClearAllPermissions() {
-    setFormPermissions([]);
-    notify('Toutes les permissions ont été décochées.');
+    setFormPermissions(['dashboard.view']);
+    notify('Toutes les permissions secondaires ont été décochées (accès tableau de bord conservé).');
   }
 
   function handleTogglePermission(permCode: string) {
     setFormPermissions((prev) => {
       if (prev.includes('*')) {
-        // Unpack wildcard to individual permissions except the toggled one
         const all: string[] = [];
         PERMISSION_MODULES.forEach((m) => m.permissions.forEach((p) => all.push(p.code)));
         return all.filter((p) => p !== permCode);
@@ -508,16 +325,29 @@ export default function UsersManagement() {
   }
 
   function handleToggleActive(id: number) {
-    setUsers((prev) =>
-      prev.map((u) => {
+    setUsers((prev) => {
+      const updated = prev.map((u) => {
         if (u.id === id) {
           const next = !u.is_active;
           notify(`Compte de ${u.name} ${next ? 'réactivé' : 'suspendu'}.`);
           return { ...u, is_active: next };
         }
         return u;
-      })
-    );
+      });
+      saveStoredStaffUsers(updated);
+      return updated;
+    });
+  }
+
+  function handleDeleteUser(id: number, name: string) {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement le compte de ${name} ?`)) {
+      setUsers((prev) => {
+        const updated = prev.filter((u) => u.id !== id);
+        saveStoredStaffUsers(updated);
+        return updated;
+      });
+      notify(`Compte de ${name} supprimé avec succès.`);
+    }
   }
 
   function handleSave(e: React.FormEvent) {
@@ -531,44 +361,58 @@ export default function UsersManagement() {
     const primaryRole = formRoles[0];
     const mainLabel = assignedRoleLabels.join(' + ');
 
+    let finalPerms = [...formPermissions];
+    if (finalPerms.length === 0) {
+      const union = new Set<string>();
+      formRoles.forEach((r) => {
+        const pList = DEFAULT_ROLE_PERMS[r] || [];
+        pList.forEach((p) => union.add(p));
+      });
+      finalPerms = Array.from(union);
+    }
+    if (!finalPerms.includes('*') && !finalPerms.includes('dashboard.view')) {
+      finalPerms.unshift('dashboard.view');
+    }
+
+    let updatedList: StaffUserItem[];
     if (editingUser) {
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === editingUser.id
-            ? {
-                ...u,
-                name: formName,
-                email: formEmail,
-                phone: formPhone,
-                roles: formRoles,
-                primary_role: primaryRole,
-                role_label: mainLabel,
-                role_labels: assignedRoleLabels,
-                custom_permissions: formPermissions,
-                warehouse_name: formDepot,
-              }
-            : u
-        )
+      updatedList = users.map((u) =>
+        u.id === editingUser.id
+          ? {
+              ...u,
+              name: formName.trim(),
+              email: formEmail.trim(),
+              phone: formPhone.trim(),
+              roles: formRoles,
+              primary_role: primaryRole,
+              role_label: mainLabel,
+              role_labels: assignedRoleLabels,
+              custom_permissions: finalPerms,
+              warehouse_name: formDepot,
+            }
+          : u
       );
-      notify(`Collaborateur ${formName} mis à jour avec ${formRoles.length} rôles et ${formPermissions.length} permissions.`);
+      notify(`Collaborateur ${formName} mis à jour (${formRoles.length} rôles, ${finalPerms.length} permissions sauvegardées).`);
     } else {
       const newUser: StaffUserItem = {
         id: Date.now(),
-        name: formName,
-        email: formEmail,
-        phone: formPhone,
+        name: formName.trim(),
+        email: formEmail.trim(),
+        phone: formPhone.trim(),
         roles: formRoles,
         primary_role: primaryRole,
         role_label: mainLabel,
         role_labels: assignedRoleLabels,
-        custom_permissions: formPermissions,
+        custom_permissions: finalPerms,
         warehouse_name: formDepot,
         is_active: true,
         last_login: 'Jamais connecté',
       };
-      setUsers((prev) => [newUser, ...prev]);
-      notify(`Nouveau collaborateur ${formName} créé avec succès (${formRoles.length} rôles attribués).`);
+      updatedList = [newUser, ...users];
+      notify(`Nouveau collaborateur ${formName} créé avec succès (${finalPerms.length} permissions enregistrées).`);
     }
+    setUsers(updatedList);
+    saveStoredStaffUsers(updatedList);
     setModalOpen(false);
   }
 
@@ -763,10 +607,20 @@ export default function UsersManagement() {
                           className="row-action"
                           title={u.is_active ? 'Suspendre le compte' : 'Activer le compte'}
                           onClick={() => handleToggleActive(u.id)}
-                          style={{ color: u.is_active ? '#ef4444' : '#22c55e' }}
+                          style={{ color: u.is_active ? '#f59e0b' : '#22c55e' }}
                         >
                           {u.is_active ? <XCircle size={14} /> : <CheckCircle2 size={14} />}
                         </button>
+                        {u.roles[0] !== 'superadmin' && (
+                          <button
+                            className="row-action"
+                            title="Supprimer ce collaborateur"
+                            onClick={() => handleDeleteUser(u.id, u.name)}
+                            style={{ color: '#ef4444' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

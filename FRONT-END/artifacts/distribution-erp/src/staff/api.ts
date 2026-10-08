@@ -119,6 +119,74 @@ export const api = {
   adminRevenue: () => request<{ data: RevenueData }>('/admin/revenue'),
   adminWarehouses: () => request<{ data: WarehouseNode[] }>('/admin/warehouses'),
   adminPerformance: () => request<{ data: PerformanceData }>('/admin/performance'),
+
+  // Customers CRM
+  getCustomers: (params?: { q?: string; tier?: string; status?: string }) => {
+    const qry = new URLSearchParams(params as Record<string, string>).toString();
+    return request<any[]>(`/customers${qry ? '?' + qry : ''}`);
+  },
+  createCustomer: (data: any) =>
+    request<any>('/customers', { method: 'POST', body: JSON.stringify(data) }),
+  updateCustomer: (id: number, data: any) =>
+    request<any>(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCustomer: (id: number) =>
+    request<any>(`/customers/${id}`, { method: 'DELETE' }),
+
+  // Payments / Règlements Clients
+  getPayments: (params?: { customer_id?: number; method?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any>(`/payments${qry ? '?' + qry : ''}`);
+  },
+  createPayment: (data: { customer_id: number; amount: number; method: string; bank?: string; doc_number?: string; due_date?: string; notes?: string }) =>
+    request<any>('/payments', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Products / Articles & Photos
+  getProducts: (params?: { q?: string; category_id?: number }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/products${qry ? '?' + qry : ''}`);
+  },
+  createProduct: (data: any) =>
+    request<any>('/products', { method: 'POST', body: JSON.stringify(data) }),
+  updateProduct: (id: number, data: any) =>
+    request<any>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteProduct: (id: number) =>
+    request<any>(`/products/${id}`, { method: 'DELETE' }),
+
+  // Drivers & Fleet Logistics
+  getDrivers: (params?: { type?: string; status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/drivers${qry ? '?' + qry : ''}`);
+  },
+  createDriver: (data: any) =>
+    request<any>('/drivers', { method: 'POST', body: JSON.stringify(data) }),
+  updateDriverStatus: (id: number, status: string, mission?: string) =>
+    request<any>(`/drivers/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, current_mission: mission }) }),
+
+  // Stocks & Dépôts
+  getStocks: (params?: { warehouse_id?: number }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/stocks${qry ? '?' + qry : ''}`);
+  },
+  createStock: (data: any) =>
+    request<any>('/stocks', { method: 'POST', body: JSON.stringify(data) }),
+  transferStock: (data: { product_id: number; source_warehouse_id: number; dest_warehouse_id: number; quantity: number }) =>
+    request<any>('/stocks/transfer', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Returns SAV (SuperAdmin validation)
+  getReturns: (params?: { status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/returns${qry ? '?' + qry : ''}`);
+  },
+  createReturn: (data: any) =>
+    request<any>('/returns', { method: 'POST', body: JSON.stringify(data) }),
+  validateReturn: (id: number, data: { status: 'Validé' | 'Refusé'; restock_approved: boolean; superadmin_notes?: string }) =>
+    request<any>(`/returns/${id}/validate`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  // Orders
+  getOrders: () => request<any[]>('/orders'),
+  createOrder: (data: any) => request<any>('/orders', { method: 'POST', body: JSON.stringify(data) }),
+  updateOrderStatus: (ref: string, status: string) =>
+    request<any>(`/orders/${ref}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 };
 
 export interface OverviewKpis {

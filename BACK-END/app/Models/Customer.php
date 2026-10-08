@@ -12,8 +12,9 @@ class Customer extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'code', 'name', 'company', 'city', 'address', 'lat', 'lng',
-        'phone', 'email', 'password', 'price_tier', 'credit_limit',
+        'code', 'name', 'company', 'ice', 'city', 'address', 'lat', 'lng',
+        'phone', 'whatsapp', 'email', 'password', 'price_tier', 'credit_limit',
+        'current_balance', 'overdue_amount',
         'status', 'locale', 'commercial_id',
     ];
 
@@ -26,6 +27,8 @@ class Customer extends Authenticatable
             'lat' => 'decimal:7',
             'lng' => 'decimal:7',
             'credit_limit' => 'decimal:2',
+            'current_balance' => 'decimal:2',
+            'overdue_amount' => 'decimal:2',
         ];
     }
 

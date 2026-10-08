@@ -4,6 +4,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\OrderController;
 use App\Http\Controllers\Api\v1\SyncController;
+use App\Http\Controllers\Api\v1\CustomerController;
+use App\Http\Controllers\Api\v1\PaymentController;
+use App\Http\Controllers\Api\v1\ProductController;
+use App\Http\Controllers\Api\v1\DriverController;
+use App\Http\Controllers\Api\v1\StockController;
+use App\Http\Controllers\Api\v1\ReturnController;
+use App\Http\Controllers\Api\v1\SupplierController;
+use App\Http\Controllers\Api\v1\UserController;
 use App\Http\Controllers\Api\v1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\v1\Customer\AuthController as CustomerAuthController;
 use App\Http\Controllers\Api\v1\Customer\CatalogController as CustomerCatalogController;
@@ -34,7 +42,53 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:orders.view');
         Route::post('/orders', [OrderController::class, 'store'])->middleware('permission:orders.create');
+        Route::put('/orders/{id}', [OrderController::class, 'update']);
+        Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
         Route::patch('/orders/{ref}/status', [OrderController::class, 'updateStatus'])->middleware('permission:orders.update');
+
+        // Customers CRM
+        Route::get('/customers', [CustomerController::class, 'index']);
+        Route::post('/customers', [CustomerController::class, 'store']);
+        Route::put('/customers/{id}', [CustomerController::class, 'update']);
+        Route::delete('/customers/{id}', [CustomerController::class, 'destroy']);
+
+        // Payments & Client settlements
+        Route::get('/payments', [PaymentController::class, 'index']);
+        Route::post('/payments', [PaymentController::class, 'store']);
+
+        // Products & Catalog
+        Route::get('/products', [ProductController::class, 'index']);
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::put('/products/{id}', [ProductController::class, 'update']);
+        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+
+        // Suppliers
+        Route::get('/suppliers', [SupplierController::class, 'index']);
+        Route::post('/suppliers', [SupplierController::class, 'store']);
+        Route::put('/suppliers/{id}', [SupplierController::class, 'update']);
+        Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy']);
+
+        // Drivers & Fleet Logistics
+        Route::get('/drivers', [DriverController::class, 'index']);
+        Route::post('/drivers', [DriverController::class, 'store']);
+        Route::patch('/drivers/{id}/status', [DriverController::class, 'updateStatus']);
+
+        // Stocks & Inventories
+        Route::get('/stocks', [StockController::class, 'index']);
+        Route::post('/stocks', [StockController::class, 'store']);
+        Route::put('/stocks/{id}', [StockController::class, 'update']);
+        Route::post('/stocks/transfer', [StockController::class, 'transfer']);
+
+        // Staff Users Management
+        Route::get('/users', [UserController::class, 'index']);
+        Route::post('/users', [UserController::class, 'store']);
+        Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+        // Returns & SAV (with SuperAdmin approval)
+        Route::get('/returns', [ReturnController::class, 'index']);
+        Route::post('/returns', [ReturnController::class, 'store']);
+        Route::patch('/returns/{id}/validate', [ReturnController::class, 'validateReturn']);
 
         Route::post('/sync', [SyncController::class, 'sync']);
     });

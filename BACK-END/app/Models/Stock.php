@@ -9,12 +9,22 @@ class Stock extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['product_id', 'warehouse_id', 'on_hand', 'reserved', 'min_threshold'];
+    protected $fillable = [
+        'product_id',
+        'warehouse_id',
+        'on_hand',
+        'reserved',
+        'min_threshold',
+        'lot_number',
+        'expiry_date',
+        'unit_price',
+    ];
 
     protected $casts = [
         'on_hand' => 'integer',
         'reserved' => 'integer',
         'min_threshold' => 'integer',
+        'unit_price' => 'decimal:2',
     ];
 
     public function product()

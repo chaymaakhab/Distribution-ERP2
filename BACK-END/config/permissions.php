@@ -29,6 +29,8 @@ return [
         'suppliers' => ['suppliers.view', 'suppliers.create', 'suppliers.update', 'suppliers.delete'],
 
         'orders' => ['orders.view', 'orders.create', 'orders.update', 'orders.validate', 'orders.confirm', 'orders.cancel', 'orders.assign'],
+        'quotes' => ['quotes.view', 'quotes.create', 'quotes.update', 'quotes.convert'],
+        'visits' => ['visits.view', 'visits.create', 'visits.update'],
 
         'stock' => ['stock.view', 'stock.transfer', 'stock.adjust', 'stock.inventory'],
         'warehouses' => ['warehouses.view', 'warehouses.manage'],
@@ -38,6 +40,7 @@ return [
         'deliveries' => ['deliveries.view', 'deliveries.assign', 'deliveries.start', 'deliveries.complete'],
 
         'invoices' => ['invoices.view', 'invoices.create', 'invoices.cancel'],
+        'credit_notes' => ['credit_notes.view', 'credit_notes.create'],
         'payments' => ['payments.view', 'payments.create'],
         'cheques' => ['cheques.view', 'cheques.manage'],
         'cash_closings' => ['cash_closings.view', 'cash_closings.create', 'cash_closings.validate'],
@@ -108,6 +111,8 @@ return [
                 'products.view', 'categories.view',
                 'customers.view', 'customers.create', 'customers.update', 'customer_accounts.manage',
                 'orders.view', 'orders.create', 'orders.update', 'orders.validate', 'orders.confirm', 'orders.cancel',
+                'visits.view', 'visits.create', 'visits.update',
+                'quotes.view', 'quotes.create',
                 'invoices.view', 'payments.view', 'payments.create',
                 'returns.view', 'returns.create',
                 'reports.view',
@@ -147,8 +152,10 @@ return [
                 'dashboard.view',
                 'customers.view', 'customer_accounts.manage',
                 'suppliers.view',
-                'orders.view',
+                'orders.view', 'orders.create',
+                'quotes.view', 'quotes.create', 'quotes.update', 'quotes.convert',
                 'invoices.view', 'invoices.create', 'invoices.cancel',
+                'credit_notes.view', 'credit_notes.create',
                 'payments.view', 'payments.create',
                 'cheques.view', 'cheques.manage',
                 'cash_closings.view', 'cash_closings.create', 'cash_closings.validate',

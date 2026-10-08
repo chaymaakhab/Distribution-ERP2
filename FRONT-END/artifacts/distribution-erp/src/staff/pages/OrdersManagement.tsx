@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ClipboardList, Search, Filter, Plus, CheckCircle2, XCircle,
   Eye, Download, ShoppingBag, Truck, Calendar, ArrowRight,
   PackageCheck, FileText, Printer, BadgeDollarSign, Edit2, Trash2, X, Check,
 } from 'lucide-react';
-import { formatMoney } from '../api';
+import { api, formatMoney } from '../api';
 import InvoiceDocumentModal, { type InvoiceData } from '../components/InvoiceDocumentModal';
 import DeliverySlipDocumentModal, { type DeliverySlipData } from '../components/DeliverySlipDocumentModal';
 import NewInvoiceModal from '../components/NewInvoiceModal';
@@ -61,6 +61,28 @@ export default function OrdersManagement() {
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  useEffect(() => {
+    api.getOrders()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: OrderItemRow[] = data.map((o: any) => ({
+            ref: o.ref,
+            customer: o.customer,
+            city: o.city,
+            date: o.date,
+            total: Number(o.total) || 0,
+            status: o.status,
+            source: o.source || 'Commercial',
+            items_count: o.items_count || (o.items ? o.items.length : 1),
+          }));
+          setOrders(mapped);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend orders indisponibles, utilisation liste locale:', err);
+      });
+  }, []);
+
   // Edit Order Modal State
   const [editingOrder, setEditingOrder] = useState<OrderItemRow | null>(null);
   const [editCustomer, setEditCustomer] = useState('');
@@ -101,11 +123,19 @@ export default function OrdersManagement() {
       })
     );
 
+    api.updateOrder(editingOrder.ref, {
+      city: editCity.trim(),
+      total: Number(editTotal) || editingOrder.total,
+      status: editStatus,
+      source: editSource,
+    }).catch(err => console.warn('Failed to update order on backend:', err));
+
     notify(`Commande ${editingOrder.ref} modifiée avec succès !`);
     setEditingOrder(null);
   }
 
   function handleDeleteOrder(ref: string) {
+    api.deleteOrder(ref).catch(err => console.warn('Failed to delete order on backend:', err));
     setOrders((prev) => prev.filter((o) => o.ref !== ref));
     setDeleteConfirmOrder(null);
     notify(`Commande ${ref} supprimée / annulée avec succès.`);
@@ -176,6 +206,17 @@ export default function OrdersManagement() {
 
     setOrders([newOrder, ...orders]);
     setShowNewOrderModal(false);
+
+    api.createOrder({
+      ref: newOrder.ref,
+      customer: newOrder.customer,
+      city: newOrder.city,
+      date: newOrder.date,
+      total: newOrder.total,
+      status: newOrder.status,
+      source: newOrder.source,
+    }).catch(err => console.warn('Failed to save order to backend:', err));
+
     notify(`Bon de Commande ${newOrder.ref} pour ${newOrder.customer} enregistré avec succès !`);
   }
 

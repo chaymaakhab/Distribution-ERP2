@@ -52,4 +52,15 @@ class ProductReturn extends Model
     {
         return $this->belongsTo(User::class, 'validated_by_user_id');
     }
+
+    public function items()
+    {
+        return $this->hasMany(ReturnItem::class, 'return_id');
+    }
+
+    public function creditNote()
+    {
+        return $this->hasOne(CreditNote::class, 'return_id');
+    }
 }
+

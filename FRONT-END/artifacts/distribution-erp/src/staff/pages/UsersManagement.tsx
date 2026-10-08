@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   UserCheck, Search, Filter, Plus, Edit2, ShieldCheck,
   CheckCircle2, XCircle, Warehouse, Mail, Phone, Lock, X,
   Check, RefreshCw, CheckSquare, Square, Layers, Sparkles, Trash2,
 } from 'lucide-react';
+import { api } from '../api';
 import {
   getStoredStaffUsers, saveStoredStaffUsers, DEFAULT_STAFF_USERS,
   ROLE_PERMISSIONS as DEFAULT_ROLE_PERMS,
@@ -195,6 +196,33 @@ export default function UsersManagement() {
   const [editingUser, setEditingUser] = useState<StaffUserItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
+  useEffect(() => {
+    api.getUsers()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: StaffUserItem[] = data.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            phone: u.phone || '+212 522 00 00 00',
+            password: 'password',
+            roles: Array.isArray(u.roles) ? u.roles.map((r: any) => r.code || r) : [u.role || 'commercial'],
+            primary_role: u.primary_role || 'commercial',
+            permissions: u.permissions || (DEFAULT_ROLE_PERMS as any)[u.primary_role || 'commercial'] || [],
+            is_active: u.is_active ?? true,
+            warehouse_id: u.warehouse?.id ?? 1,
+            warehouse_name: u.warehouse?.name ?? 'Casablanca Central',
+            created_at: u.created_at || '01/10/2026',
+          }));
+          setUsers(mapped);
+          saveStoredStaffUsers(mapped);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend users indisponibles, utilisation liste locale:', err);
+      });
+  }, []);
+
   // Form states
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
@@ -341,6 +369,7 @@ export default function UsersManagement() {
 
   function handleDeleteUser(id: number, name: string) {
     if (window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement le compte de ${name} ?`)) {
+      api.deleteUser(id).catch(err => console.warn('Failed to delete user on backend:', err));
       setUsers((prev) => {
         const updated = prev.filter((u) => u.id !== id);
         saveStoredStaffUsers(updated);
@@ -376,6 +405,13 @@ export default function UsersManagement() {
 
     let updatedList: StaffUserItem[];
     if (editingUser) {
+      api.updateUser(editingUser.id, {
+        name: formName.trim(),
+        email: formEmail.trim(),
+        phone: formPhone.trim(),
+        roles: formRoles,
+      }).catch(err => console.warn('Failed to update user on backend:', err));
+
       updatedList = users.map((u) =>
         u.id === editingUser.id
           ? {
@@ -394,6 +430,19 @@ export default function UsersManagement() {
       );
       notify(`Collaborateur ${formName} mis à jour (${formRoles.length} rôles, ${finalPerms.length} permissions sauvegardées).`);
     } else {
+      api.createUser({
+        name: formName.trim(),
+        email: formEmail.trim(),
+        phone: formPhone.trim(),
+        password: 'password',
+        roles: formRoles,
+        is_active: true,
+      }).then(created => {
+        if (created?.id) {
+          setUsers(prev => prev.map(u => u.email === formEmail.trim() ? { ...u, id: created.id } : u));
+        }
+      }).catch(err => console.warn('Failed to save user on backend:', err));
+
       const newUser: StaffUserItem = {
         id: Date.now(),
         name: formName.trim(),

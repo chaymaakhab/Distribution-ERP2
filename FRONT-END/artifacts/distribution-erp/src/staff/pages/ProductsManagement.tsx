@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Package, Search, Filter, Plus, Download, CheckCircle2,
   Boxes, Edit2, Tag, X, Barcode, Trash2, Check, AlertCircle,
   Upload, Image as ImageIcon,
 } from 'lucide-react';
-import { formatMoney } from '../api';
+import { api, formatMoney } from '../api';
 
 interface ProductItem {
   id: number;
@@ -120,6 +120,18 @@ export default function ProductsManagement() {
   const [query, setQuery] = useState('');
   const [catFilter, setCatFilter] = useState('all');
   const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.getProducts()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend products indisponibles, utilisation liste locale:', err);
+      });
+  }, []);
 
   // New Product Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -240,11 +252,25 @@ export default function ProductsManagement() {
       })
     );
 
+    api.updateProduct(editingProduct.id, {
+      sku: editSku.trim().toUpperCase(),
+      name: editName.trim(),
+      category_name: editCategory,
+      packaging: editPackaging.trim() || 'Pièce',
+      price_ht: Number(editPriceHt) || 0,
+      vat_rate: Number(editVatRate) || 20,
+      price_revendeur: Number(editPriceRevendeur) || (Number(editPriceHt) * 1.12),
+      price_grossiste: Number(editPriceGrossiste) || (Number(editPriceHt) * 1.05),
+      status: editStatus,
+      image: editImage.trim() || null,
+    }).catch(err => console.warn('Failed to update product on backend:', err));
+
     notify(`Article « ${editName} » mis à jour avec succès !`);
     setEditingProduct(null);
   }
 
   function handleDelete(id: number) {
+    api.deleteProduct(id).catch(err => console.warn('Failed to delete product on backend:', err));
     setProducts((prev) => prev.filter((p) => p.id !== id));
     setDeleteConfirmProduct(null);
     notify('Référence produit supprimée avec succès.');
@@ -277,6 +303,25 @@ export default function ProductsManagement() {
 
     setProducts([newProduct, ...products]);
     setShowAddModal(false);
+
+    api.createProduct({
+      sku: newProduct.sku,
+      name: newProduct.name,
+      category_name: newProduct.category,
+      price_ht: newProduct.price_ht,
+      vat_rate: newProduct.vat_rate,
+      price_revendeur: newProduct.price_revendeur,
+      price_grossiste: newProduct.price_grossiste,
+      packaging: newProduct.packaging,
+      initial_stock: Number(formInitialStock) || 0,
+      min_alert: Number(formMinAlert) || 10,
+      barcode: formBarcode.trim() || null,
+      image: newProduct.image || null,
+    }).then(created => {
+      if (created?.id) {
+        setProducts(prev => [created, ...prev.filter(x => x.id !== newProduct.id)]);
+      }
+    }).catch(err => console.warn('Failed to save product to backend:', err));
 
     // Reset Form
     setFormSku('');

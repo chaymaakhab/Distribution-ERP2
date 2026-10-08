@@ -20,10 +20,10 @@ export default function RegisterPaymentModal({
   const remaining = Math.max(0, totalTtc - currentPaid);
 
   const [amount, setAmount] = useState<number>(remaining);
-  const [method, setMethod] = useState<'Virement bancaire' | 'Chèque' | 'Espèces' | 'Traite'>('Virement bancaire');
-  const [refDoc, setRefDoc] = useState(`VIR-${Math.floor(100000 + Math.random() * 900000)}`);
+  const [method, setMethod] = useState<'Virement bancaire' | 'Chèque' | 'Espèces' | 'Traite' | 'Carte bancaire'>('Carte bancaire');
+  const [refDoc, setRefDoc] = useState(`CB-${Math.floor(100000 + Math.random() * 900000)}`);
   const [bank, setBank] = useState('Attijariwafa Bank');
-  const [date, setDate] = useState('07 Oct 2026');
+  const [date, setDate] = useState('08 Oct 2026');
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -176,7 +176,15 @@ export default function RegisterPaymentModal({
               </label>
               <select
                 value={method}
-                onChange={(e) => setMethod(e.target.value as any)}
+                onChange={(e) => {
+                  const m = e.target.value as any;
+                  setMethod(m);
+                  if (m === 'Carte bancaire') setRefDoc(`CB-${Math.floor(100000 + Math.random() * 900000)}`);
+                  else if (m === 'Espèces') setRefDoc(`ESP-${Math.floor(100000 + Math.random() * 900000)}`);
+                  else if (m === 'Chèque') setRefDoc(`CHQ-${Math.floor(100000 + Math.random() * 900000)}`);
+                  else if (m === 'Virement bancaire') setRefDoc(`VIR-${Math.floor(100000 + Math.random() * 900000)}`);
+                  else if (m === 'Traite') setRefDoc(`TRT-${Math.floor(100000 + Math.random() * 900000)}`);
+                }}
                 style={{
                   width: '100%',
                   height: '38px',
@@ -188,22 +196,23 @@ export default function RegisterPaymentModal({
                   fontSize: '12.5px',
                 }}
               >
+                <option value="Espèces">Espèces (Cash / Caisse)</option>
+                <option value="Carte bancaire">Carte bancaire (TPE / CMI / Card)</option>
                 <option value="Virement bancaire">Virement bancaire</option>
                 <option value="Chèque">Chèque bancaire</option>
-                <option value="Espèces">Espèces (Caisse)</option>
                 <option value="Traite">Traite / Effet</option>
               </select>
             </div>
 
             <div>
               <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
-                N° PIÈCE / RÉFÉRENCE *
+                N° PIÈCE / TICKET TPE / RÉFÉRENCE *
               </label>
               <input
                 required
                 value={refDoc}
                 onChange={(e) => setRefDoc(e.target.value)}
-                placeholder="Ex. CHQ-890123 / VIR-094"
+                placeholder="Ex. CB-890123 / TICKET-TPE / CHQ-104"
                 style={{
                   width: '100%',
                   height: '38px',
@@ -221,7 +230,7 @@ export default function RegisterPaymentModal({
           {method !== 'Espèces' && (
             <div>
               <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '5px' }}>
-                BANQUE ÉMETTRICE
+                {method === 'Carte bancaire' ? 'BANQUE ACQUÉREUR DU TPE / CMI' : 'BANQUE ÉMETTRICE'}
               </label>
               <select
                 value={bank}

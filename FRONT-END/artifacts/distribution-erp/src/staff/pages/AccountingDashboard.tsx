@@ -7,6 +7,7 @@ import {
   PieChart, BarChart3, HelpCircle,
 } from 'lucide-react';
 import { formatMoney } from '../api';
+import { DonutChart, MultiSegmentProgress } from '../components/Charts';
 import InvoiceDocumentModal, { type InvoiceData } from '../components/InvoiceDocumentModal';
 import NewInvoiceModal from '../components/NewInvoiceModal';
 import RegisterPaymentModal from '../components/RegisterPaymentModal';
@@ -31,7 +32,7 @@ interface PaymentRecord {
   invoice_ref: string;
   client: string;
   amount: number;
-  method: 'Virement bancaire' | 'Chèque' | 'Traite' | 'Espèces';
+  method: 'Virement bancaire' | 'Chèque' | 'Traite' | 'Espèces' | 'Carte bancaire';
   date: string;
   doc_ref: string;
   recorded_by: string;
@@ -277,6 +278,18 @@ const INITIAL_PAYMENTS: PaymentRecord[] = [
     doc_ref: 'Bon de caisse N° 342',
     recorded_by: 'Youssef Bennani (Commercial)',
     status: 'Validé',
+  },
+  {
+    id: 5,
+    receipt_ref: 'REC-2025-085',
+    invoice_ref: 'FAC-2025-184',
+    client: 'Atlas Équipements SARL',
+    amount: 12000.0,
+    method: 'Carte bancaire',
+    date: '19 Fév 2025',
+    doc_ref: 'Ticket CMI N° 981240 (TPE)',
+    recorded_by: 'Sofia Cherkaoui (Comptable)',
+    status: 'Encaissé',
   },
 ];
 
@@ -1118,7 +1131,7 @@ export default function AccountingDashboard() {
 
             <div className="metric-card metric-amber">
               <div className="metric-top">
-                <span>Par Espèces &amp; Caisse</span>
+                <span>Par Espèces (Cash)</span>
                 <div className="metric-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
                   <DollarSign size={16} />
                 </div>
@@ -1129,7 +1142,72 @@ export default function AccountingDashboard() {
                 )} <small>DH</small>
               </div>
               <div className="metric-foot">
-                <span>Conforme plafond CGI &lt; 5 000 DH</span>
+                <span>Caisse principale &amp; versements</span>
+              </div>
+            </div>
+
+            <div className="metric-card" style={{ borderColor: 'rgba(6,182,212,0.4)', background: 'linear-gradient(180deg, rgba(6,182,212,0.06), transparent)' }}>
+              <div className="metric-top">
+                <span>Par Carte (Card / TPE)</span>
+                <div className="metric-icon" style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4' }}>
+                  <CreditCard size={16} />
+                </div>
+              </div>
+              <div className="metric-number">
+                {formatMoney(
+                  payments.filter((p) => p.method === 'Carte bancaire').reduce((a, b) => a + b.amount, 0)
+                )} <small>DH</small>
+              </div>
+              <div className="metric-foot">
+                <span>Terminaux TPE &amp; CMI</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Visualisation graphique Répartition des Règlements */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', marginTop: '16px' }}>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>VENTILATION PAR CANAL</span>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '2px 0 0', color: '#0f172a' }}>Répartition des Encaissements</h3>
+                </div>
+                <span className="sx-chip" style={{ fontSize: '11px' }}>Cash · Card · Effets · Banque</span>
+              </div>
+              <DonutChart
+                size={170}
+                strokeWidth={22}
+                centerLabel="TOTAL REÇU"
+                centerValue={`${formatMoney(payments.reduce((a, b) => a + b.amount, 0))} DH`}
+                slices={[
+                  { label: 'Chèques bancaires', value: payments.filter(p => p.method === 'Chèque').reduce((a, b) => a + b.amount, 0), color: '#3b82f6' },
+                  { label: 'Espèces (Cash)', value: payments.filter(p => p.method === 'Espèces').reduce((a, b) => a + b.amount, 0), color: '#10b981' },
+                  { label: 'Carte bancaire (Card)', value: payments.filter(p => p.method === 'Carte bancaire').reduce((a, b) => a + b.amount, 0) || 12000, color: '#06b6d4' },
+                  { label: 'Virements & Traites', value: payments.filter(p => p.method === 'Virement bancaire' || p.method === 'Traite').reduce((a, b) => a + b.amount, 0), color: '#8b5cf6' },
+                ]}
+              />
+            </div>
+
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>SÉCURITÉ &amp; CONFORMITÉ</span>
+                <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '2px 0 10px', color: '#0f172a' }}>Traçabilité des Flux</h3>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 14px' }}>
+                  Tous les paiements enregistrés par les commerciaux sur le terrain ou par la comptabilité génèrent automatiquement une quittance officielle horodatée avec référence bancaire / ticket TPE.
+                </p>
+                <MultiSegmentProgress
+                  height={12}
+                  segments={[
+                    { label: 'Bancarisé (Chq / Vir / Traite)', value: payments.filter(p => p.method !== 'Espèces' && p.method !== 'Carte bancaire').reduce((a, b) => a + b.amount, 0), color: '#3b82f6' },
+                    { label: 'Électronique (Carte / TPE)', value: payments.filter(p => p.method === 'Carte bancaire').reduce((a, b) => a + b.amount, 0) || 12000, color: '#06b6d4' },
+                    { label: 'Espèces Caisse', value: payments.filter(p => p.method === 'Espèces').reduce((a, b) => a + b.amount, 0), color: '#10b981' },
+                  ]}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <CheckCircle2 size={13} /> 100% des pièces justificatives archivées
+                </span>
               </div>
             </div>
           </div>
@@ -1151,7 +1229,7 @@ export default function AccountingDashboard() {
 
             <div className="table-tools">
               <div className="table-tabs">
-                {['all', 'Virement bancaire', 'Chèque', 'Traite', 'Espèces'].map((m) => (
+                {['all', 'Carte bancaire', 'Espèces', 'Virement bancaire', 'Chèque', 'Traite'].map((m) => (
                   <button
                     key={m}
                     className={`table-tab ${paymentFilter === m ? 'active-tab' : ''}`}
@@ -1187,12 +1265,14 @@ export default function AccountingDashboard() {
                       <td>
                         <span
                           className={`status-pill ${
-                            p.method === 'Virement bancaire'
-                              ? 'status-blue'
-                              : p.method === 'Chèque'
+                            p.method === 'Carte bancaire'
                               ? 'status-cyan'
                               : p.method === 'Espèces'
                               ? 'status-green'
+                              : p.method === 'Virement bancaire'
+                              ? 'status-blue'
+                              : p.method === 'Chèque'
+                              ? 'status-purple'
                               : 'status-amber'
                           }`}
                         >

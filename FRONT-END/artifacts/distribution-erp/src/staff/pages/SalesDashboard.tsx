@@ -7,6 +7,7 @@ import {
   Check, CreditCard, ChevronDown, Percent,
 } from 'lucide-react';
 import { formatMoney } from '../api';
+import { DonutChart, MultiSegmentProgress } from '../components/Charts';
 import InvoiceDocumentModal, { type InvoiceData } from '../components/InvoiceDocumentModal';
 import DeliverySlipDocumentModal, { type DeliverySlipData } from '../components/DeliverySlipDocumentModal';
 import NewInvoiceModal from '../components/NewInvoiceModal';
@@ -80,7 +81,7 @@ interface FieldPayment {
   client: string;
   invoice_ref: string;
   amount: number;
-  method: 'Espèces' | 'Chèque';
+  method: 'Espèces' | 'Carte bancaire' | 'Chèque';
   cheque_number?: string;
   date: string;
   status: 'En main commercial' | 'Reversé au comptable';
@@ -469,7 +470,7 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
   const [fieldPayments, setFieldPayments] = useState<FieldPayment[]>(INITIAL_FIELD_PAYMENTS);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [payClient, setPayClient] = useState(COMMERCIAL_CLIENTS[0].company);
-  const [payMethod, setPayMethod] = useState<'Espèces' | 'Chèque'>('Espèces');
+  const [payMethod, setPayMethod] = useState<'Espèces' | 'Carte bancaire' | 'Chèque'>('Espèces');
   const [payAmount, setPayAmount] = useState<number>(2500);
   const [payChequeNum, setPayChequeNum] = useState('');
   const [payInvoiceRef, setPayInvoiceRef] = useState('FAC-2025-184');
@@ -1399,6 +1400,69 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
                 <span>Validé par la comptabilité</span>
               </div>
             </div>
+
+            <div className="metric-card" style={{ borderColor: 'rgba(6,182,212,0.4)', background: 'linear-gradient(180deg, rgba(6,182,212,0.06), transparent)' }}>
+              <div className="metric-top">
+                <span>Carte bancaire (Card / TPE)</span>
+                <div className="metric-icon" style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4' }}>
+                  <CreditCard size={16} />
+                </div>
+              </div>
+              <div className="metric-number">
+                {formatMoney(
+                  fieldPayments.filter((p) => p.method === 'Carte bancaire').reduce((sum, p) => sum + p.amount, 0)
+                )} <small>DH</small>
+              </div>
+              <div className="metric-foot">
+                <span>Paiements TPE mobile</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Visualisation graphique des encaissements terrain */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', marginTop: '16px' }}>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>VENTILATION PAR MODE</span>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '2px 0 0', color: '#0f172a' }}>Modes de Règlement Terrain</h3>
+                </div>
+                <span className="sx-chip" style={{ fontSize: '11px' }}>Cash · Card · Chèque</span>
+              </div>
+              <DonutChart
+                size={160}
+                strokeWidth={20}
+                centerLabel="COLLECTÉ"
+                centerValue={`${formatMoney(fieldPayments.reduce((s, p) => s + p.amount, 0))} DH`}
+                slices={[
+                  { label: 'Chèques barrés', value: fieldPayments.filter(p => p.method === 'Chèque').reduce((s, p) => s + p.amount, 0), color: '#3b82f6' },
+                  { label: 'Espèces (Cash)', value: fieldPayments.filter(p => p.method === 'Espèces').reduce((s, p) => s + p.amount, 0), color: '#10b981' },
+                  { label: 'Carte bancaire (Card)', value: fieldPayments.filter(p => p.method === 'Carte bancaire').reduce((s, p) => s + p.amount, 0), color: '#06b6d4' },
+                ]}
+              />
+            </div>
+
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>STATUT DE DÉCHARGE</span>
+                <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '2px 0 10px', color: '#0f172a' }}>Reversement à la Caisse Centrale</h3>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 14px' }}>
+                  Suivi des fonds encaissés lors des tournées commerciales avant décharge physique auprès du responsable de trésorerie.
+                </p>
+                <MultiSegmentProgress
+                  height={12}
+                  segments={[
+                    { label: 'Reversé au comptable', value: fieldPayments.filter(p => p.status === 'Reversé au comptable').reduce((s, p) => s + p.amount, 0), color: '#10b981' },
+                    { label: 'En main propre commercial', value: fieldPayments.filter(p => p.status === 'En main commercial').reduce((s, p) => s + p.amount, 0), color: '#f59e0b' },
+                  ]}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <ShieldCheck size={13} /> Traçabilité des reçus garantie
+                </span>
+              </div>
+            </div>
           </div>
 
           <section className="panel list-panel" style={{ marginTop: '16px' }}>
@@ -1438,7 +1502,7 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
                       <td><b className="table-main">{p.client}</b></td>
                       <td><span className="table-ref" style={{ color: '#0ea5e9' }}>{p.invoice_ref}</span></td>
                       <td>
-                        <span className={`status-pill ${p.method === 'Espèces' ? 'status-green' : 'status-blue'}`}>
+                        <span className={`status-pill ${p.method === 'Espèces' ? 'status-green' : p.method === 'Carte bancaire' ? 'status-cyan' : 'status-blue'}`}>
                           {p.method}
                           {p.cheque_number && ` (${p.cheque_number})`}
                         </span>
@@ -1726,7 +1790,8 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
                   onChange={(e) => setPayMethod(e.target.value as any)}
                   style={{ width: '100%', marginTop: '4px' }}
                 >
-                  <option value="Espèces">Espèces (Max 5 000 DH)</option>
+                  <option value="Espèces">Espèces (Cash · Max 5 000 DH)</option>
+                  <option value="Carte bancaire">Carte bancaire (Card / TPE mobile)</option>
                   <option value="Chèque">Chèque bancaire</option>
                 </select>
               </label>

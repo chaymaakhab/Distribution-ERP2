@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Users, Search, Filter, Phone, MessageSquare, ShieldAlert,
   ArrowUpRight, Building2, CheckCircle2, ChevronRight, Download, Plus,
   CreditCard, ExternalLink, X, Edit2, Trash2, Check,
   Printer, Receipt, Banknote, Calendar, Landmark, DollarSign, Eye,
 } from 'lucide-react';
-import { formatMoney } from '../api';
+import { api, formatMoney } from '../api';
 
 export interface CrmClient {
   id: number;
@@ -37,7 +37,7 @@ export interface ClientPaymentRecord {
   amount: number;
   previousBalance: number;
   newBalance: number;
-  paymentMethod: 'Espèces' | 'Chèque bancaire' | 'Virement bancaire' | 'Traite / Effet';
+  paymentMethod: 'Espèces' | 'Carte bancaire' | 'Chèque bancaire' | 'Virement bancaire' | 'Traite / Effet';
   bankName?: string;
   chequeOrDocNumber?: string;
   dueDate?: string;
@@ -218,6 +218,66 @@ export default function ClientsCrm() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedClient, setSelectedClient] = useState<CrmClient | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [payments, setPayments] = useState<ClientPaymentRecord[]>(DEMO_PAYMENTS);
+
+  useEffect(() => {
+    api.getCustomers()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: CrmClient[] = data.map((c: any) => ({
+            id: c.id,
+            code: c.code,
+            name: c.name || c.company,
+            company: c.company || c.name,
+            city: c.city || 'Casablanca',
+            phone: c.phone || '+212 522 00 00 00',
+            whatsapp: c.whatsapp || (c.phone ? c.phone.replace(/[^0-9]/g, '') : '212600000000'),
+            ice: c.ice || '003147829000064',
+            commercial_name: c.commercial?.name || 'Youssef Bennani',
+            price_tier: c.price_tier || 'revendeur',
+            credit_limit: Number(c.credit_limit) || 50000,
+            current_balance: Number(c.current_balance) || 0,
+            overdue_amount: Number(c.overdue_amount) || 0,
+            orders_count: c.orders_count || 0,
+            last_order_days_ago: 2,
+            status: c.status || 'Actif',
+          }));
+          setClients(mapped);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend customers indisponibles, utilisation liste locale:', err);
+      });
+
+    api.getPayments()
+      .then((res: any) => {
+        const list = res?.data || (Array.isArray(res) ? res : []);
+        if (Array.isArray(list) && list.length > 0) {
+          const mappedPayments: ClientPaymentRecord[] = list.map((p: any) => ({
+            id: p.id,
+            receiptNumber: p.receipt_number || p.ref,
+            clientId: p.customer_id,
+            clientName: p.customer?.name || 'Client',
+            clientCompany: p.customer?.company || p.customer?.name || 'Entreprise',
+            clientIce: p.customer?.ice || '',
+            date: p.created_at ? new Date(p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '08 Oct 2026',
+            amount: Number(p.amount) || 0,
+            previousBalance: Number(p.previous_balance) || 0,
+            newBalance: Number(p.new_balance) || 0,
+            paymentMethod: p.method as any,
+            bankName: p.bank,
+            chequeOrDocNumber: p.doc_number,
+            dueDate: p.due_date,
+            collectedBy: p.user?.name || 'Youssef Bennani',
+            notes: p.notes,
+          }));
+          setPayments(mappedPayments);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend payments indisponibles, utilisation liste locale:', err);
+      });
+  }, []);
 
   // Edit Client Modal State
   const [editingClient, setEditingClient] = useState<CrmClient | null>(null);
@@ -274,11 +334,24 @@ export default function ClientsCrm() {
       })
     );
 
+    api.updateCustomer(editingClient.id, {
+      company: editCompany.trim(),
+      name: editName.trim(),
+      city: editCity.trim(),
+      phone: editPhone.trim(),
+      whatsapp: editWhatsapp.trim(),
+      ice: editIce.trim(),
+      price_tier: editPriceTier,
+      credit_limit: Number(editCreditLimit),
+      status: editStatus,
+    }).catch(err => console.warn('Failed to update client on backend:', err));
+
     notify(`Fiche client « ${editCompany} » mise à jour avec succès !`);
     setEditingClient(null);
   }
 
   function handleDeleteClient(id: number) {
+    api.deleteCustomer(id).catch(err => console.warn('Failed to delete client on backend:', err));
     setClients((prev) => prev.filter((c) => c.id !== id));
     setDeleteConfirmClient(null);
     notify('Compte client supprimé avec succès.');
@@ -330,6 +403,21 @@ export default function ClientsCrm() {
     setClients([newClient, ...clients]);
     setShowAddClientModal(false);
 
+    api.createCustomer({
+      company: newClient.company,
+      name: newClient.name,
+      city: newClient.city,
+      phone: newClient.phone,
+      whatsapp: newClient.whatsapp,
+      ice: newClient.ice,
+      price_tier: newClient.price_tier,
+      credit_limit: newClient.credit_limit,
+    }).then(created => {
+      if (created?.id) {
+        setClients(prev => [{ ...newClient, id: created.id, code: created.code }, ...prev.filter(x => x.id !== newClient.id)]);
+      }
+    }).catch(err => console.warn('Failed to save client on backend:', err));
+
     // Reset Form
     setFormCompany('');
     setFormContact('');
@@ -345,11 +433,10 @@ export default function ClientsCrm() {
   const [activeTab, setActiveTab] = useState<'clients' | 'payments'>('clients');
 
   // Client Payment State
-  const [payments, setPayments] = useState<ClientPaymentRecord[]>(DEMO_PAYMENTS);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentClient, setPaymentClient] = useState<CrmClient | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState<'Espèces' | 'Chèque bancaire' | 'Virement bancaire' | 'Traite / Effet'>('Chèque bancaire');
+  const [paymentMethod, setPaymentMethod] = useState<'Espèces' | 'Carte bancaire' | 'Chèque bancaire' | 'Virement bancaire' | 'Traite / Effet'>('Espèces');
   const [paymentBank, setPaymentBank] = useState('Attijariwafa Bank');
   const [paymentDocNum, setPaymentDocNum] = useState('');
   const [paymentDueDate, setPaymentDueDate] = useState('');
@@ -362,9 +449,9 @@ export default function ClientsCrm() {
     const c = targetClient || (clients.length > 0 ? clients[0] : null);
     setPaymentClient(c);
     setPaymentAmount(c && c.current_balance > 0 ? c.current_balance : 10000);
-    setPaymentMethod('Chèque bancaire');
+    setPaymentMethod('Espèces');
     setPaymentBank('Attijariwafa Bank');
-    setPaymentDocNum(`CHQ-${Math.floor(100000 + Math.random() * 900000)}`);
+    setPaymentDocNum(`ESP-${Math.floor(100000 + Math.random() * 900000)}`);
     setPaymentDueDate('25 Oct 2026');
     setPaymentDate('08 Oct 2026');
     setPaymentCollector(c?.commercial_name || 'Youssef Bennani');
@@ -420,6 +507,22 @@ export default function ClientsCrm() {
 
     setPayments([newRecord, ...payments]);
     setShowPaymentModal(false);
+
+    api.createPayment({
+      customer_id: paymentClient.id,
+      amount: paymentAmount,
+      method: paymentMethod,
+      bank: paymentMethod !== 'Espèces' ? paymentBank : undefined,
+      doc_number: paymentDocNum,
+      due_date: (paymentMethod === 'Chèque bancaire' || paymentMethod === 'Traite / Effet') ? paymentDueDate : undefined,
+      notes: paymentNotes,
+    }).then(res => {
+      if (res?.payment?.receipt_number) {
+        setPayments(prev => prev.map(p => p.id === newRecord.id ? { ...p, receiptNumber: res.payment.receipt_number, id: res.payment.id } : p));
+        setReceiptModalData(prev => prev ? { ...prev, receiptNumber: res.payment.receipt_number, id: res.payment.id } : prev);
+      }
+    }).catch(err => console.warn('Failed to persist payment on backend:', err));
+
     notify(`Règlement de ${formatMoney(paymentAmount)} DH enregistré pour « ${paymentClient.company} » !`);
     setReceiptModalData(newRecord);
   }
@@ -755,6 +858,8 @@ export default function ClientsCrm() {
                         className={`status-pill ${
                           p.paymentMethod === 'Espèces'
                             ? 'status-green'
+                            : p.paymentMethod === 'Carte bancaire'
+                            ? 'status-cyan'
                             : p.paymentMethod === 'Chèque bancaire'
                             ? 'status-blue'
                             : p.paymentMethod === 'Virement bancaire'
@@ -1759,19 +1864,28 @@ export default function ClientsCrm() {
                   Mode de règlement *
                   <select
                     value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value as any)}
-                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                    onChange={(e) => {
+                      const m = e.target.value as any;
+                      setPaymentMethod(m);
+                      if (m === 'Espèces') setPaymentDocNum(`ESP-${Math.floor(100000 + Math.random() * 900000)}`);
+                      else if (m === 'Carte bancaire') setPaymentDocNum(`CB-${Math.floor(100000 + Math.random() * 900000)}`);
+                      else if (m === 'Chèque bancaire') setPaymentDocNum(`CHQ-${Math.floor(100000 + Math.random() * 900000)}`);
+                      else if (m === 'Virement bancaire') setPaymentDocNum(`VIR-${Math.floor(100000 + Math.random() * 900000)}`);
+                      else if (m === 'Traite / Effet') setPaymentDocNum(`EFF-${Math.floor(100000 + Math.random() * 900000)}`);
+                    }}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 600 }}
                   >
+                    <option value="Espèces">Espèces (Cash / Caisse)</option>
+                    <option value="Carte bancaire">Carte bancaire (TPE / CMI / Card)</option>
                     <option value="Chèque bancaire">Chèque bancaire</option>
                     <option value="Virement bancaire">Virement bancaire</option>
-                    <option value="Espèces">Espèces (Cash)</option>
                     <option value="Traite / Effet">Traite / Effet de commerce</option>
                   </select>
                 </label>
 
                 {paymentMethod !== 'Espèces' ? (
                   <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
-                    Banque émettrice / de dépôt
+                    {paymentMethod === 'Carte bancaire' ? 'Banque acquéreur TPE' : 'Banque émettrice / de dépôt'}
                     <select
                       value={paymentBank}
                       onChange={(e) => setPaymentBank(e.target.value)}
@@ -1802,7 +1916,9 @@ export default function ClientsCrm() {
               {/* Document Number & Due date */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
-                  {paymentMethod === 'Chèque bancaire'
+                  {paymentMethod === 'Carte bancaire'
+                    ? 'N° Ticket TPE / Autorisation *'
+                    : paymentMethod === 'Chèque bancaire'
                     ? 'N° du Chèque *'
                     : paymentMethod === 'Traite / Effet'
                     ? 'N° de la Traite *'
@@ -1813,7 +1929,7 @@ export default function ClientsCrm() {
                     required
                     value={paymentDocNum}
                     onChange={(e) => setPaymentDocNum(e.target.value)}
-                    placeholder="Ex. CHQ-990182 ou VIR-4890"
+                    placeholder="Ex. CB-990182 ou CHQ-89012"
                     style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
                   />
                 </label>

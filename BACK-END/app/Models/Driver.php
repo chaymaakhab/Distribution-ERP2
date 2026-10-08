@@ -28,4 +28,20 @@ class Driver extends Model
     {
         return $this->belongsTo(Warehouse::class);
     }
+
+    public function tours()
+    {
+        return $this->hasMany(DeliveryTour::class);
+    }
+
+    public function transfers()
+    {
+        return $this->hasMany(StockTransfer::class);
+    }
+
+    public function vehicle()
+    {
+        return $this->hasOne(Vehicle::class);
+    }
 }
+

@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Building2, Search, Plus, Phone, Mail, MapPin, X, Eye,
   Package, TrendingUp, CheckCircle2, RefreshCw, FileText, ShoppingCart,
   Edit2, Trash2, Check,
 } from 'lucide-react';
-import { formatMoney } from '../api';
+import { api, formatMoney } from '../api';
 import NewPurchaseOrderModal from '../components/NewPurchaseOrderModal';
 import PurchaseOrderDocumentModal, { type PurchaseOrderData } from '../components/PurchaseOrderDocumentModal';
 
@@ -155,6 +155,18 @@ export default function SuppliersManagement() {
   const [targetSupplierForPo, setTargetSupplierForPo] = useState<Supplier | null>(null);
   const [viewPoData, setViewPoData] = useState<PurchaseOrderData | null>(null);
 
+  useEffect(() => {
+    api.getSuppliers()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSuppliers(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend suppliers indisponibles, utilisation liste locale:', err);
+      });
+  }, []);
+
   // Edit Supplier Modal State
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [editSuppName, setEditSuppName] = useState('');
@@ -213,11 +225,26 @@ export default function SuppliersManagement() {
       })
     );
 
+    api.updateSupplier(editingSupplier.id, {
+      name: editSuppName.trim(),
+      contact: editSuppContact.trim(),
+      phone: editSuppPhone.trim(),
+      email: editSuppEmail.trim(),
+      city: editSuppCity.trim(),
+      address: editSuppAddress.trim(),
+      ice: editSuppIce.trim(),
+      rc: editSuppRc.trim(),
+      status: editSuppStatus,
+      categories: editSuppCategories.split(',').map(c => c.trim()).filter(Boolean),
+      payment_terms: editSuppPaymentTerms.trim(),
+    }).catch(err => console.warn('Failed to update supplier on backend:', err));
+
     notify(`Fiche fournisseur « ${editSuppName} » mise à jour avec succès !`);
     setEditingSupplier(null);
   }
 
   function handleDeleteSupplier(id: number) {
+    api.deleteSupplier(id).catch(err => console.warn('Failed to delete supplier on backend:', err));
     setSuppliers(prev => prev.filter(s => s.id !== id));
     setDeleteConfirmSupplier(null);
     notify('Fournisseur supprimé du référentiel.');
@@ -281,6 +308,25 @@ export default function SuppliersManagement() {
 
     setSuppliers([newSupplier, ...suppliers]);
     setShowAddSupplierModal(false);
+
+    api.createSupplier({
+      name: newSupplier.name,
+      contact: newSupplier.contact,
+      phone: newSupplier.phone,
+      email: newSupplier.email,
+      city: newSupplier.city,
+      address: newSupplier.address,
+      ice: newSupplier.ice,
+      rc: newSupplier.rc,
+      categories: newSupplier.categories,
+      payment_terms: newSupplier.payment_terms,
+      lead_time_days: newSupplier.lead_time_days,
+      status: newSupplier.status,
+    }).then((created) => {
+      if (created?.id) {
+        setSuppliers(prev => [created, ...prev.filter(x => x.id !== newSupplier.id)]);
+      }
+    }).catch(err => console.warn('Failed to save supplier to backend:', err));
 
     // Reset Form
     setFormName('');

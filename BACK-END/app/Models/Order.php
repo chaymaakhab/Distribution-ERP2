@@ -44,4 +44,20 @@ class Order extends Model
     {
         return $this->hasOne(Invoice::class);
     }
+
+    public function pickingLists()
+    {
+        return $this->hasMany(PickingList::class);
+    }
+
+    public function deliverySlip()
+    {
+        return $this->hasOne(DeliverySlip::class);
+    }
+
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class);
+    }
 }
+

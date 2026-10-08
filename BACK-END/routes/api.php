@@ -12,12 +12,21 @@ use App\Http\Controllers\Api\v1\StockController;
 use App\Http\Controllers\Api\v1\ReturnController;
 use App\Http\Controllers\Api\v1\SupplierController;
 use App\Http\Controllers\Api\v1\UserController;
+use App\Http\Controllers\Api\v1\PurchaseOrderController;
+use App\Http\Controllers\Api\v1\StockTransferController;
+use App\Http\Controllers\Api\v1\PreparationController;
+use App\Http\Controllers\Api\v1\DeliveryTourController;
+use App\Http\Controllers\Api\v1\TreasuryController;
+use App\Http\Controllers\Api\v1\InvoiceController;
+use App\Http\Controllers\Api\v1\VehicleController;
+use App\Http\Controllers\Api\v1\StockMovementController;
 use App\Http\Controllers\Api\v1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\v1\Customer\AuthController as CustomerAuthController;
 use App\Http\Controllers\Api\v1\Customer\CatalogController as CustomerCatalogController;
 use App\Http\Controllers\Api\v1\Customer\OrderController as CustomerOrderController;
 use App\Http\Controllers\Api\v1\Customer\InvoiceController as CustomerInvoiceController;
 use App\Http\Controllers\Api\v1\Customer\AccountController as CustomerAccountController;
+
 
 Route::prefix('v1')->group(function () {
     // ---------------------------------------------------------------------
@@ -90,8 +99,47 @@ Route::prefix('v1')->group(function () {
         Route::post('/returns', [ReturnController::class, 'store']);
         Route::patch('/returns/{id}/validate', [ReturnController::class, 'validateReturn']);
 
+        // Purchase Orders / Bons d'Achat & Réception
+        Route::get('/purchase-orders', [PurchaseOrderController::class, 'index']);
+        Route::get('/purchase-orders/{id}', [PurchaseOrderController::class, 'show']);
+        Route::post('/purchase-orders', [PurchaseOrderController::class, 'store']);
+        Route::patch('/purchase-orders/{id}/status', [PurchaseOrderController::class, 'updateStatus']);
+
+        // Inter-depot Transfers / Transferts Inter-Dépôts
+        Route::get('/transfers', [StockTransferController::class, 'index']);
+        Route::post('/transfers', [StockTransferController::class, 'store']);
+        Route::patch('/transfers/{id}/status', [StockTransferController::class, 'updateStatus']);
+
+        // Order Preparation & Barcode Scanning
+        Route::get('/picking-lists', [PreparationController::class, 'index']);
+        Route::get('/picking-lists/{id}', [PreparationController::class, 'show']);
+        Route::post('/picking-lists/{id}/scan', [PreparationController::class, 'scanItem']);
+
+        // Delivery Tours & Tour Stops
+        Route::get('/delivery-tours', [DeliveryTourController::class, 'index']);
+        Route::get('/delivery-tours/{id}', [DeliveryTourController::class, 'show']);
+        Route::patch('/delivery-tours/{tourId}/stops/{stopId}', [DeliveryTourController::class, 'updateStop']);
+
+        // Invoicing & Credit Notes
+        Route::get('/invoices', [InvoiceController::class, 'index']);
+        Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
+        Route::get('/credit-notes', [InvoiceController::class, 'creditNotes']);
+        Route::post('/credit-notes', [InvoiceController::class, 'storeCreditNote']);
+
+        // Treasury, Cash Closings & Cheques
+        Route::get('/treasury/closings', [TreasuryController::class, 'closings']);
+        Route::post('/treasury/closings', [TreasuryController::class, 'storeClosing']);
+        Route::get('/treasury/cheques', [TreasuryController::class, 'cheques']);
+        Route::patch('/treasury/cheques/{id}/status', [TreasuryController::class, 'updateChequeStatus']);
+
+        // Fleet Vehicles & Movements
+        Route::get('/vehicles', [VehicleController::class, 'index']);
+        Route::post('/vehicles', [VehicleController::class, 'store']);
+        Route::get('/stock-movements', [StockMovementController::class, 'index']);
+
         Route::post('/sync', [SyncController::class, 'sync']);
     });
+
 
     // ---------------------------------------------------------------------
     // Customer shopping portal.

@@ -4,6 +4,7 @@ import {
   ArrowRight, Check, X, ShieldAlert, Truck, FileText, Printer,
   Camera, CameraOff, RefreshCw, Volume2,
 } from 'lucide-react';
+import { DonutChart, MultiSegmentProgress } from '../components/Charts';
 import DeliverySlipDocumentModal, { type DeliverySlipData } from '../components/DeliverySlipDocumentModal';
 
 interface PrepItem {
@@ -302,6 +303,53 @@ export default function PreparationDashboard() {
           <div className="metric-number" style={{ fontSize: '18px' }}>En préparation</div>
           <div className="metric-foot">
             <span>Départ prévu 11h30</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Visualisation graphique de préparation des colis */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', margin: '14px 0' }}>
+        <div style={{ background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '10px', padding: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase' }}>AVANCEMENT PICKING</span>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '2px 0 0', color: 'var(--text)' }}>Taux de Colisage Tournée</h3>
+            </div>
+            <span className="sx-chip" style={{ fontSize: '11px' }}>CMD-2405 &amp; CMD-2406</span>
+          </div>
+          <DonutChart
+            size={160}
+            strokeWidth={20}
+            centerLabel="PRÉPARÉ"
+            centerValue={`${totalPrepared} / ${totalRequested}`}
+            slices={[
+              { label: 'Articles bipés & conformes', value: totalPrepared, color: '#10b981', formatted: `${totalPrepared} un.` },
+              { label: 'En attente de prélèvement', value: Math.max(0, totalRequested - totalPrepared), color: '#38bdf8', formatted: `${Math.max(0, totalRequested - totalPrepared)} un.` },
+            ]}
+          />
+        </div>
+
+        <div style={{ background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase' }}>CONTRÔLE QUALITÉ & EXPÉDITION</span>
+            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '2px 0 10px', color: 'var(--text)' }}>Vérification des Lignes de Préparation</h3>
+            <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '0 0 14px' }}>
+              Le scanner optique valide chaque EAN-13 unitaire pour garantir zéro erreur de chargement dans le camion du livreur.
+            </p>
+            <MultiSegmentProgress
+              height={12}
+              segments={[
+                { label: 'Lignes complètes (OK)', value: items.filter(i => i.status === 'ok').length, color: '#10b981' },
+                { label: 'Lignes incomplètes', value: items.filter(i => i.status === 'short').length, color: '#f59e0b' },
+                { label: 'En attente', value: items.filter(i => i.status === 'pending').length, color: '#38bdf8' },
+              ]}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', fontSize: '11.5px' }}>
+            <span style={{ color: 'var(--muted)' }}>Quai de chargement A-2</span>
+            <span style={{ color: '#22c55e', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <ShieldAlert size={13} /> Sécurité expédition validée
+            </span>
           </div>
         </div>
       </div>

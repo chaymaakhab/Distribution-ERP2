@@ -182,12 +182,118 @@ export const api = {
   validateReturn: (id: number, data: { status: 'Validé' | 'Refusé'; restock_approved: boolean; superadmin_notes?: string }) =>
     request<any>(`/returns/${id}/validate`, { method: 'PATCH', body: JSON.stringify(data) }),
 
+  // Suppliers / Fournisseurs
+  getSuppliers: (params?: { q?: string; status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/suppliers${qry ? '?' + qry : ''}`);
+  },
+  createSupplier: (data: any) =>
+    request<any>('/suppliers', { method: 'POST', body: JSON.stringify(data) }),
+  updateSupplier: (id: number, data: any) =>
+    request<any>(`/suppliers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteSupplier: (id: number) =>
+    request<any>(`/suppliers/${id}`, { method: 'DELETE' }),
+
   // Orders
-  getOrders: () => request<any[]>('/orders'),
+  getOrders: (params?: { q?: string; status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/orders${qry ? '?' + qry : ''}`);
+  },
   createOrder: (data: any) => request<any>('/orders', { method: 'POST', body: JSON.stringify(data) }),
+  updateOrder: (id: string | number, data: any) =>
+    request<any>(`/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteOrder: (id: string | number) =>
+    request<any>(`/orders/${id}`, { method: 'DELETE' }),
   updateOrderStatus: (ref: string, status: string) =>
     request<any>(`/orders/${ref}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
+  // Staff Users
+  getUsers: (params?: { q?: string; role?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/users${qry ? '?' + qry : ''}`);
+  },
+  createUser: (data: any) =>
+    request<any>('/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateUser: (id: number, data: any) =>
+    request<any>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteUser: (id: number) =>
+    request<any>(`/users/${id}`, { method: 'DELETE' }),
+
+  // Purchase Orders / Bons d'Achat & Réception
+  getPurchaseOrders: (params?: { q?: string; status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/purchase-orders${qry ? '?' + qry : ''}`);
+  },
+  createPurchaseOrder: (data: any) =>
+    request<any>('/purchase-orders', { method: 'POST', body: JSON.stringify(data) }),
+  updatePurchaseOrderStatus: (id: number, status: string) =>
+    request<any>(`/purchase-orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
+  // Inter-depot Transfers / Transferts Inter-Dépôts
+  getTransfers: (params?: { status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/transfers${qry ? '?' + qry : ''}`);
+  },
+  createTransfer: (data: any) =>
+    request<any>('/transfers', { method: 'POST', body: JSON.stringify(data) }),
+  updateTransferStatus: (id: number, status: string) =>
+    request<any>(`/transfers/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
+  // Picking & Preparation
+  getPickingLists: (params?: { status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/picking-lists${qry ? '?' + qry : ''}`);
+  },
+  scanPickingItem: (pickingId: number, barcode: string, quantity: number = 1) =>
+    request<any>(`/picking-lists/${pickingId}/scan`, { method: 'POST', body: JSON.stringify({ barcode, quantity }) }),
+
+  // Delivery Tours
+  getDeliveryTours: (params?: { driver_id?: number; status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/delivery-tours${qry ? '?' + qry : ''}`);
+  },
+  updateDeliveryStop: (tourId: number, stopId: number, data: any) =>
+    request<any>(`/delivery-tours/${tourId}/stops/${stopId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  // Invoices & Credit Notes
+  getInvoices: (params?: { q?: string; status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/invoices${qry ? '?' + qry : ''}`);
+  },
+  getCreditNotes: (params?: { status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/credit-notes${qry ? '?' + qry : ''}`);
+  },
+  createCreditNote: (data: any) =>
+    request<any>('/credit-notes', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Treasury, Cash Closings & Cheques
+  getTreasuryClosings: (params?: { warehouse_id?: number }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/treasury/closings${qry ? '?' + qry : ''}`);
+  },
+  createTreasuryClosing: (data: any) =>
+    request<any>('/treasury/closings', { method: 'POST', body: JSON.stringify(data) }),
+  getTreasuryCheques: (params?: { status?: string; doc_type?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/treasury/cheques${qry ? '?' + qry : ''}`);
+  },
+  updateChequeStatus: (id: number, status: string, remittance_ref?: string) =>
+    request<any>(`/treasury/cheques/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, remittance_ref }) }),
+
+  // Vehicles & Movements
+  getVehicles: (params?: { status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/vehicles${qry ? '?' + qry : ''}`);
+  },
+  createVehicle: (data: any) =>
+    request<any>('/vehicles', { method: 'POST', body: JSON.stringify(data) }),
+  getStockMovements: (params?: { warehouse_id?: number; product_id?: number }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/stock-movements${qry ? '?' + qry : ''}`);
+  },
 };
+
 
 export interface OverviewKpis {
   ca_today: number;

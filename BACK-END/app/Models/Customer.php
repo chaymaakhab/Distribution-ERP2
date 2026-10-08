@@ -51,4 +51,20 @@ class Customer extends Authenticatable
     {
         return $this->belongsTo(User::class, 'commercial_id');
     }
+
+    public function creditNotes()
+    {
+        return $this->hasMany(CreditNote::class);
+    }
+
+    public function returns()
+    {
+        return $this->hasMany(ProductReturn::class);
+    }
+
+    public function cheques()
+    {
+        return $this->hasMany(ChequeInHand::class);
+    }
 }
+

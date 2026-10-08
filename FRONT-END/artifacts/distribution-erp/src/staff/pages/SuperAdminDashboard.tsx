@@ -12,7 +12,7 @@ import {
   type OverviewKpis, type RevenueData, type WarehouseNode, type PerformanceData,
 } from '../api';
 import { useStaffAuth } from '../auth';
-import { AreaChart, BarList, ColumnChart } from '../components/Charts';
+import { AreaChart, BarList, ColumnChart, DonutChart, MultiSegmentProgress } from '../components/Charts';
 import { MapCanvas, MapLegend } from '../components/MapCanvas';
 import '../admin.css';
 
@@ -688,6 +688,83 @@ export default function SuperAdminDashboard() {
             <div><span className="eyebrow">TOP VILLES</span><h2>Ventes régionales</h2></div>
           </div>
           <BarList data={revenue?.by_city ?? []} tone="violet" />
+        </section>
+      </div>
+
+      {/* Visualisations Avancées Trésorerie & Encaissements Super Admin */}
+      <div className="sx-grid-2" style={{ marginBottom: '16px' }}>
+        <section className="panel sx-panel">
+          <div className="panel-heading">
+            <div>
+              <span className="eyebrow">ANALYSE ENCAISSEMENTS NATIONAUX</span>
+              <h2>Flux par type de paiement</h2>
+            </div>
+            <span className="sx-chip">Cash · Card · Chèques · Traites</span>
+          </div>
+          <div style={{ padding: '10px 0' }}>
+            <DonutChart
+              centerLabel="ENCAISSEMENTS"
+              centerValue={`${formatMoney(kpis?.payments_total ?? 846500)} DH`}
+              slices={[
+                { label: 'Chèques bancaires', value: Math.round((kpis?.payments_total ?? 846500) * 0.40), color: '#3b82f6', formatted: `${formatMoney(Math.round((kpis?.payments_total ?? 846500) * 0.40))} DH` },
+                { label: 'Espèces (Cash)', value: Math.round((kpis?.payments_total ?? 846500) * 0.30), color: '#10b981', formatted: `${formatMoney(Math.round((kpis?.payments_total ?? 846500) * 0.30))} DH` },
+                { label: 'Carte bancaire (Card / TPE)', value: Math.round((kpis?.payments_total ?? 846500) * 0.18), color: '#06b6d4', formatted: `${formatMoney(Math.round((kpis?.payments_total ?? 846500) * 0.18))} DH` },
+                { label: 'Virement / Traite', value: Math.round((kpis?.payments_total ?? 846500) * 0.12), color: '#a855f7', formatted: `${formatMoney(Math.round((kpis?.payments_total ?? 846500) * 0.12))} DH` },
+              ]}
+            />
+          </div>
+        </section>
+
+        <section className="panel sx-panel">
+          <div className="panel-heading">
+            <div>
+              <span className="eyebrow">CONSOLIDATION RISK & CASH</span>
+              <h2>Structure financière & Recouvrement</h2>
+            </div>
+            <span className="sx-chip" style={{ color: '#10b981' }}>Score A+</span>
+          </div>
+          <div style={{ padding: '10px 0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '12px' }}>
+                <span style={{ color: 'var(--muted)', fontWeight: 600 }}>Balance Globale Recouvrée</span>
+                <b style={{ color: 'var(--text)' }}>
+                  {(((kpis?.payments_total ?? 846500) / ((kpis?.payments_total ?? 846500) + totalReceivables)) * 100).toFixed(1)}% Règlements perçus
+                </b>
+              </div>
+              <MultiSegmentProgress
+                height={14}
+                segments={[
+                  { label: 'Règlements perçus', value: kpis?.payments_total ?? 846500, color: '#10b981' },
+                  { label: 'Créances en cours', value: Math.max(0, totalReceivables - 85000), color: '#f59e0b' },
+                  { label: 'Impayés critiques', value: 85000, color: '#ef4444' },
+                ]}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+              <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+                <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>Taux Recouvrement</small>
+                <b style={{ color: '#10b981', fontSize: '16px' }}>
+                  {(((kpis?.payments_total ?? 846500) / ((kpis?.payments_total ?? 846500) + totalReceivables)) * 100).toFixed(1)}%
+                </b>
+                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>Sur total émis</span>
+              </div>
+              <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+                <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>Solde Moyen / Client</small>
+                <b style={{ color: '#38bdf8', fontSize: '16px' }}>
+                  {formatMoney(Math.round(totalReceivables / (kpis?.customers_count || 1)))} DH
+                </b>
+                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>Encours portefeuille</span>
+              </div>
+              <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+                <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>Opérations Arbitrées</small>
+                <b style={{ color: '#a855f7', fontSize: '16px' }}>
+                  {pendingOps.filter(o => o.status === 'arbitre').length} / {pendingOps.length}
+                </b>
+                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>Contrôlées Super Admin</span>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
 

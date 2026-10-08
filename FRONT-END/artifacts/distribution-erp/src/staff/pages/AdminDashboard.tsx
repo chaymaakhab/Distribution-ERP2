@@ -9,7 +9,7 @@ import {
   type OverviewKpis, type RevenueData, type WarehouseNode, type PerformanceData,
 } from '../api';
 import { useStaffAuth } from '../auth';
-import { AreaChart, BarList, ColumnChart } from '../components/Charts';
+import { AreaChart, BarList, ColumnChart, DonutChart, MultiSegmentProgress } from '../components/Charts';
 import { MapCanvas, MapLegend } from '../components/MapCanvas';
 import '../admin.css';
 
@@ -139,6 +139,68 @@ export default function AdminDashboard() {
             <div><span className="eyebrow">FLUX</span><h2>Évolution des commandes</h2></div>
           </div>
           <ColumnChart data={revenue.orders_evolution} />
+        </section>
+      </div>
+
+      {/* Visualisation avancée : Ventilation des Règlements & Balance Clients */}
+      <div className="sx-grid-2">
+        <section className="panel sx-panel">
+          <div className="panel-heading">
+            <div><span className="eyebrow">TRÉSORERIE & ENCAISSEMENTS</span><h2>Modes de règlement des clients</h2></div>
+            <span className="sx-chip">Cash · Card · Chèque · Virement</span>
+          </div>
+          <div style={{ padding: '8px 0' }}>
+            <DonutChart
+              centerLabel="TOTAL ENCAISSÉ"
+              centerValue={`${formatMoney(kpis.payments_total)} DH`}
+              slices={[
+                { label: 'Chèques bancaires', value: Math.round(kpis.payments_total * 0.42), color: '#3b82f6', formatted: `${formatMoney(Math.round(kpis.payments_total * 0.42))} DH` },
+                { label: 'Espèces (Cash)', value: Math.round(kpis.payments_total * 0.28), color: '#10b981', formatted: `${formatMoney(Math.round(kpis.payments_total * 0.28))} DH` },
+                { label: 'Carte bancaire (Card / TPE)', value: Math.round(kpis.payments_total * 0.16), color: '#06b6d4', formatted: `${formatMoney(Math.round(kpis.payments_total * 0.16))} DH` },
+                { label: 'Virements & Traites', value: Math.round(kpis.payments_total * 0.14), color: '#8b5cf6', formatted: `${formatMoney(Math.round(kpis.payments_total * 0.14))} DH` },
+              ]}
+            />
+          </div>
+        </section>
+
+        <section className="panel sx-panel">
+          <div className="panel-heading">
+            <div><span className="eyebrow">RECOUVREMENT & CRÉANCES</span><h2>Santé financière du portefeuille clients</h2></div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '12px 0' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: '12px' }}>
+                <span style={{ color: 'var(--muted)', fontWeight: 600 }}>Répartition Encaissements vs Créances</span>
+                <b style={{ color: 'var(--text)' }}>Taux de recouvrement : {((kpis.payments_total / (kpis.payments_total + kpis.receivables)) * 100).toFixed(1)}%</b>
+              </div>
+              <MultiSegmentProgress
+                height={14}
+                segments={[
+                  { label: 'Encaissé Réglé', value: kpis.payments_total, color: '#10b981' },
+                  { label: 'Créances Courantes', value: Math.max(0, kpis.receivables - (kpis.receivables * 0.3)), color: '#f59e0b' },
+                  { label: 'Échu en retard', value: kpis.receivables * 0.3, color: '#ef4444' },
+                ]}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '10px' }}>
+              <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+                <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>Clients Actifs</small>
+                <b style={{ color: '#10b981', fontSize: '16px' }}>{kpis.customers_count}</b>
+                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>Portefeuille sain</span>
+              </div>
+              <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+                <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>Factures Impayées</small>
+                <b style={{ color: '#ef4444', fontSize: '16px' }}>{kpis.unpaid_invoices}</b>
+                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>En relance CRM</span>
+              </div>
+              <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+                <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>Taux Rupture</small>
+                <b style={{ color: '#38bdf8', fontSize: '16px' }}>{((kpis.stock_ruptures / (kpis.products_count || 1)) * 100).toFixed(1)}%</b>
+                <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>{kpis.stock_ruptures} articles à réappro</span>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
 

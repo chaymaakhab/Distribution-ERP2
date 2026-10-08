@@ -38,6 +38,11 @@ class Product extends Model
         return $this->hasMany(Stock::class);
     }
 
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
     /**
      * Unit price HT applicable to a given customer price tier.
      * Falls back to the base price when the tier has no dedicated grid price.

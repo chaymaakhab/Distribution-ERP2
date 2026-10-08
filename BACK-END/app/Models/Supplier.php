@@ -34,4 +34,15 @@ class Supplier extends Model
         'lead_time_days' => 'integer',
         'categories' => 'array',
     ];
+
+    public function purchaseOrders()
+    {
+        return $this->hasMany(PurchaseOrder::class);
+    }
+
+    public function purchaseReceipts()
+    {
+        return $this->hasMany(PurchaseReceipt::class);
+    }
 }
+

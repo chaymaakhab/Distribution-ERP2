@@ -575,7 +575,7 @@ export default function SegmentedTopNavbar({
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Crown size={20} style={{ color: '#9333ea' }} />
                 <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0f172a' }}>
-                  Abonnement SaaS · {currentCompany.brand_name || currentCompany.name}
+                  Formule &amp; Quotas · {currentCompany.brand_name || currentCompany.name}
                 </h3>
               </div>
               <button type="button" className="icon-button" onClick={() => setSubscriptionModalOpen(false)} style={{ color: '#64748b' }}>
@@ -645,7 +645,7 @@ export default function SegmentedTopNavbar({
               </div>
 
               <div style={{ fontSize: 11, color: '#64748b', fontStyle: 'italic', background: '#f1f5f9', padding: '8px 10px', borderRadius: 6 }}>
-                💡 En tant que client SaaS, pour étendre vos quotas de dépôts ou d'utilisateurs, demandez une extension à la Direction Plateforme.
+                💡 Pour étendre les quotas de dépôts ou d'utilisateurs de cette société, contactez la Direction Générale.
               </div>
             </div>
 

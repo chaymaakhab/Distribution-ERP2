@@ -4,7 +4,7 @@ import {
   AlertTriangle, CheckCircle2, Clock, Plus, Download, ShieldCheck,
   Calendar, Layers, X, Truck, User, Phone, MapPin, Building2,
   Navigation, Search, Filter, MessageSquare, ChevronRight, Check,
-  Upload, Image as ImageIcon,
+  Upload, Image as ImageIcon, Users,
 } from 'lucide-react';
 import { api, formatMoney } from '../api';
 import { DonutChart, MultiSegmentProgress } from '../components/Charts';
@@ -640,6 +640,15 @@ export default function WarehouseDashboard({
             description: 'Arrêter la caisse et réconcilier les encaissements',
             icon: ShieldCheck,
             onClick: () => setClosingModal(true),
+          },
+          {
+            id: 'qa-clt',
+            label: '+ Nouveau Client Dépôt',
+            description: 'Créer un compte client pro avec ses identifiants portail',
+            icon: Users,
+            onClick: () => {
+              if (onNavigate) onNavigate('customers');
+            },
           },
         ]}
       />

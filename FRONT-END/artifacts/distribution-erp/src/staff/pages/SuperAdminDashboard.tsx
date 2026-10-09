@@ -5,7 +5,7 @@ import {
   Warehouse, BadgeDollarSign, ArrowUpRight, TrendingUp, AlertTriangle,
   RotateCcw, RefreshCw, FileText, CheckCircle2, ChevronRight,
   Settings, Lock, ArrowRight, Layers, BarChart3, HardDrive,
-  Truck, Building2, Check, X, Undo2,
+  Truck, Building2, Check, X, Undo2, Award,
 } from 'lucide-react';
 import {
   api, formatMoney,
@@ -17,6 +17,7 @@ import { MapCanvas, MapLegend } from '../components/MapCanvas';
 import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
 import DepotsMultiCityAnalytics from '../components/DepotsMultiCityAnalytics';
 import SaasCompaniesManagement from '../components/SaasCompaniesManagement';
+import CommercialsPortfolioManagement from '../components/CommercialsPortfolioManagement';
 import '../admin.css';
 
 export interface PendingOperation {
@@ -328,7 +329,7 @@ export default function SuperAdminDashboard() {
   const [toast, setToast] = useState<string | null>(null);
 
   // Super Admin Operation Validations
-  const [viewSection, setViewSection] = useState<'all' | 'companies' | 'depots' | 'tasks'>('all');
+  const [viewSection, setViewSection] = useState<'all' | 'companies' | 'depots' | 'tasks' | 'commercials'>('all');
   const [pendingOps, setPendingOps] = useState<PendingOperation[]>(INITIAL_PENDING_OPS);
   const [taskFilter, setTaskFilter] = useState<'all' | 'pending' | 'arbitrated' | 'returns' | 'credit' | 'finance'>('all');
   const [arbitrationModal, setArbitrationModal] = useState<PendingOperation | null>(null);
@@ -719,6 +720,26 @@ export default function SuperAdminDashboard() {
         </button>
         <button
           type="button"
+          onClick={() => setViewSection('commercials')}
+          style={{
+            padding: '6px 14px',
+            borderRadius: 6,
+            border: viewSection === 'commercials' ? '1px solid #0284c7' : '1px solid transparent',
+            background: viewSection === 'commercials' ? '#0284c7' : 'transparent',
+            color: viewSection === 'commercials' ? '#ffffff' : 'var(--text)',
+            fontWeight: 700,
+            fontSize: 12,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Award size={14} />
+          Portefeuilles Commerciaux & Commissions
+        </button>
+        <button
+          type="button"
           onClick={() => setLocation(`/${workspace}/warehouses`)}
           style={{
             marginLeft: 'auto',
@@ -754,6 +775,13 @@ export default function SuperAdminDashboard() {
       {viewSection === 'depots' && (
         <div style={{ marginBottom: 20 }}>
           <DepotsMultiCityAnalytics onNavigateToWarehouse={() => setLocation(`/${workspace}/warehouses`)} />
+        </div>
+      )}
+
+      {/* ── Portefeuilles Commerciaux & Commissions (User Request) ── */}
+      {viewSection === 'commercials' && (
+        <div style={{ marginBottom: 20 }}>
+          <CommercialsPortfolioManagement />
         </div>
       )}
 

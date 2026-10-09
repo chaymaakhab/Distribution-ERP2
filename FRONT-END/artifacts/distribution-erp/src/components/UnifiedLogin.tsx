@@ -187,9 +187,9 @@ export default function UnifiedLogin({
   const { toggleTheme, isLight } = useTheme();
 
   const [portalMode, setPortalMode] = useState<'staff' | 'customer'>(defaultTab);
-  const [selectedRoleId, setSelectedRoleId] = useState<string>('superadmin');
-  const [identifier, setIdentifier] = useState('superadmin@hercules-erp.ma');
-  const [password, setPassword] = useState('password');
+  const [selectedRoleId, setSelectedRoleId] = useState<string>(defaultTab === 'customer' ? 'client' : 'superadmin');
+  const [identifier, setIdentifier] = useState(defaultTab === 'customer' ? 'contact@atlas-equipements.ma' : 'superadmin@hercules-erp.ma');
+  const [password, setPassword] = useState(defaultTab === 'customer' ? 'client1234' : 'password');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);

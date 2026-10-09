@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import {
   Building2, ClipboardCheck, Truck, AlertTriangle, Boxes,
   TrendingUp, Users, ArrowRight, CheckCircle2, XCircle,
-  ShoppingBag, ShieldAlert, FileText, Plus, Phone,
+  ShoppingBag, ShieldAlert, FileText, Plus, Phone, Award,
 } from 'lucide-react';
 import {
   api, formatMoney,
@@ -197,6 +197,9 @@ export default function AdministratorDashboard() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button className="button-secondary" onClick={() => setLocation(`/${workspace}/customers`)}>
+            <Award size={14} style={{ color: '#f59e0b' }} /> Portefeuilles Commerciaux
+          </button>
           <button className="button-secondary" onClick={() => setLocation(`/${workspace}/orders`)}>
             <ClipboardCheck size={14} /> Toutes les commandes
           </button>
@@ -231,6 +234,13 @@ export default function AdministratorDashboard() {
             label: '+ Nouveau Client',
             description: 'Créer un compte client et fixer son plafond',
             icon: Users,
+            onClick: () => setLocation(`/${workspace}/customers`),
+          },
+          {
+            id: 'qa-comms',
+            label: 'Portefeuilles Commerciaux',
+            description: 'Suivre les clients et commissions par commercial',
+            icon: Award,
             onClick: () => setLocation(`/${workspace}/customers`),
           },
           {

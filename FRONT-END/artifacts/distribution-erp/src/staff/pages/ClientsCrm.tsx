@@ -4,10 +4,11 @@ import {
   ArrowUpRight, Building2, CheckCircle2, ChevronRight, Download, Plus,
   CreditCard, ExternalLink, X, Edit2, Trash2, Check,
   Printer, Receipt, Banknote, Calendar, Landmark, DollarSign, Eye,
-  Lock, Sparkles, UserCheck, Percent,
+  Lock, Sparkles, UserCheck, Percent, Award,
 } from 'lucide-react';
 import { api, formatMoney } from '../api';
 import { useStaffAuth } from '../auth';
+import CommercialsPortfolioManagement from '../components/CommercialsPortfolioManagement';
 
 export interface CrmClient {
   id: number;
@@ -487,7 +488,7 @@ export default function ClientsCrm() {
   }
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<'clients' | 'payments'>('clients');
+  const [activeTab, setActiveTab] = useState<'clients' | 'payments' | 'commercials'>('clients');
 
   // Client Payment State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -674,6 +675,13 @@ export default function ClientsCrm() {
         >
           <Receipt size={14} style={{ display: 'inline', marginRight: 6, color: '#10b981' }} />
           Journal des Règlements Clients & Reçus ({payments.length})
+        </button>
+        <button
+          className={`table-tab ${activeTab === 'commercials' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('commercials')}
+        >
+          <Award size={14} style={{ display: 'inline', marginRight: 6, color: '#f59e0b' }} />
+          Portefeuilles Commerciaux & Commissions
         </button>
       </div>
 
@@ -980,6 +988,11 @@ export default function ClientsCrm() {
             </table>
           </div>
         </section>
+      )}
+
+      {/* ── Onglet Portefeuilles Commerciaux & Commissions ── */}
+      {activeTab === 'commercials' && (
+        <CommercialsPortfolioManagement />
       )}
 
       {/* ── Modal Nouveau Client (Fiche d'Enregistrement) ── */}

@@ -381,15 +381,8 @@ function Router() {
 }
 function AppShellRouter() {
   return <Switch>
-    <Route path="/customer/login" component={CustomerApp} />
-    <Route path="/customer/home" component={CustomerApp} />
-    <Route path="/customer/catalog" component={CustomerApp} />
-    <Route path="/customer/product/:code" component={CustomerApp} />
-    <Route path="/customer/cart" component={CustomerApp} />
-    <Route path="/customer/orders" component={CustomerApp} />
-    <Route path="/customer/order/:ref" component={CustomerApp} />
-    <Route path="/customer/invoices" component={CustomerApp} />
-    <Route path="/customer/profile" component={CustomerApp} />
+    <Route path="/customer" component={CustomerApp} />
+    <Route path="/customer/:rest*" component={CustomerApp} />
     <Route path="/login" component={StaffApp} />
     <Route path="/:ws/dashboard" component={StaffApp} />
     <Route path="/:ws/:module" component={StaffApp} />

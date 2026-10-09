@@ -328,6 +328,8 @@ function CustomerShell({
       {/* 4. Main Page View Routing */}
       <main className="cx-main">
         <Switch>
+          <Route path="/customer" component={() => <Home user={user} />} />
+          <Route path="/customer/" component={() => <Home user={user} />} />
           <Route path="/customer/home" component={() => <Home user={user} />} />
           <Route path="/customer/catalog" component={() => <Catalog />} />
           <Route path="/customer/product/:code">

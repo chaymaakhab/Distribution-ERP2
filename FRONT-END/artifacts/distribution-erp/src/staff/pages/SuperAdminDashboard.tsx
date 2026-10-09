@@ -327,6 +327,7 @@ export default function SuperAdminDashboard() {
   const [toast, setToast] = useState<string | null>(null);
 
   // Super Admin Operation Validations (User requested: "super admin y3ti validation l chaque opiration par exemple reteur chno sbab dyalo o 3lach kan o wach produit saleh yrje3 l stock wela ba9i")
+  const [viewSection, setViewSection] = useState<'all' | 'depots' | 'tasks'>('all');
   const [pendingOps, setPendingOps] = useState<PendingOperation[]>(INITIAL_PENDING_OPS);
   const [taskFilter, setTaskFilter] = useState<'all' | 'pending' | 'arbitrated' | 'returns' | 'credit' | 'finance'>('all');
   const [arbitrationModal, setArbitrationModal] = useState<PendingOperation | null>(null);
@@ -614,8 +615,110 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
+      {/* ── Section Quick Navigation Pills ── */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 10,
+          marginBottom: 20,
+          background: 'var(--navy-2)',
+          padding: '6px 10px',
+          borderRadius: 8,
+          border: '1px solid var(--line)',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', marginRight: 4 }}>
+          Vues prioritaires :
+        </span>
+        <button
+          type="button"
+          onClick={() => setViewSection('all')}
+          style={{
+            padding: '6px 14px',
+            borderRadius: 6,
+            border: viewSection === 'all' ? '1px solid #0284c7' : '1px solid transparent',
+            background: viewSection === 'all' ? '#0284c7' : 'transparent',
+            color: viewSection === 'all' ? '#ffffff' : 'var(--text)',
+            fontWeight: 700,
+            fontSize: 12,
+            cursor: 'pointer',
+          }}
+        >
+          Vue Complète &amp; Synthèse
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewSection('depots')}
+          style={{
+            padding: '6px 14px',
+            borderRadius: 6,
+            border: viewSection === 'depots' ? '1px solid #0284c7' : '1px solid transparent',
+            background: viewSection === 'depots' ? '#0284c7' : 'transparent',
+            color: viewSection === 'depots' ? '#ffffff' : 'var(--text)',
+            fontWeight: 700,
+            fontSize: 12,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Building2 size={14} />
+          Visualisation Data Dépôts (7 Villes Maroc)
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewSection('tasks')}
+          style={{
+            padding: '6px 14px',
+            borderRadius: 6,
+            border: viewSection === 'tasks' ? '1px solid #0284c7' : '1px solid transparent',
+            background: viewSection === 'tasks' ? '#0284c7' : 'transparent',
+            color: viewSection === 'tasks' ? '#ffffff' : 'var(--text)',
+            fontWeight: 700,
+            fontSize: 12,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <ShieldCheck size={14} />
+          Centre de Tâches &amp; Arbitrages ({pendingOps.filter((o) => o.status === 'en_attente').length} en attente)
+        </button>
+        <button
+          type="button"
+          onClick={() => setLocation(`/${workspace}/warehouses`)}
+          style={{
+            marginLeft: 'auto',
+            padding: '6px 12px',
+            borderRadius: 6,
+            background: 'transparent',
+            border: '1px solid var(--line)',
+            color: '#38bdf8',
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
+          }}
+        >
+          <span>Ouvrir Module Dépôts ↗</span>
+        </button>
+      </div>
+
+      {/* When 'depots' view is selected, show DepotsMultiCityAnalytics right on top */}
+      {viewSection === 'depots' && (
+        <div style={{ marginBottom: 20 }}>
+          <DepotsMultiCityAnalytics onNavigateToWarehouse={() => setLocation(`/${workspace}/warehouses`)} />
+        </div>
+      )}
+
       {/* ── Super Admin Hierarchical Validation Tasks & Alerts (User Request) ── */}
-      {(() => {
+      {(viewSection === 'all' || viewSection === 'tasks') && (() => {
         const pendingCount = pendingOps.filter((o) => o.status === 'en_attente').length;
         const arbitratedCount = pendingOps.filter((o) => o.status === 'arbitre').length;
         const filteredTasks = pendingOps.filter((op) => {
@@ -927,7 +1030,9 @@ export default function SuperAdminDashboard() {
       })()}
 
       {/* ── Multi-City Moroccan Depots Analytics (User Request) ── */}
-      <DepotsMultiCityAnalytics onNavigateToWarehouse={() => setLocation(`/${workspace}/warehouses`)} />
+      {viewSection === 'all' && (
+        <DepotsMultiCityAnalytics onNavigateToWarehouse={() => setLocation(`/${workspace}/warehouses`)} />
+      )}
 
       {/* Charts & Analytics */}
       <div className="sx-grid-2" style={{ marginBottom: '16px' }}>

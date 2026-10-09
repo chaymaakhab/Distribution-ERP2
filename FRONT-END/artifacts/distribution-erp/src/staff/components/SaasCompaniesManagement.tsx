@@ -363,7 +363,7 @@ export default function SaasCompaniesManagement({
 
     setCompanies((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
     setEditingSubscriptionCompany(null);
-    notify(`Abonnement SaaS pour "${updated.name}" mis à jour avec succès !`);
+    notify(`Formule pour "${updated.name}" mise à jour avec succès !`);
   }
 
   return (
@@ -398,13 +398,13 @@ export default function SaasCompaniesManagement({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 14, marginBottom: 18 }}>
         <div>
           <div className="eyebrow" style={{ color: '#38bdf8', fontWeight: 800, letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Crown size={14} /> GESTION DES ENTREPRISES SAAS &amp; ABONNEMENTS
+            <Crown size={14} /> GESTION DES SOCIÉTÉS &amp; FILIALES
           </div>
           <h2 style={{ margin: '2px 0 0', fontSize: 20, fontWeight: 800, color: '#ffffff' }}>
-            Portefeuille Sociétés Clientes &amp; Abonnements
+            Portefeuille des Sociétés &amp; Filiales
           </h2>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--muted)' }}>
-            Supervision centralisée des entreprises clientes, attribution de leur administrateur et suivi des échéances d’abonnements.
+            Supervision centralisée des sociétés du réseau, attribution de leur administrateur et suivi de leurs activités.
           </p>
         </div>
 
@@ -414,24 +414,24 @@ export default function SaasCompaniesManagement({
           onClick={() => setIsCreateModalOpen(true)}
           style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#0284c7', borderColor: '#0369a1' }}
         >
-          <Plus size={16} /> + Nouvelle Entreprise SaaS
+          <Plus size={16} /> + Nouvelle Entreprise
         </button>
       </div>
 
-      {/* ── SaaS Strategic KPI Strips ── */}
+      {/* ── Strategic KPI Strips ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
         <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--line)' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Revenu Récurrent (MRR)</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Revenu Mensuel Récurrent</span>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#22c55e', marginTop: 4 }}>
             {formatMoney(mrrTotal)} <small style={{ fontSize: 12 }}>DH/mois</small>
           </div>
           <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
-            ARR estimé : <b>{formatMoney(arrTotal)} DH/an</b>
+            Total Annuel Estimé : <b>{formatMoney(arrTotal)} DH/an</b>
           </div>
         </div>
 
         <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--line)' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Sociétés Souscrites</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Sociétés Affiliées</span>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#38bdf8', marginTop: 4 }}>
             {totalCompanies} <small style={{ fontSize: 12 }}>entreprises</small>
           </div>
@@ -441,7 +441,7 @@ export default function SaasCompaniesManagement({
         </div>
 
         <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--line)' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Dépôts Hébergés</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Dépôts Opérationnels</span>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#a855f7', marginTop: 4 }}>
             {totalDepotsSaaS} <small style={{ fontSize: 12 }}>hubs actifs</small>
           </div>
@@ -451,7 +451,7 @@ export default function SaasCompaniesManagement({
         </div>
 
         <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--line)' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Utilisateurs SaaS</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Utilisateurs Actifs</span>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#f97316', marginTop: 4 }}>
             {totalUsersSaaS} <small style={{ fontSize: 12 }}>comptes actifs</small>
           </div>
@@ -688,7 +688,7 @@ export default function SaasCompaniesManagement({
                     onClick={() => handleOpenEditSubscription(c)}
                     style={{ height: 30, fontSize: 11.5, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 6 }}
                   >
-                    <Edit size={13} /> Modifier / Renouveler Abonnement
+                    <Edit size={13} /> Modifier / Renouveler Formule
                   </button>
                   <button
                     type="button"
@@ -871,10 +871,10 @@ export default function SaasCompaniesManagement({
                 </div>
               </div>
 
-              {/* SECTION 3 : Abonnement SaaS */}
+              {/* SECTION 3 : Formule Contractuelle */}
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
                 <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 800, fontSize: 11 }}>
-                  3. FORMULE D'ABONNEMENT SAAS &amp; QUOTAS
+                  3. FORMULE CONTRACTUELLE &amp; CAPACITÉS
                 </span>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 8 }}>
                   <div>
@@ -965,14 +965,14 @@ export default function SaasCompaniesManagement({
                 Annuler
               </button>
               <button type="submit" className="button-primary" style={{ background: '#0284c7', borderColor: '#0369a1' }}>
-                Créer l’Entreprise SaaS &amp; Son Admin
+                Créer l’Entreprise &amp; Son Administrateur
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* ── MODAL 2 : Renouvellement / Modification Abonnement SaaS ── */}
+      {/* ── MODAL 2 : Renouvellement / Modification Formule Contractuelle ── */}
       {editingSubscriptionCompany && (
         <div className="modal-backdrop" onClick={() => setEditingSubscriptionCompany(null)}>
           <form
@@ -985,7 +985,7 @@ export default function SaasCompaniesManagement({
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Crown size={20} style={{ color: '#0284c7' }} />
                 <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' }}>
-                  Renouveler Abonnement · {editingSubscriptionCompany.name}
+                  Renouveler Formule · {editingSubscriptionCompany.name}
                 </h3>
               </div>
               <button type="button" className="icon-button" onClick={() => setEditingSubscriptionCompany(null)} style={{ color: '#64748b' }}>
@@ -997,7 +997,7 @@ export default function SaasCompaniesManagement({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={{ fontSize: 11.5, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 4 }}>
-                    Formule SaaS
+                    Formule Contractuelle
                   </label>
                   <select
                     value={editPlan}

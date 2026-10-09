@@ -95,17 +95,24 @@ const initialRows: Record<string, Row[]> = {
 const modules = [
   { id: '/', label: 'Vue d’ensemble', icon: LayoutDashboard },
   { id: '/orders', label: 'Commandes', icon: ClipboardList, count: '12' },
+  { id: '/quotes', label: 'Devis & Proformas', icon: FileText, count: '6' },
   { id: '/products', label: 'Catalogue', icon: Package },
   { id: '/inventory', label: 'Stocks', icon: Warehouse, count: '4' },
-  { id: '/customers', label: 'Clients', icon: Users },
+  { id: '/customers', label: 'Clients & CRM', icon: Users },
+  { id: '/visits', label: 'Visites Terrain', icon: MapPin, count: '6' },
+  { id: '/promotions', label: 'Promotions', icon: ShoppingBag, count: '3' },
   { id: '/purchasing', label: 'Achats', icon: ShoppingCart },
   { id: '/deliveries', label: 'Livraisons', icon: Truck },
   { id: '/finance', label: 'Finance', icon: BadgeDollarSign },
   { id: '/reports', label: 'Rapports', icon: BarChart3 },
   { id: '/settings', label: 'Paramètres', icon: Settings },
+  { id: '/customer/home', label: 'Espace Client B2B', icon: Store },
 ];
 const titles: Record<string, { title: string; kicker: string; description: string; action: string }> = {
   '/orders': { title: 'Commandes', kicker: 'VENTES / OPÉRATIONS', description: 'Suivez chaque commande, de la validation à la livraison.', action: 'Nouvelle commande' },
+  '/quotes': { title: 'Devis & Proformas', kicker: 'VENTES / PROPOSITIONS', description: 'Propositions commerciales, offres chantiers et conversion en commandes.', action: 'Nouveau devis' },
+  '/visits': { title: 'Visites Commerciales', kicker: 'RELATION COMMERCIALE / CRM', description: 'Comptes-rendus des visites terrain et tournées de prospection.', action: 'Planifier une visite' },
+  '/promotions': { title: 'Promotions & Remises', kicker: 'VENTES / CAMPAGNES', description: 'Campagnes promotionnelles B2B et grilles de remises.', action: 'Créer une offre' },
   '/products': { title: 'Catalogue produits', kicker: 'RÉFÉRENTIEL', description: 'Articles, tarifs, conditionnements et visibilité client.', action: 'Ajouter un produit' },
   '/inventory': { title: 'Stocks & mouvements', kicker: 'ENTREPÔT', description: 'Quantités physiques, réservées et réellement disponibles.', action: 'Nouveau mouvement' },
   '/customers': { title: 'Clients', kicker: 'RELATION COMMERCIALE', description: 'Comptes clients, conditions tarifaires et encours.', action: 'Ajouter un client' },
@@ -388,6 +395,9 @@ function AppShellRouter() {
     <Route path="/:ws/:module" component={StaffApp} />
     <Route path="/" component={AppShell} />
     <Route path="/orders" component={AppShell} />
+    <Route path="/quotes" component={AppShell} />
+    <Route path="/visits" component={AppShell} />
+    <Route path="/promotions" component={AppShell} />
     <Route path="/products" component={AppShell} />
     <Route path="/inventory" component={AppShell} />
     <Route path="/customers" component={AppShell} />

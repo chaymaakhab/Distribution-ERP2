@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\CommercialCommission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -97,6 +98,7 @@ class OrderController extends Controller
             $order = Order::create([
                 'ref' => 'CMD-'.Str::upper(Str::random(6)),
                 'customer_id' => $customer->id,
+                'commercial_id' => $customer->commercial_id,
                 'city' => $customer->city,
                 'date' => now()->toDateString(),
                 'desired_date' => $data['desired_date'] ?? null,
@@ -109,6 +111,24 @@ class OrderController extends Controller
             ]);
 
             $order->items()->createMany($lines);
+
+            if ($customer->commercial_id) {
+                $commRate = (float) ($customer->commission_percentage ?? 5.00);
+                $finalTotal = round($total, 2);
+                $commAmount = round(($finalTotal * $commRate) / 100, 2);
+                CommercialCommission::create([
+                    'company_id' => $customer->company_id,
+                    'commercial_id' => $customer->commercial_id,
+                    'customer_id' => $customer->id,
+                    'order_id' => $order->id,
+                    'commercial_reference' => $customer->commercial_reference,
+                    'base_amount' => $finalTotal,
+                    'commission_rate' => $commRate,
+                    'commission_amount' => $commAmount,
+                    'status' => 'pending',
+                    'period' => now()->format('Y-m'),
+                ]);
+            }
 
             return $order;
         });

@@ -3,7 +3,7 @@ import { Link, Route, Switch, useLocation } from 'wouter';
 import {
   ShoppingCart, Home as HomeIcon, LayoutGrid, Package, Receipt, User as UserIcon,
   LogOut, Menu, X, Search, Bell, ChevronRight, Store, Sun, Moon, LogIn,
-  Phone, MessageSquare, ShieldCheck, Truck, Sparkles, Building2,
+  Phone, MessageSquare, ShieldCheck, Truck, Sparkles, Building2, FileText, CreditCard, ArrowRight,
 } from 'lucide-react';
 import { useTheme } from '../lib/theme';
 import { CartProvider, useCart } from './cart';
@@ -18,6 +18,7 @@ import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Invoices from './pages/Invoices';
 import Profile from './pages/Profile';
+import CustomerQuotes from './pages/CustomerQuotes';
 import './customer.css';
 
 export default function CustomerApp() {
@@ -98,7 +99,9 @@ function CustomerShell({
   const navItems = [
     { href: '/customer/home', label: t('nav.home'), icon: HomeIcon },
     { href: '/customer/catalog', label: t('nav.catalog'), icon: LayoutGrid },
+    { href: '/customer/cart', label: 'Panier / Commande', icon: ShoppingCart, countBadge: count },
     { href: '/customer/orders', label: t('nav.orders'), icon: Package },
+    { href: '/customer/quotes', label: 'Devis & Proformas', icon: FileText },
     { href: '/customer/invoices', label: t('nav.invoices'), icon: Receipt },
     { href: '/customer/profile', label: t('nav.profile'), icon: UserIcon },
   ];
@@ -325,42 +328,106 @@ function CustomerShell({
         </div>
       )}
 
-      {/* 4. Main Page View Routing */}
-      <main className="cx-main">
-        <Switch>
-          <Route path="/customer" component={() => <Home user={user} />} />
-          <Route path="/customer/" component={() => <Home user={user} />} />
-          <Route path="/customer/home" component={() => <Home user={user} />} />
-          <Route path="/customer/catalog" component={() => <Catalog />} />
-          <Route path="/customer/product/:code">
-            {(params: { code: string }) => <ProductDetail code={params.code} />}
-          </Route>
-          <Route path="/customer/cart" component={() => <Cart user={user} />} />
-          <Route path="/customer/orders" component={() => <Orders />} />
-          <Route path="/customer/order/:ref">
-            {(params: { ref: string }) => <OrderDetail ref_={params.ref} />}
-          </Route>
-          <Route path="/customer/invoices" component={() => <Invoices />} />
-          <Route path="/customer/profile">
-            {() => <Profile user={user} onUpdated={onUpdated} />}
-          </Route>
-          <Route component={() => <NotFound onHome={() => setLocation('/customer/home')} />} />
-        </Switch>
-      </main>
+      {/* 4. Body Layout with Desktop Sidebar & Main Content */}
+      <div className="cx-body-wrapper">
+        <aside className="cx-desktop-sidebar">
+          <div className="cx-sidebar-section">
+            <span className="cx-sidebar-heading">ESPACE B2B</span>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = location === item.href || (item.href !== '/customer/home' && location.startsWith(item.href));
+              return (
+                <Link key={item.href} href={item.href} className={`cx-sidebar-link ${active ? 'active' : ''}`}>
+                  <Icon size={16} />
+                  <span>{item.label}</span>
+                  {item.countBadge !== undefined && item.countBadge > 0 && (
+                    <span className="badge-count">{item.countBadge}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
 
-      {/* 5. Sleek Enterprise Footer */}
-      <footer className="cx-footer">
-        <div>
-          <b>© 2026 HERCULES DISTRIBUTION MAROC SARL</b> · Plateforme B2B Grossistes & Revendeurs Agréés.
+          {/* Credit & Encours Widget */}
+          <div className="cx-sidebar-widget">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--cx-muted)' }}>CRÉDIT DISPONIBLE</span>
+              <span className="cx-badge cx-badge-green" style={{ fontSize: 10, padding: '1px 6px' }}>Actif</span>
+            </div>
+            <b style={{ fontSize: 16, color: 'var(--cx-brand)', fontWeight: 800 }}>
+              {new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(balance?.credit_available || user.credit_limit)} DH
+            </b>
+            <small style={{ color: 'var(--cx-muted)', fontSize: 11 }}>
+              Plafond : {new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(user.credit_limit)} DH
+            </small>
+            <div style={{ borderTop: '1px dashed var(--cx-border)', paddingTop: 6, marginTop: 2 }}>
+              <span style={{ fontSize: 11, color: 'var(--cx-text-secondary)' }}>
+                Franco dès <b>1 000 DH HT</b>
+              </span>
+            </div>
+          </div>
+
+          {/* Commercial & Staff Quick Links */}
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <a
+              href="https://wa.me/212661234567"
+              target="_blank"
+              rel="noreferrer"
+              className="cx-btn cx-btn-emerald cx-btn-block sm"
+              style={{ fontSize: 12 }}
+            >
+              <MessageSquare size={14} /> WhatsApp Commercial
+            </a>
+            <Link
+              href="/login"
+              className="cx-btn cx-btn-ghost cx-btn-block sm"
+              style={{ fontSize: 11.5 }}
+            >
+              <Store size={14} /> Accès Staff ERP
+            </Link>
+          </div>
+        </aside>
+
+        <div className="cx-main-content">
+          <main className="cx-main">
+            <Switch>
+              <Route path="/customer" component={() => <Home user={user} />} />
+              <Route path="/customer/" component={() => <Home user={user} />} />
+              <Route path="/customer/home" component={() => <Home user={user} />} />
+              <Route path="/customer/catalog" component={() => <Catalog />} />
+              <Route path="/customer/product/:code">
+                {(params: { code: string }) => <ProductDetail code={params.code} />}
+              </Route>
+              <Route path="/customer/cart" component={() => <Cart user={user} />} />
+              <Route path="/customer/orders" component={() => <Orders />} />
+              <Route path="/customer/order/:ref">
+                {(params: { ref: string }) => <OrderDetail ref_={params.ref} />}
+              </Route>
+              <Route path="/customer/quotes" component={() => <CustomerQuotes />} />
+              <Route path="/customer/invoices" component={() => <Invoices />} />
+              <Route path="/customer/profile">
+                {() => <Profile user={user} onUpdated={onUpdated} />}
+              </Route>
+              <Route component={() => <NotFound onHome={() => setLocation('/customer/home')} />} />
+            </Switch>
+          </main>
+
+          <footer className="cx-footer">
+            <div>
+              <b>© 2026 HERCULES DISTRIBUTION MAROC SARL</b> · Plateforme B2B Grossistes & Revendeurs Agréés.
+            </div>
+            <div className="cx-footer-links">
+              <Link href="/customer/orders">Suivi Commandes</Link>
+              <ChevronRight size={12} />
+              <Link href="/customer/quotes">Devis</Link>
+              <ChevronRight size={12} />
+              <Link href="/customer/invoices">Relevé Factures</Link>
+              <ChevronRight size={12} />
+              <Link href="/customer/profile">Conditions & ICE</Link>
+            </div>
+          </footer>
         </div>
-        <div className="cx-footer-links">
-          <Link href="/customer/orders">Suivi Commandes</Link>
-          <ChevronRight size={12} />
-          <Link href="/customer/invoices">Relevé Factures</Link>
-          <ChevronRight size={12} />
-          <Link href="/customer/profile">Conditions & ICE</Link>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }

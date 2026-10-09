@@ -486,8 +486,8 @@ export default function SuperAdminDashboard() {
         actions={[
           {
             id: 'sa-company',
-            label: '+ Nouvelle Entreprise SaaS',
-            description: 'Créer une société cliente et son admin d’entreprise',
+            label: '+ Nouvelle Entreprise',
+            description: 'Créer une société ou filiale avec son administrateur',
             icon: Building2,
             primary: true,
             onClick: () => setViewSection('companies'),
@@ -542,8 +542,8 @@ export default function SuperAdminDashboard() {
             <Server size={16} />
           </div>
           <div>
-            <div style={{ fontSize: '10.5px', color: 'var(--muted)', fontWeight: 700 }}>SERVEUR & BASE SQL</div>
-            <b style={{ fontSize: '12px', color: '#22c55e' }}>En ligne · MySQL 8.x</b>
+            <div style={{ fontSize: '10.5px', color: 'var(--muted)', fontWeight: 700 }}>ÉTAT DU SYSTÈME</div>
+            <b style={{ fontSize: '12px', color: '#22c55e' }}>Opérationnel · Données Sécurisées</b>
           </div>
         </div>
 
@@ -552,7 +552,7 @@ export default function SuperAdminDashboard() {
             <Activity size={16} />
           </div>
           <div>
-            <div style={{ fontSize: '10.5px', color: 'var(--muted)', fontWeight: 700 }}>SYNCHRO MULTI-DÉPÔT</div>
+            <div style={{ fontSize: '10.5px', color: 'var(--muted)', fontWeight: 700 }}>RÉSEAU MULTI-DÉPÔTS</div>
             <b style={{ fontSize: '12px', color: 'var(--text)' }}>4 / 4 Dépôts actifs</b>
           </div>
         </div>
@@ -562,7 +562,7 @@ export default function SuperAdminDashboard() {
             <ShieldCheck size={16} />
           </div>
           <div>
-            <div style={{ fontSize: '10.5px', color: 'var(--muted)', fontWeight: 700 }}>AUDIT & SÉCURITÉ</div>
+            <div style={{ fontSize: '10.5px', color: 'var(--muted)', fontWeight: 700 }}>CONFORMITÉ & SÉCURITÉ</div>
             <b style={{ fontSize: '12px', color: 'var(--text)' }}>100% Conforme (0 alerte)</b>
           </div>
         </div>
@@ -572,7 +572,7 @@ export default function SuperAdminDashboard() {
             <HardDrive size={16} />
           </div>
           <div>
-            <div style={{ fontSize: '10.5px', color: 'var(--muted)', fontWeight: 700 }}>SAUVEGARDE AUTO</div>
+            <div style={{ fontSize: '10.5px', color: 'var(--muted)', fontWeight: 700 }}>SAUVEGARDE RÉSEAU</div>
             <b style={{ fontSize: '12px', color: 'var(--text)' }}>Aujourd'hui à 03:00</b>
           </div>
         </div>
@@ -676,7 +676,7 @@ export default function SuperAdminDashboard() {
           }}
         >
           <Building2 size={14} />
-          Sociétés Clientes &amp; Abonnements SaaS
+          Sociétés &amp; Filiales du Réseau
         </button>
         <button
           type="button"
@@ -696,7 +696,7 @@ export default function SuperAdminDashboard() {
           }}
         >
           <Building2 size={14} />
-          Visualisation Data Dépôts (7 Villes Maroc)
+          Répartition Régionale des Dépôts (7 Villes Maroc)
         </button>
         <button
           type="button"

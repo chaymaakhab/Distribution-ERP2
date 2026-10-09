@@ -35,6 +35,11 @@ class Order extends Model
         return $this->belongsTo(User::class, 'commercial_id');
     }
 
+    public function commission()
+    {
+        return $this->hasOne(CommercialCommission::class);
+    }
+
     public function items()
     {
         return $this->hasMany(OrderItem::class);

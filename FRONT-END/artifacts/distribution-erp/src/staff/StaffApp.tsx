@@ -31,6 +31,14 @@ import SuppliersManagement from './pages/SuppliersManagement';
 import ReturnsManagement from './pages/ReturnsManagement';
 import ReportsPage from './pages/ReportsPage';
 import SystemMaintenance from './pages/SystemMaintenance';
+import QuotesManagement from './pages/QuotesManagement';
+import CommercialVisits from './pages/CommercialVisits';
+import ValidationRequests from './pages/ValidationRequests';
+import PromotionsManagement from './pages/PromotionsManagement';
+import DeliverySlips from './pages/DeliverySlips';
+import PurchaseReceipts from './pages/PurchaseReceipts';
+import InventoryAudits from './pages/InventoryAudits';
+import SaasCompaniesManagement from './components/SaasCompaniesManagement';
 import GlobalSearchModal, { getErpSearchItems } from './components/GlobalSearchModal';
 import NotificationsDrawer, { ALL_SYSTEM_NOTIFICATIONS, filterNotificationsByPermissions } from './components/NotificationsDrawer';
 import LogoutConfirmModal from './components/LogoutConfirmModal';
@@ -85,6 +93,7 @@ function StaffShell({ user }: { user: StaffUser }) {
   const [mobileNav, setMobileNav] = useState(false);
   const [roleMenu, setRoleMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [topbarSearch, setTopbarSearch] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(() => {
@@ -238,6 +247,8 @@ function StaffShell({ user }: { user: StaffUser }) {
           onNavigate={go}
           onOpenMobileNav={() => setMobileNav(true)}
           onOpenSearchModal={() => setSearchOpen(true)}
+          topbarSearch={topbarSearch}
+          onTopbarSearchChange={setTopbarSearch}
           onOpenNotifications={() => setNotifOpen(true)}
           onOpenLogoutModal={() => setLogoutModalOpen(true)}
           unreadCount={unreadNotifCount}
@@ -326,6 +337,14 @@ function GuardedModule({ segment, onNavigate }: { segment: string; onNavigate?: 
   if (segment === 'settings') return <SystemSettings />;
   if (segment === 'maintenance') return <SystemMaintenance />;
   if (segment === 'orders') return <OrdersManagement />;
+  if (segment === 'quotes') return <QuotesManagement onNavigate={onNavigate} />;
+  if (segment === 'visits') return <CommercialVisits onNavigate={onNavigate} />;
+  if (segment === 'promotions') return <PromotionsManagement onNavigate={onNavigate} />;
+  if (segment === 'validations') return <ValidationRequests onNavigate={onNavigate} />;
+  if (segment === 'delivery-slips') return <DeliverySlips onNavigate={onNavigate} />;
+  if (segment === 'purchase-receipts') return <PurchaseReceipts onNavigate={onNavigate} />;
+  if (segment === 'inventory-audits') return <InventoryAudits onNavigate={onNavigate} />;
+  if (segment === 'companies') return <SaasCompaniesManagement />;
   if (segment === 'products') return <ProductsManagement />;
   if (segment === 'purchasing') return <PurchasingManagement />;
   if (segment === 'suppliers') return <SuppliersManagement />;

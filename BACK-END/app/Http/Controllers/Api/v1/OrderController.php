@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\CommercialCommission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -134,6 +135,28 @@ class OrderController extends Controller
                 if ($total <= 0) {
                     $order->update(['total' => $calcTotal]);
                 }
+            }
+
+            // Record Commercial Commission if customer has commercial attribution
+            $commId = $order->commercial_id;
+            if ($commId && $customer) {
+                $commRate = (float) ($customer->commission_percentage ?? 5.00);
+                $finalTotal = (float) $order->fresh()->total;
+                $commAmount = round(($finalTotal * $commRate) / 100, 2);
+                CommercialCommission::updateOrCreate(
+                    ['order_id' => $order->id],
+                    [
+                        'company_id' => $customer->company_id,
+                        'commercial_id' => $commId,
+                        'customer_id' => $customer->id,
+                        'commercial_reference' => $customer->commercial_reference,
+                        'base_amount' => $finalTotal,
+                        'commission_rate' => $commRate,
+                        'commission_amount' => $commAmount,
+                        'status' => 'pending',
+                        'period' => now()->format('Y-m'),
+                    ]
+                );
             }
 
             $order->load(['customer', 'items.product']);

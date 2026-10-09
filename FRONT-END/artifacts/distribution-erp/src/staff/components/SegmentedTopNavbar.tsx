@@ -18,6 +18,8 @@ interface SegmentedTopNavbarProps {
   onNavigate: (segment: string) => void;
   onOpenMobileNav: () => void;
   onOpenSearchModal: () => void;
+  topbarSearch: string;
+  onTopbarSearchChange: (query: string) => void;
   onOpenNotifications: () => void;
   onOpenLogoutModal: () => void;
   unreadCount: number;
@@ -35,6 +37,8 @@ export default function SegmentedTopNavbar({
   onNavigate,
   onOpenMobileNav,
   onOpenSearchModal,
+  topbarSearch,
+  onTopbarSearchChange,
   onOpenNotifications,
   onOpenLogoutModal,
   unreadCount,
@@ -49,7 +53,6 @@ export default function SegmentedTopNavbar({
   const { isLight, toggleTheme } = useTheme();
 
   // Search state
-  const [topbarSearch, setTopbarSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement>(null);
 
@@ -68,7 +71,7 @@ export default function SegmentedTopNavbar({
     id: 1,
     code: 'SOC-001',
     name: 'Hercules Distribution Maroc S.A.R.L.',
-    brand_name: isSuperAdmin ? 'Hercules SaaS Master Platform' : 'Hercules Distribution',
+    brand_name: isSuperAdmin ? 'Groupe Hercules Distribution' : 'Hercules Distribution',
     ice: '002345678000045',
     city: 'Casablanca',
     subscription_plan: 'enterprise',
@@ -148,7 +151,7 @@ export default function SegmentedTopNavbar({
               userSelect: 'none',
               transition: 'all 0.15s ease',
             }}
-            title={isSuperAdmin ? 'Cliquez pour basculer entre les entreprises SaaS' : `Société : ${currentCompany.name}`}
+            title={isSuperAdmin ? 'Cliquez pour basculer entre les sociétés du réseau' : `Société : ${currentCompany.name}`}
           >
             <div
               style={{
@@ -210,9 +213,9 @@ export default function SegmentedTopNavbar({
             >
               <div style={{ padding: '8px 14px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  🏢 Sélecteur de Société SaaS
+                  🏢 Sélecteur de Société &amp; Filiale
                 </span>
-                <span style={{ fontSize: 10, color: '#0284c7', fontWeight: 600 }}>Multi-Tenant</span>
+                <span style={{ fontSize: 10, color: '#0284c7', fontWeight: 600 }}>Multi-Sociétés</span>
               </div>
 
               <div style={{ maxHeight: 260, overflowY: 'auto' }}>
@@ -235,7 +238,7 @@ export default function SegmentedTopNavbar({
                   }}
                 >
                   <div>
-                    <strong style={{ fontSize: 12, color: '#0f172a', display: 'block' }}>Vue Globale SaaS Master</strong>
+                    <strong style={{ fontSize: 12, color: '#0f172a', display: 'block' }}>Vue Globale du Réseau</strong>
                     <span style={{ fontSize: 10.5, color: '#64748b' }}>Supervision consolidée de toutes les sociétés</span>
                   </div>
                   {!activeCompany && <Check size={14} style={{ color: '#16a34a' }} />}
@@ -343,7 +346,7 @@ export default function SegmentedTopNavbar({
             type="text"
             value={topbarSearch}
             onChange={(e) => {
-              setTopbarSearch(e.target.value);
+              onTopbarSearchChange(e.target.value);
               setDropdownOpen(true);
             }}
             onFocus={() => {
@@ -354,7 +357,7 @@ export default function SegmentedTopNavbar({
                 if (inlineResults.length > 0) {
                   inlineResults[0].action();
                   setDropdownOpen(false);
-                  setTopbarSearch('');
+                  onTopbarSearchChange('');
                 } else {
                   onOpenSearchModal();
                 }
@@ -369,7 +372,7 @@ export default function SegmentedTopNavbar({
             <button
               type="button"
               onClick={() => {
-                setTopbarSearch('');
+                onTopbarSearchChange('');
                 setDropdownOpen(false);
               }}
               style={{ background: 'transparent', border: 0, color: 'var(--muted)', cursor: 'pointer', padding: 2 }}
@@ -412,7 +415,7 @@ export default function SegmentedTopNavbar({
                     onClick={() => {
                       item.action();
                       setDropdownOpen(false);
-                      setTopbarSearch('');
+                      onTopbarSearchChange('');
                     }}
                   >
                     <div style={{ width: 26, height: 26, borderRadius: 5, background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', display: 'grid', placeItems: 'center' }}>
@@ -445,7 +448,7 @@ export default function SegmentedTopNavbar({
           flexShrink: 0,
         }}
         className="hide-mobile"
-        title="Détails de l'abonnement SaaS de la société"
+        title="Détails de la formule de la société"
       >
         <span
           style={{
@@ -458,7 +461,7 @@ export default function SegmentedTopNavbar({
         />
         <div style={{ fontSize: 11 }}>
           <b style={{ color: 'var(--text)', display: 'block', lineHeight: 1.2 }}>
-            {isSuperAdmin && !activeCompany ? 'Plateforme SaaS Master' : `Abonnement ${planBadge.label}`}
+            {isSuperAdmin && !activeCompany ? 'Direction Générale Réseau' : `Formule ${planBadge.label}`}
           </b>
           <span style={{ color: currentCompany.days_remaining > 30 ? '#22c55e' : '#f59e0b', fontSize: 10 }}>
             {currentCompany.days_remaining} jours restants

@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Models\Customer;
+use App\Models\CommercialCommission;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -43,6 +45,25 @@ class StaffSeeder extends Seeder
         foreach ($users as [$roleCode, $name, $email, $warehouseId, $commercialCode, $commRate]) {
             $role = Role::where('code', $roleCode)->first();
 
+            $existing = User::where('email', $email)->first();
+            $resolvedCode = $existing?->commercial_code;
+
+            if ($commercialCode) {
+                $codeTaken = User::where('commercial_code', $commercialCode)
+                    ->when($existing, fn($q) => $q->where('id', '!=', $existing->id))
+                    ->exists();
+
+                if (!$codeTaken) {
+                    $resolvedCode = $commercialCode;
+                } elseif (!$resolvedCode) {
+                    $maxNum = User::whereNotNull('commercial_code')
+                        ->pluck('commercial_code')
+                        ->map(fn($c) => preg_match('/COM-(\d+)/', $c, $m) ? (int)$m[1] : 0)
+                        ->max() ?: 0;
+                    $resolvedCode = 'COM-' . str_pad($maxNum + 1, 3, '0', STR_PAD_LEFT);
+                }
+            }
+
             $user = User::updateOrCreate(
                 ['email' => $email],
                 [
@@ -52,7 +73,7 @@ class StaffSeeder extends Seeder
                     'is_active' => true,
                     'locale' => 'fr',
                     'warehouse_id' => $warehouseId,
-                    'commercial_code' => $commercialCode,
+                    'commercial_code' => $resolvedCode,
                     'commission_rate' => $commRate ?? 5.00,
                 ]
             );
@@ -99,6 +120,35 @@ class StaffSeeder extends Seeder
             $prepRole->id => ['is_primary' => false],
             $delivery->id => ['is_primary' => false],
         ]);
+
+        // Seed initial commercial commissions if empty
+        $commUser = User::where('commercial_code', 'COM-001')->first();
+        $sampleCustomer = Customer::where('commercial_id', $commUser?->id)->first() ?? Customer::first();
+        if ($commUser && $sampleCustomer && CommercialCommission::count() == 0) {
+            CommercialCommission::create([
+                'commercial_id' => $commUser->id,
+                'customer_id' => $sampleCustomer->id,
+                'commercial_reference' => $commUser->commercial_code ?? 'COM-001',
+                'base_amount' => 24500.00,
+                'commission_rate' => 5.00,
+                'commission_amount' => 1225.00,
+                'status' => 'validated',
+                'period' => date('Y-m'),
+                'notes' => 'Commission sur livraison validée',
+            ]);
+            CommercialCommission::create([
+                'commercial_id' => $commUser->id,
+                'customer_id' => $sampleCustomer->id,
+                'commercial_reference' => $commUser->commercial_code ?? 'COM-001',
+                'base_amount' => 18000.00,
+                'commission_rate' => 5.00,
+                'commission_amount' => 900.00,
+                'status' => 'paid',
+                'paid_at' => now(),
+                'period' => date('Y-m'),
+                'notes' => 'Règlement commission validé par Super Admin',
+            ]);
+        }
 
         $this->command?->info('Staff seeded. Logins: superadmin@/admin@/depot@/commercial@/preparation@/livreur@/prevendeur@/compta@/terrain@/polyvalent@ hercules-erp.ma — password: "password"');
     }

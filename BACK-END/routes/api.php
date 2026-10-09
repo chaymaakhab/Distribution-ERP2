@@ -64,6 +64,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/performance', [AdminDashboardController::class, 'performance'])->middleware('permission:reports.view');
             Route::get('/commercials-clients', [AdminDashboardController::class, 'commercialsClients']);
             Route::put('/commercials/{id}/commission-rate', [AdminDashboardController::class, 'updateCommercialCommission']);
+            Route::get('/commercial-commissions', [AdminDashboardController::class, 'commercialCommissions']);
+            Route::patch('/commercial-commissions/{id}/status', [AdminDashboardController::class, 'updateCommercialCommissionStatus']);
+            Route::post('/commercial-commissions/settle', [AdminDashboardController::class, 'settleCommercialCommissions']);
         });
 
         // Orders Management

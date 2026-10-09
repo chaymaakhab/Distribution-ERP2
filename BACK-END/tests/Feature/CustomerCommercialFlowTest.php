@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Order;
+use App\Models\CommercialCommission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -21,7 +23,7 @@ class CustomerCommercialFlowTest extends TestCase
         Role::firstOrCreate(['code' => 'superadmin'], ['name' => 'Super Admin', 'permissions' => ['*']]);
         Role::firstOrCreate(['code' => 'admin'], ['name' => 'Admin', 'permissions' => ['customers.view', 'customers.create', 'customers.update']]);
         Role::firstOrCreate(['code' => 'warehouse'], ['name' => 'Responsable Dépôt', 'permissions' => ['customers.view', 'customers.create', 'customers.update']]);
-        Role::firstOrCreate(['code' => 'commercial'], ['name' => 'Commercial', 'permissions' => ['customers.view', 'customers.create', 'customers.update']]);
+        Role::firstOrCreate(['code' => 'commercial'], ['name' => 'Commercial', 'permissions' => ['customers.view', 'customers.create', 'customers.update', 'orders.create', 'orders.view']]);
     }
 
     public function test_customer_can_self_register_and_choose_commercial()
@@ -127,5 +129,108 @@ class CustomerCommercialFlowTest extends TestCase
                 'commercials',
                 'unassigned_clients',
             ]);
+    }
+
+    public function test_order_creates_commercial_commission_entry()
+    {
+        $commercial = User::factory()->create([
+            'commercial_code' => 'COM-777',
+            'commission_rate' => 6.00,
+        ]);
+        $commRole = Role::where('code', 'commercial')->first();
+        $commercial->roles()->sync([$commRole->id => ['is_primary' => true]]);
+
+        $customer = Customer::create([
+            'code' => 'CLT-777',
+            'company' => 'Sarl Test Commission',
+            'name' => 'Mounir',
+            'city' => 'Casablanca',
+            'phone' => '+212522000000',
+            'commercial_id' => $commercial->id,
+            'commercial_reference' => 'COM-777',
+            'commission_percentage' => 6.00,
+            'password' => Hash::make('secret'),
+        ]);
+
+        $token = $commercial->createToken('staff')->plainTextToken;
+
+        $res = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/orders', [
+                'customer_id' => $customer->id,
+                'city' => 'Casablanca',
+                'total' => 10000.00,
+            ]);
+
+        $res->assertStatus(201);
+
+        $this->assertDatabaseHas('commercial_commissions', [
+            'commercial_id' => $commercial->id,
+            'customer_id' => $customer->id,
+            'commercial_reference' => 'COM-777',
+            'base_amount' => 10000.00,
+            'commission_rate' => 6.00,
+            'commission_amount' => 600.00,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_superadmin_can_view_and_settle_commissions()
+    {
+        $superadmin = User::factory()->create();
+        $saRole = Role::where('code', 'superadmin')->first();
+        $superadmin->roles()->sync([$saRole->id => ['is_primary' => true]]);
+        $token = $superadmin->createToken('staff')->plainTextToken;
+
+        $commercial = User::factory()->create(['commercial_code' => 'COM-555']);
+        $customer = Customer::create([
+            'code' => 'CLT-555',
+            'company' => 'Sarl Settle',
+            'name' => 'Reda',
+            'city' => 'Casablanca',
+            'phone' => '+212522000000',
+            'commercial_id' => $commercial->id,
+            'password' => Hash::make('secret'),
+        ]);
+
+        $commission = CommercialCommission::create([
+            'commercial_id' => $commercial->id,
+            'customer_id' => $customer->id,
+            'commercial_reference' => 'COM-555',
+            'base_amount' => 20000,
+            'commission_rate' => 5.0,
+            'commission_amount' => 1000,
+            'status' => 'pending',
+            'period' => '2026-10',
+        ]);
+
+        // 1. View ledger
+        $listRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/v1/admin/commercial-commissions');
+        $listRes->assertStatus(200)
+            ->assertJsonStructure(['summary' => ['total_commissions', 'pending_commissions'], 'commissions']);
+
+        // 2. Update status
+        $statusRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->patchJson("/api/v1/admin/commercial-commissions/{$commission->id}/status", [
+                'status' => 'validated',
+            ]);
+        $statusRes->assertStatus(200);
+        $this->assertDatabaseHas('commercial_commissions', [
+            'id' => $commission->id,
+            'status' => 'validated',
+        ]);
+
+        // 3. Settle all
+        $settleRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/v1/admin/commercial-commissions/settle', [
+                'commercial_id' => $commercial->id,
+            ]);
+        $settleRes->assertStatus(200)
+            ->assertJsonPath('settled_count', 1);
+
+        $this->assertDatabaseHas('commercial_commissions', [
+            'id' => $commission->id,
+            'status' => 'paid',
+        ]);
     }
 }

@@ -1962,10 +1962,99 @@ html.dark .cx-app {
   border: 1px solid #bae6fd;
 }
 
+/* =========================================================================
+   Executive B2B Desktop Sidebar Layout
+   ========================================================================= */
+.cx-body-wrapper {
+  display: flex;
+  flex: 1;
+  width: 100%;
+}
+.cx-desktop-sidebar {
+  width: 260px;
+  background: var(--cx-surface);
+  border-right: 1px solid var(--cx-border);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 14px;
+  gap: 18px;
+  position: sticky;
+  top: 73px;
+  height: calc(100vh - 73px);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.cx-main-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cx-sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.cx-sidebar-heading {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--cx-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 0 10px;
+  margin-bottom: 6px;
+}
+.cx-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cx-text-secondary);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+.cx-sidebar-link:hover {
+  background: var(--cx-brand-soft);
+  color: var(--cx-brand);
+}
+.cx-sidebar-link.active {
+  background: var(--cx-brand-soft);
+  color: var(--cx-brand);
+  font-weight: 800;
+  border-left: 3px solid var(--cx-brand);
+}
+.cx-sidebar-link .badge-count {
+  margin-left: auto;
+  background: var(--cx-brand);
+  color: #fff;
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-weight: 800;
+}
+.cx-sidebar-widget {
+  background: var(--cx-bg);
+  border: 1px solid var(--cx-border);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
 /* Mobile Responsiveness */
+@media (max-width: 1024px) {
+  .cx-desktop-sidebar { display: none; }
+}
+@media (min-width: 1025px) {
+  .cx-topnav { display: none; }
+}
 @media (max-width: 900px) {
   .cx-topbar { padding: 0 16px; }
-  .cx-topnav { display: none; }
   .cx-header-search { display: none; }
   .cx-mobile-only { display: grid; }
   .cx-hero-b2b { padding: 24px 20px; }
@@ -1975,4 +2064,5 @@ html.dark .cx-app {
   .cx-pd-media { position: static; min-height: 280px; }
   .cx-trust-contact { display: none; }
 }
+
 

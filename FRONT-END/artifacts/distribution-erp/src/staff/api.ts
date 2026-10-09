@@ -207,6 +207,50 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+  getCommercialCommissions: (params?: { commercial_id?: number; status?: string; customer_id?: number; period?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<{
+      summary: {
+        total_commissions: number;
+        pending_commissions: number;
+        validated_commissions: number;
+        paid_commissions: number;
+        count: number;
+      };
+      commissions: Array<{
+        id: number;
+        commercial_id: number;
+        commercial_name: string;
+        commercial_code: string;
+        customer_id: number;
+        customer_name: string;
+        customer_company: string;
+        customer_city?: string;
+        order_id?: number;
+        order_ref?: string;
+        order_date?: string;
+        order_status?: string;
+        base_amount: number;
+        commission_rate: number;
+        commission_amount: number;
+        status: 'pending' | 'validated' | 'paid' | 'cancelled';
+        period?: string;
+        paid_at?: string;
+        notes?: string;
+        created_at: string;
+      }>;
+    }>(`/admin/commercial-commissions${qry ? '?' + qry : ''}`);
+  },
+  updateCommercialCommissionStatus: (id: number, data: { status: string; notes?: string }) =>
+    request<{ message: string; commission: any }>(`/admin/commercial-commissions/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  settleCommercialCommissions: (data: { commercial_id: number; period?: string }) =>
+    request<{ message: string; settled_count: number; total_settled: number }>(`/admin/commercial-commissions/settle`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 
   // Customers CRM
   getCustomers: (params?: { q?: string; tier?: string; status?: string }) => {

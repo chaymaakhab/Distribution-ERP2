@@ -59,6 +59,11 @@ class Customer extends Authenticatable
         return $this->belongsTo(User::class, 'created_by_user_id');
     }
 
+    public function commissions()
+    {
+        return $this->hasMany(CommercialCommission::class);
+    }
+
     public function creditNotes()
     {
         return $this->hasMany(CreditNote::class);

@@ -65,6 +65,11 @@ class User extends Authenticatable
         return $this->hasMany(CommercialVisit::class, 'commercial_id');
     }
 
+    public function commissions()
+    {
+        return $this->hasMany(CommercialCommission::class, 'commercial_id');
+    }
+
     public function roleCodes(): array
     {
         return $this->roles->pluck('code')->all();

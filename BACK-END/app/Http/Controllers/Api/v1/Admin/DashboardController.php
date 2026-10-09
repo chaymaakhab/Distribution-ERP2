@@ -12,6 +12,8 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Stock;
 use App\Models\Warehouse;
+use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -336,5 +338,132 @@ class DashboardController extends Controller
         }
 
         return $out;
+    }
+
+    /**
+     * List of all commercials with their associated clients, revenue, and commissions.
+     * Accessible by SuperAdmin and Administrateur.
+     */
+    public function commercialsClients(Request $request)
+    {
+        $commercialUsers = User::whereHas('roles', function ($q) {
+            $q->whereIn('code', ['commercial', 'pre_seller']);
+        })
+        ->with(['customers' => function ($q) {
+            $q->withCount('orders')
+              ->withSum(['orders' => function ($oq) {
+                  $oq->whereIn('status', ['confirmed', 'prepared', 'assigned', 'in_delivery', 'delivered']);
+              }], 'total')
+              ->orderBy('id', 'desc');
+        }])
+        ->get();
+
+        $result = $commercialUsers->map(function ($commercial) {
+            $clients = $commercial->customers->map(function ($customer) {
+                $turnover = (float) ($customer->orders_sum_total ?? 0);
+                $commPercent = (float) ($customer->commission_percentage ?? $commercial->commission_rate ?? 5.00);
+                $commissionEarned = round(($turnover * $commPercent) / 100, 2);
+
+                return [
+                    'id' => $customer->id,
+                    'code' => $customer->code,
+                    'name' => $customer->name,
+                    'company' => $customer->company,
+                    'email' => $customer->email,
+                    'phone' => $customer->phone,
+                    'city' => $customer->city,
+                    'ice' => $customer->ice,
+                    'price_tier' => $customer->price_tier,
+                    'status' => $customer->status,
+                    'credit_limit' => (float) $customer->credit_limit,
+                    'current_balance' => (float) $customer->current_balance,
+                    'orders_count' => (int) $customer->orders_count,
+                    'turnover' => $turnover,
+                    'commission_percentage' => $commPercent,
+                    'commission_earned' => $commissionEarned,
+                    'commercial_reference' => $customer->commercial_reference,
+                    'created_at' => $customer->created_at?->format('d/m/Y'),
+                ];
+            });
+
+            $totalTurnover = $clients->sum('turnover');
+            $totalCommission = $clients->sum('commission_earned');
+            $totalOrders = $clients->sum('orders_count');
+
+            return [
+                'id' => $commercial->id,
+                'name' => $commercial->name,
+                'email' => $commercial->email,
+                'phone' => $commercial->phone,
+                'commercial_code' => $commercial->commercial_code ?: ('COM-' . str_pad($commercial->id, 3, '0', STR_PAD_LEFT)),
+                'commission_rate' => (float) ($commercial->commission_rate ?? 5.00),
+                'clients_count' => $clients->count(),
+                'total_orders' => $totalOrders,
+                'total_turnover' => round($totalTurnover, 2),
+                'total_commission' => round($totalCommission, 2),
+                'clients' => $clients->values()->all(),
+            ];
+        });
+
+        // Clients not yet assigned to any commercial
+        $unassignedClients = Customer::whereNull('commercial_id')
+            ->withCount('orders')
+            ->withSum(['orders' => function ($oq) {
+                $oq->whereIn('status', ['confirmed', 'prepared', 'assigned', 'in_delivery', 'delivered']);
+            }], 'total')
+            ->get()
+            ->map(function ($c) {
+                return [
+                    'id' => $c->id,
+                    'code' => $c->code,
+                    'name' => $c->name,
+                    'company' => $c->company,
+                    'email' => $c->email,
+                    'phone' => $c->phone,
+                    'city' => $c->city,
+                    'price_tier' => $c->price_tier,
+                    'status' => $c->status,
+                    'orders_count' => (int) $c->orders_count,
+                    'turnover' => (float) ($c->orders_sum_total ?? 0),
+                    'created_at' => $c->created_at?->format('d/m/Y'),
+                ];
+            });
+
+        // Summary metrics
+        $summary = [
+            'total_commercials' => $result->count(),
+            'total_assigned_clients' => $result->sum('clients_count'),
+            'total_unassigned_clients' => $unassignedClients->count(),
+            'total_turnover' => round($result->sum('total_turnover'), 2),
+            'total_commissions' => round($result->sum('total_commission'), 2),
+        ];
+
+        return response()->json([
+            'summary' => $summary,
+            'commercials' => $result->values()->all(),
+            'unassigned_clients' => $unassignedClients->values()->all(),
+        ]);
+    }
+
+    public function updateCommercialCommission(Request $request, $id)
+    {
+        $commercial = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'commission_rate' => 'required|numeric|min:0|max:100',
+            'commercial_code' => "nullable|string|max:30|unique:users,commercial_code,{$id}",
+        ]);
+
+        $commercial->update($validated);
+
+        return response()->json([
+            'message' => 'Taux de commission et code commercial mis à jour.',
+            'commercial' => [
+                'id' => $commercial->id,
+                'name' => $commercial->name,
+                'commercial_code' => $commercial->commercial_code,
+                'commission_rate' => (float) $commercial->commission_rate,
+            ],
+        ]);
     }
 }

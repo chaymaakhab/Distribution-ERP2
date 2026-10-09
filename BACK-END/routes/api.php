@@ -31,6 +31,8 @@ use App\Http\Controllers\Api\v1\CommercialVisitController;
 use App\Http\Controllers\Api\v1\NotificationController;
 use App\Http\Controllers\Api\v1\PromotionController;
 use App\Http\Controllers\Api\v1\RoleManagementController;
+use App\Http\Controllers\Api\v1\SaasCompanyController;
+use App\Http\Controllers\Api\v1\ValidationRequestController;
 use App\Http\Controllers\Api\v1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\v1\Customer\AuthController as CustomerAuthController;
 use App\Http\Controllers\Api\v1\Customer\CatalogController as CustomerCatalogController;
@@ -54,12 +56,14 @@ Route::prefix('v1')->group(function () {
         Route::get('/roles/management', [RoleManagementController::class, 'index']);
         Route::put('/roles/{id}/permissions', [RoleManagementController::class, 'updatePermissions']);
 
-        // SuperAdmin / Administrateur : global dashboard, charts, map, rankings.
+        // SuperAdmin / Administrateur : global dashboard, charts, map, rankings, commercials & clients.
         Route::prefix('admin')->group(function () {
             Route::get('/overview', [AdminDashboardController::class, 'overview'])->middleware('permission:dashboard.view');
             Route::get('/revenue', [AdminDashboardController::class, 'revenue'])->middleware('permission:reports.view');
             Route::get('/warehouses', [AdminDashboardController::class, 'warehouses'])->middleware('permission:warehouses.view');
             Route::get('/performance', [AdminDashboardController::class, 'performance'])->middleware('permission:reports.view');
+            Route::get('/commercials-clients', [AdminDashboardController::class, 'commercialsClients']);
+            Route::put('/commercials/{id}/commission-rate', [AdminDashboardController::class, 'updateCommercialCommission']);
         });
 
         // Orders Management
@@ -218,6 +222,20 @@ Route::prefix('v1')->group(function () {
 
         // Offline Data Synchronization
         Route::post('/sync', [SyncController::class, 'sync']);
+
+        // SaaS Multi-Company & Subscription Management (Super Admin SaaS Master)
+        Route::get('/saas/overview', [SaasCompanyController::class, 'overview']);
+        Route::get('/saas/companies', [SaasCompanyController::class, 'index']);
+        Route::post('/saas/companies', [SaasCompanyController::class, 'store']);
+        Route::get('/saas/companies/{id}', [SaasCompanyController::class, 'show']);
+        Route::put('/saas/companies/{id}', [SaasCompanyController::class, 'update']);
+        Route::patch('/saas/companies/{id}/subscription', [SaasCompanyController::class, 'updateSubscription']);
+        Route::get('/saas/my-company', [SaasCompanyController::class, 'myCompany']);
+
+        // Hierarchical Validation Tasks & Arbitrations (Super Admin & Enterprise Admin)
+        Route::get('/validation-requests', [ValidationRequestController::class, 'index']);
+        Route::post('/validation-requests', [ValidationRequestController::class, 'store']);
+        Route::patch('/validation-requests/{id}/arbitrate', [ValidationRequestController::class, 'arbitrate']);
     });
 
 
@@ -225,9 +243,13 @@ Route::prefix('v1')->group(function () {
     // Customer shopping portal.
     // ---------------------------------------------------------------------
     Route::prefix('customer')->group(function () {
-        // Guest: login is throttled to limit repeated attempts.
-        Route::middleware('throttle:5,1')->group(function () {
+        // Public list of active commercials for selection
+        Route::get('/commercials', [CustomerAuthController::class, 'commercials']);
+
+        // Guest: login & register are throttled to limit repeated attempts.
+        Route::middleware('throttle:10,1')->group(function () {
             Route::post('/login', [CustomerAuthController::class, 'login']);
+            Route::post('/register', [CustomerAuthController::class, 'register']);
         });
 
         // Authenticated customer. Every endpoint is scoped to the token owner.
@@ -249,6 +271,7 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/account/balance', [CustomerAccountController::class, 'balance']);
             Route::put('/account/profile', [CustomerAccountController::class, 'updateProfile']);
+            Route::put('/account/commercial', [CustomerAccountController::class, 'chooseCommercial']);
         });
     });
 });

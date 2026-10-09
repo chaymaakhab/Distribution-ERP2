@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import {
   Building2, Store, Lock, Mail, Eye, EyeOff, Loader2,
   AlertCircle, CheckCircle2, ChevronRight, Sun, Moon,
   Crown, Boxes, Briefcase, PackageCheck, Truck,
   BadgeDollarSign, ShoppingCart, ArrowRight, ShieldCheck, LogIn,
+  UserPlus, UserCheck,
 } from 'lucide-react';
 import { useTheme } from '../lib/theme';
 import { api as staffApi, setSession as setStaffSession, type StaffUser } from '../staff/api';
@@ -194,6 +195,28 @@ export default function UnifiedLogin({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [customerMode, setCustomerMode] = useState<'login' | 'register'>('login');
+  const [regName, setRegName] = useState('');
+  const [regCompany, setRegCompany] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('+212 6');
+  const [regCity, setRegCity] = useState('Casablanca');
+  const [regAddress, setRegAddress] = useState('');
+  const [regIce, setRegIce] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regCommercialId, setRegCommercialId] = useState<string>('');
+  const [regCommercialCode, setRegCommercialCode] = useState('');
+  const [commercialsList, setCommercialsList] = useState<any[]>([]);
+
+  useEffect(() => {
+    customerApi.getCommercials().then((res) => {
+      if (Array.isArray(res) && res.length > 0) {
+        setCommercialsList(res);
+      }
+    }).catch(() => {});
+  }, []);
+
   const [storedUsers] = useState<StaffUserRecord[]>(() => {
     try {
       return getStoredStaffUsers();
@@ -303,6 +326,52 @@ export default function UnifiedLogin({
     }
   }
 
+  async function handleRegisterSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!regName.trim() || !regEmail.trim() || !regPhone.trim()) {
+      setError('Veuillez renseigner les champs obligatoires (Nom, Email, Téléphone).');
+      return;
+    }
+    if (regPassword.length < 6) {
+      setError('Le mot de passe doit comporter au moins 6 caractères.');
+      return;
+    }
+    if (regPassword !== regConfirmPassword) {
+      setError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload: any = {
+        name: regName.trim(),
+        company: regCompany.trim() || regName.trim(),
+        email: regEmail.trim(),
+        phone: regPhone.trim(),
+        password: regPassword,
+        city: regCity,
+        address: regAddress.trim() || undefined,
+        ice: regIce.trim() || undefined,
+      };
+
+      if (regCommercialId === 'code' && regCommercialCode.trim()) {
+        payload.commercial_code = regCommercialCode.trim();
+      } else if (regCommercialId && regCommercialId !== '' && regCommercialId !== 'code') {
+        payload.commercial_id = Number(regCommercialId);
+      }
+
+      const res = await customerApi.register(payload);
+      setCustomerSession(res.token, res.user);
+      if (onSuccess) onSuccess();
+      setLocation(res.home || '/customer/home');
+    } catch (err: any) {
+      setError(err?.message || 'Erreur lors de la création du compte.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     executeLogin(identifier, password, portalMode);
@@ -389,36 +458,199 @@ export default function UnifiedLogin({
             </div>
           )}
 
-          {/* Customer mode info */}
+          {/* Customer mode info & sub-tabs */}
           {portalMode === 'customer' && (
-            <div className="customer-info-banner">
-              <div className="role-active-top">
-                <span className="role-name">Atlas Équipements SARL</span>
-                <span className="role-scope-badge">Client Revendeur</span>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => { setCustomerMode('login'); setError(null); }}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    borderRadius: 6,
+                    border: customerMode === 'login' ? '1px solid #0284c7' : '1px solid rgba(255,255,255,0.1)',
+                    background: customerMode === 'login' ? '#0284c7' : 'transparent',
+                    color: customerMode === 'login' ? '#ffffff' : 'var(--text-muted, #94a3b8)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <LogIn size={14} />
+                  <span>Se connecter</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setCustomerMode('register'); setError(null); }}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    borderRadius: 6,
+                    border: customerMode === 'register' ? '1px solid #0284c7' : '1px solid rgba(255,255,255,0.1)',
+                    background: customerMode === 'register' ? '#0284c7' : 'transparent',
+                    color: customerMode === 'register' ? '#ffffff' : 'var(--text-muted, #94a3b8)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <UserPlus size={14} />
+                  <span>Créer un compte B2B</span>
+                </button>
               </div>
-              <p className="role-scope-desc">
-                Accès au catalogue avec vos prix négociés, passation de commandes, suivi de factures et encours.
-              </p>
+
+              {customerMode === 'login' ? (
+                <div className="customer-info-banner">
+                  <div className="role-active-top">
+                    <span className="role-name">Atlas Équipements SARL</span>
+                    <span className="role-scope-badge">Client Revendeur</span>
+                  </div>
+                  <p className="role-scope-desc">
+                    Accès au catalogue avec vos prix négociés, passation de commandes, suivi de factures et encours.
+                  </p>
+                </div>
+              ) : (
+                <div className="customer-info-banner" style={{ background: 'rgba(2, 132, 199, 0.08)', borderColor: '#0284c7' }}>
+                  <div className="role-active-top">
+                    <span className="role-name" style={{ color: '#0284c7' }}>Nouvelle Adhésion Client</span>
+                    <span className="role-scope-badge">Ouverture de compte</span>
+                  </div>
+                  <p className="role-scope-desc">
+                    Créez votre compte en quelques secondes, choisissez votre commercial référent et accédez aux tarifs distributeur.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Form */}
-          <form className="login-form" onSubmit={handleSubmit}>
-            {error && (
-              <div className="login-alert-error" role="alert">
-                <AlertCircle size={15} />
-                <span>{error}</span>
-              </div>
-            )}
+          {/* Form: Customer Register Mode */}
+          {portalMode === 'customer' && customerMode === 'register' ? (
+            <form className="login-form" onSubmit={handleRegisterSubmit}>
+              {error && (
+                <div className="login-alert-error" role="alert">
+                  <AlertCircle size={15} />
+                  <span>{error}</span>
+                </div>
+              )}
 
-            {portalMode === 'staff' && storedUsers.length > 0 && (
-              <div className="field-block" style={{ marginBottom: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="field-block">
+                  <label className="field-label-text">Nom / Interlocuteur *</label>
+                  <div className="field-input-wrap">
+                    <input
+                      type="text"
+                      value={regName}
+                      onChange={(e) => setRegName(e.target.value)}
+                      placeholder="Ex. Karim Alami"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="field-block">
+                  <label className="field-label-text">Société / Raison Sociale *</label>
+                  <div className="field-input-wrap">
+                    <input
+                      type="text"
+                      value={regCompany}
+                      onChange={(e) => setRegCompany(e.target.value)}
+                      placeholder="Ex. Alami Quincaillerie SARL"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="field-block">
+                  <label className="field-label-text">Email professionnel *</label>
+                  <div className="field-input-wrap">
+                    <Mail size={15} className="input-icon" />
+                    <input
+                      type="email"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      placeholder="contact@entreprise.ma"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="field-block">
+                  <label className="field-label-text">Téléphone direct *</label>
+                  <div className="field-input-wrap">
+                    <input
+                      type="text"
+                      value={regPhone}
+                      onChange={(e) => setRegPhone(e.target.value)}
+                      placeholder="+212 6 XX XX XX XX"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="field-block">
+                  <label className="field-label-text">Ville principale *</label>
+                  <div className="field-input-wrap">
+                    <select
+                      value={regCity}
+                      onChange={(e) => setRegCity(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text)',
+                        fontSize: 13,
+                        outline: 'none',
+                        padding: '8px 0',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="Casablanca" style={{ background: '#0f172a', color: '#fff' }}>Casablanca</option>
+                      <option value="Rabat" style={{ background: '#0f172a', color: '#fff' }}>Rabat</option>
+                      <option value="Tanger" style={{ background: '#0f172a', color: '#fff' }}>Tanger</option>
+                      <option value="Marrakech" style={{ background: '#0f172a', color: '#fff' }}>Marrakech</option>
+                      <option value="Fès" style={{ background: '#0f172a', color: '#fff' }}>Fès</option>
+                      <option value="Agadir" style={{ background: '#0f172a', color: '#fff' }}>Agadir</option>
+                      <option value="Meknès" style={{ background: '#0f172a', color: '#fff' }}>Meknès</option>
+                      <option value="Kénitra" style={{ background: '#0f172a', color: '#fff' }}>Kénitra</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="field-block">
+                  <label className="field-label-text">ICE Société (15 chiffres)</label>
+                  <div className="field-input-wrap">
+                    <input
+                      type="text"
+                      maxLength={15}
+                      value={regIce}
+                      onChange={(e) => setRegIce(e.target.value)}
+                      placeholder="002194850000038"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Commercial Referral Selection */}
+              <div className="field-block">
                 <label className="field-label-text" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>Collaborateurs enregistrés ({storedUsers.length}) :</span>
-                  <small style={{ color: '#0284c7', fontWeight: 600 }}>Comptes & droits en mémoire</small>
+                  <span>Choisir votre commercial référent :</span>
+                  <small style={{ color: '#0284c7', fontWeight: 600 }}>Attribution commerciale directe</small>
                 </label>
                 <div className="field-input-wrap">
-                  <ShieldCheck size={15} className="input-icon" />
+                  <UserCheck size={15} className="input-icon" />
                   <select
                     style={{
                       width: '100%',
@@ -430,119 +662,228 @@ export default function UnifiedLogin({
                       padding: '8px 0',
                       cursor: 'pointer',
                     }}
-                    value={identifier}
-                    onChange={(e) => {
-                      const selEmail = e.target.value;
-                      if (!selEmail) return;
-                      setIdentifier(selEmail);
-                      setPassword('password');
-                      const userRec = storedUsers.find((u) => u.email === selEmail);
-                      if (userRec) {
-                        const matchRole = ALL_ROLES.find((r) => r.role_code === userRec.primary_role);
-                        if (matchRole) setSelectedRoleId(matchRole.id);
-                      }
-                    }}
+                    value={regCommercialId}
+                    onChange={(e) => setRegCommercialId(e.target.value)}
                   >
                     <option value="" style={{ background: '#0f172a', color: '#fff' }}>
-                      -- Ou choisir un compte enregistré (test rapide) --
+                      -- Sélectionner un commercial ou attribution automatique --
                     </option>
-                    {storedUsers.map((u) => (
-                      <option key={u.id} value={u.email} style={{ background: '#0f172a', color: '#fff' }}>
-                        {u.name} · {u.role_label} ({u.custom_permissions?.includes('*') ? 'Accès total' : `${u.custom_permissions?.length || 0} permissions`})
+                    {commercialsList.map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: '#0f172a', color: '#fff' }}>
+                        {c.name} · Réf: {c.commercial_code || `COM-${c.id}`} ({c.commission_rate ?? 5}% commission)
                       </option>
                     ))}
+                    <option value="code" style={{ background: '#0f172a', color: '#fff' }}>
+                      -- Saisir un code de référence commercial --
+                    </option>
                   </select>
                 </div>
               </div>
-            )}
 
-            <div className="field-block">
-              <label className="field-label-text">
-                {portalMode === 'customer' ? 'Email ou Téléphone Client' : 'Identifiant professionnel'}
-              </label>
-              <div className="field-input-wrap">
-                <Mail size={15} className="input-icon" />
-                <input
-                  type="text"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="nom@hercules-erp.ma"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="field-block">
-              <label className="field-label-text">Mot de passe</label>
-              <div className="field-input-wrap">
-                <Lock size={15} className="input-icon" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-                <button
-                  type="button"
-                  className="eye-toggle-btn"
-                  onClick={() => setShowPassword((s) => !s)}
-                  aria-label="Afficher ou masquer le mot de passe"
-                >
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="form-meta-row">
-              <label className="remember-label">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(e) => setRemember(e.target.checked)}
-                />
-                <span>Mémoriser la session</span>
-              </label>
-              <a
-                href="#forgot"
-                className="forgot-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setError('Veuillez contacter votre administrateur pour réinitialiser votre accès.');
-                }}
-              >
-                Mot de passe oublié ?
-              </a>
-            </div>
-
-            <div className="action-buttons-group">
-              <button className="submit-btn" type="submit" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 size={15} className="spin-animate" />
-                    <span>Connexion…</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Se connecter</span>
-                    <ArrowRight size={15} />
-                  </>
-                )}
-              </button>
-
-              {portalMode === 'staff' && (
-                <button
-                  type="button"
-                  className="quick-test-btn"
-                  onClick={() => executeLogin(activeRole.email, activeRole.password, 'staff')}
-                  disabled={loading}
-                >
-                  <LogIn size={13} />
-                  <span>Entrer directement comme {activeRole.shortName}</span>
-                </button>
+              {regCommercialId === 'code' && (
+                <div className="field-block">
+                  <label className="field-label-text">Code de référence commercial (ex: COM-001)</label>
+                  <div className="field-input-wrap">
+                    <input
+                      type="text"
+                      value={regCommercialCode}
+                      onChange={(e) => setRegCommercialCode(e.target.value.toUpperCase())}
+                      placeholder="COM-001"
+                      required
+                    />
+                  </div>
+                </div>
               )}
-            </div>
-          </form>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="field-block">
+                  <label className="field-label-text">Mot de passe *</label>
+                  <div className="field-input-wrap">
+                    <Lock size={15} className="input-icon" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="field-block">
+                  <label className="field-label-text">Confirmation *</label>
+                  <div className="field-input-wrap">
+                    <Lock size={15} className="input-icon" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={regConfirmPassword}
+                      onChange={(e) => setRegConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="action-buttons-group" style={{ marginTop: 14 }}>
+                <button className="submit-btn" type="submit" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 size={15} className="spin-animate" />
+                      <span>Création de votre compte…</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Finaliser mon inscription B2B</span>
+                      <ArrowRight size={15} />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* Form: Login Mode */
+            <form className="login-form" onSubmit={handleSubmit}>
+              {error && (
+                <div className="login-alert-error" role="alert">
+                  <AlertCircle size={15} />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {portalMode === 'staff' && storedUsers.length > 0 && (
+                <div className="field-block" style={{ marginBottom: 12 }}>
+                  <label className="field-label-text" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Collaborateurs enregistrés ({storedUsers.length}) :</span>
+                    <small style={{ color: '#0284c7', fontWeight: 600 }}>Comptes & droits en mémoire</small>
+                  </label>
+                  <div className="field-input-wrap">
+                    <ShieldCheck size={15} className="input-icon" />
+                    <select
+                      style={{
+                        width: '100%',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text)',
+                        fontSize: 12.5,
+                        outline: 'none',
+                        padding: '8px 0',
+                        cursor: 'pointer',
+                      }}
+                      value={identifier}
+                      onChange={(e) => {
+                        const selEmail = e.target.value;
+                        if (!selEmail) return;
+                        setIdentifier(selEmail);
+                        setPassword('password');
+                        const userRec = storedUsers.find((u) => u.email === selEmail);
+                        if (userRec) {
+                          const matchRole = ALL_ROLES.find((r) => r.role_code === userRec.primary_role);
+                          if (matchRole) setSelectedRoleId(matchRole.id);
+                        }
+                      }}
+                    >
+                      <option value="" style={{ background: '#0f172a', color: '#fff' }}>
+                        -- Ou choisir un compte enregistré (test rapide) --
+                      </option>
+                      {storedUsers.map((u) => (
+                        <option key={u.id} value={u.email} style={{ background: '#0f172a', color: '#fff' }}>
+                          {u.name} · {u.role_label} ({u.custom_permissions?.includes('*') ? 'Accès total' : `${u.custom_permissions?.length || 0} permissions`})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div className="field-block">
+                <label className="field-label-text">
+                  {portalMode === 'customer' ? 'Email ou Téléphone Client' : 'Identifiant professionnel'}
+                </label>
+                <div className="field-input-wrap">
+                  <Mail size={15} className="input-icon" />
+                  <input
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="nom@hercules-erp.ma"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="field-block">
+                <label className="field-label-text">Mot de passe</label>
+                <div className="field-input-wrap">
+                  <Lock size={15} className="input-icon" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="eye-toggle-btn"
+                    onClick={() => setShowPassword((s) => !s)}
+                    aria-label="Afficher ou masquer le mot de passe"
+                  >
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-meta-row">
+                <label className="remember-label">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                  />
+                  <span>Mémoriser la session</span>
+                </label>
+                <a
+                  href="#forgot"
+                  className="forgot-link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setError('Veuillez contacter votre administrateur pour réinitialiser votre accès.');
+                  }}
+                >
+                  Mot de passe oublié ?
+                </a>
+              </div>
+
+              <div className="action-buttons-group">
+                <button className="submit-btn" type="submit" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 size={15} className="spin-animate" />
+                      <span>Connexion…</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Se connecter</span>
+                      <ArrowRight size={15} />
+                    </>
+                  )}
+                </button>
+
+                {portalMode === 'staff' && (
+                  <button
+                    type="button"
+                    className="quick-test-btn"
+                    onClick={() => executeLogin(activeRole.email, activeRole.password, 'staff')}
+                    disabled={loading}
+                  >
+                    <LogIn size={13} />
+                    <span>Entrer directement comme {activeRole.shortName}</span>
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
 
           {/* Compact footer hints */}
           <div className="login-card-footer">

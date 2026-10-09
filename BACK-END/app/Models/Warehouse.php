@@ -9,12 +9,17 @@ class Warehouse extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['code', 'name', 'city', 'address', 'lat', 'lng', 'phone', 'manager_name', 'status'];
+    protected $fillable = ['code', 'name', 'city', 'address', 'company_id', 'lat', 'lng', 'phone', 'manager_name', 'status'];
 
     protected $casts = [
         'lat' => 'decimal:7',
         'lng' => 'decimal:7',
     ];
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     public function stocks()
     {

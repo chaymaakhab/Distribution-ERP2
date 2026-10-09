@@ -18,11 +18,30 @@ export interface CustomerUser {
   phone: string | null;
   city: string | null;
   address: string | null;
+  ice?: string | null;
   price_tier: string;
   credit_limit: number;
+  current_balance?: number;
   locale: string;
   role: 'customer';
-  commercial: { name: string; email: string } | null;
+  commercial_reference?: string | null;
+  commission_percentage?: number;
+  commercial: {
+    id?: number;
+    name: string;
+    email: string;
+    phone?: string;
+    commercial_code?: string;
+  } | null;
+}
+
+export interface CommercialOption {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  commercial_code: string;
+  commission_rate: number;
 }
 
 export class ApiError extends Error {
@@ -195,10 +214,73 @@ export const api = {
         credit_limit: 80000,
         locale: 'fr',
         role: 'customer',
-        commercial: { name: 'Youssef Bennani', email: 'commercial@hercules-erp.ma' },
+        commercial_reference: 'COM-001',
+        commission_percentage: 5.0,
+        commercial: { name: 'Youssef Bennani', email: 'commercial@hercules-erp.ma', commercial_code: 'COM-001' },
       };
       return { token: 'mock-customer-token', user: mockUser, home: '/customer/home' };
     }
+  },
+
+  register: async (payload: {
+    name: string;
+    company?: string;
+    email: string;
+    phone: string;
+    password: string;
+    city: string;
+    address?: string;
+    ice?: string;
+    commercial_id?: number | null;
+    commercial_code?: string | null;
+  }) => {
+    try {
+      return await request<{ token: string; user: CustomerUser; home: string; message: string }>('/register', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      if (e instanceof ApiError) throw e;
+      const mockUser: CustomerUser = {
+        id: Date.now(),
+        code: `CLI-${Math.floor(1000 + Math.random() * 9000)}`,
+        name: payload.name,
+        company: payload.company || payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        city: payload.city,
+        address: payload.address || null,
+        ice: payload.ice || null,
+        price_tier: 'standard',
+        credit_limit: 20000,
+        locale: 'fr',
+        role: 'customer',
+        commercial_reference: payload.commercial_code || (payload.commercial_id ? 'COM-001' : null),
+        commission_percentage: 5.0,
+        commercial: payload.commercial_id
+          ? { id: payload.commercial_id, name: 'Youssef Bennani', email: 'commercial@hercules-erp.ma', commercial_code: 'COM-001' }
+          : null,
+      };
+      return { token: 'mock-customer-registered-token', user: mockUser, home: '/customer/home', message: 'Compte créé !' };
+    }
+  },
+
+  getCommercials: async () => {
+    try {
+      return await request<CommercialOption[]>('/commercials');
+    } catch {
+      return [
+        { id: 4, name: 'Youssef Bennani', email: 'commercial@hercules-erp.ma', phone: '+212 661 23 45 67', commercial_code: 'COM-001', commission_rate: 5.0 },
+        { id: 9, name: 'Hamid El Meskini (Pré-vendeur)', email: 'prevendeur@hercules-erp.ma', phone: '+212 663 88 99 00', commercial_code: 'COM-003', commission_rate: 3.5 },
+      ];
+    }
+  },
+
+  chooseCommercial: async (commercialIdOrCode: { commercial_id?: number | null; commercial_code?: string | null }) => {
+    return await request<{ data: CustomerUser; message: string }>('/account/commercial', {
+      method: 'PUT',
+      body: JSON.stringify(commercialIdOrCode),
+    });
   },
 
   logout: async () => {
@@ -425,7 +507,7 @@ export const api = {
   },
 
   updateProfile: async (
-    payload: Partial<Pick<CustomerUser, 'company' | 'address' | 'phone' | 'locale'>>,
+    payload: Partial<Pick<CustomerUser, 'company' | 'address' | 'phone' | 'locale' | 'ice' | 'city'>>,
   ) => {
     try {
       return await request<{ data: CustomerUser; message: string }>('/account/profile', {

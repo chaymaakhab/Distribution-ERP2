@@ -42,13 +42,62 @@ class AccountController extends Controller
             'address' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'locale' => ['nullable', 'string', 'in:fr,ar'],
+            'commercial_id' => ['nullable', 'exists:users,id'],
+            'commercial_code' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $customer->fill($data)->save();
+        if (array_key_exists('commercial_id', $data) || array_key_exists('commercial_code', $data)) {
+            $commId = $data['commercial_id'] ?? null;
+            if ($commId) {
+                $comm = \App\Models\User::find($commId);
+            } elseif (!empty($data['commercial_code'])) {
+                $comm = \App\Models\User::where('commercial_code', trim($data['commercial_code']))->first();
+            } else {
+                $comm = null;
+            }
+
+            if ($comm) {
+                $customer->commercial_id = $comm->id;
+                $customer->commercial_reference = $comm->commercial_code ?: ('COM-' . str_pad($comm->id, 3, '0', STR_PAD_LEFT));
+                $customer->commission_percentage = $comm->commission_rate ?? 5.00;
+            }
+        }
+
+        $customer->fill(collect($data)->except(['commercial_id', 'commercial_code'])->all())->save();
 
         return response()->json([
             'data' => AuthController::presentCustomer($customer->fresh('commercial')),
             'message' => 'Profil mis à jour.',
+        ]);
+    }
+
+    public function chooseCommercial(Request $request)
+    {
+        /** @var Customer $customer */
+        $customer = $request->user();
+
+        $data = $request->validate([
+            'commercial_id' => ['nullable', 'exists:users,id'],
+            'commercial_code' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $comm = null;
+        if (!empty($data['commercial_id'])) {
+            $comm = \App\Models\User::find($data['commercial_id']);
+        } elseif (!empty($data['commercial_code'])) {
+            $comm = \App\Models\User::where('commercial_code', trim($data['commercial_code']))->first();
+        }
+
+        if ($comm) {
+            $customer->commercial_id = $comm->id;
+            $customer->commercial_reference = $comm->commercial_code ?: ('COM-' . str_pad($comm->id, 3, '0', STR_PAD_LEFT));
+            $customer->commission_percentage = $comm->commission_rate ?? 5.00;
+            $customer->save();
+        }
+
+        return response()->json([
+            'data' => AuthController::presentCustomer($customer->fresh('commercial')),
+            'message' => 'Commercial référent assigné avec succès.',
         ]);
     }
 }

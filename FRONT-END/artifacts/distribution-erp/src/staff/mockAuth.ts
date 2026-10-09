@@ -410,6 +410,23 @@ export function staffItemToSessionUser(item: StaffUserRecord): StaffUser {
     primary_role: normPrimary,
     permissions,
     home,
+    company: {
+      id: 1,
+      code: 'SOC-001',
+      name: 'Hercules Distribution Maroc S.A.R.L.',
+      brand_name: normPrimary === 'superadmin' ? 'Hercules ERP SaaS Master' : 'Hercules Distribution',
+      ice: '002345678000045',
+      rc: '458920 Casablanca',
+      city: 'Casablanca',
+      subscription_plan: 'enterprise',
+      subscription_status: 'active',
+      subscription_end_date: '2027-08-31',
+      days_remaining: 326,
+      max_users: 50,
+      max_warehouses: 10,
+      users_count: 14,
+      warehouses_count: 7,
+    },
   };
 }
 
@@ -438,6 +455,23 @@ export function createMockStaffUser(roleCode: string, email?: string): StaffUser
       code === 'superadmin' || code === 'admin'
         ? null
         : { id: 1, code: 'DEP-01', name: 'Dépôt Casablanca Central', city: 'Casablanca' },
+    company: {
+      id: 1,
+      code: 'SOC-001',
+      name: 'Hercules Distribution Maroc S.A.R.L.',
+      brand_name: code === 'superadmin' ? 'Hercules ERP SaaS Master' : 'Hercules Distribution',
+      ice: '002345678000045',
+      rc: '458920 Casablanca',
+      city: 'Casablanca',
+      subscription_plan: 'enterprise',
+      subscription_status: 'active',
+      subscription_end_date: '2027-08-31',
+      days_remaining: 326,
+      max_users: 50,
+      max_warehouses: 10,
+      users_count: 14,
+      warehouses_count: 7,
+    },
     roles: [
       {
         code,

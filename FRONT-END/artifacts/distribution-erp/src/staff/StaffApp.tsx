@@ -7,7 +7,8 @@ import {
 import { useTheme } from '@/lib/theme';
 import { StaffAuthProvider, useStaffAuth } from './auth';
 import { MODULES, NAV_GROUPS, findModule, type NavModule } from './nav';
-import type { StaffUser } from './api';
+import { api, type StaffUser, type StaffCompany } from './api';
+import SegmentedTopNavbar from './components/SegmentedTopNavbar';
 import { normalizeRoleCode } from './mockAuth';
 import StaffLogin from './StaffLogin';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
@@ -89,9 +90,6 @@ function StaffShell({ user }: { user: StaffUser }) {
   const [unreadNotifCount, setUnreadNotifCount] = useState(() => {
     return filterNotificationsByPermissions(ALL_SYSTEM_NOTIFICATIONS, hasPermission, user.primary_role, user.permissions).filter((n) => !n.read).length;
   });
-  const [topbarSearch, setTopbarSearch] = useState('');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { theme, toggleTheme, isLight } = useTheme();
   const [staffLang, setStaffLang] = useState<'fr' | 'ar'>(() => {
     try {
       return (localStorage.getItem('hercules_staff_lang') as 'fr' | 'ar') || 'fr';
@@ -111,8 +109,22 @@ function StaffShell({ user }: { user: StaffUser }) {
     document.documentElement.lang = l;
   }
 
+  const [activeCompany, setActiveCompany] = useState<StaffCompany | null>(user.company ?? null);
+  const [allCompanies, setAllCompanies] = useState<StaffCompany[]>([]);
+
+  useEffect(() => {
+    if (user.roles.some((r) => r.code === 'superadmin')) {
+      api.getSaasCompanies()
+        .then((res) => {
+          if (res?.data && res.data.length > 0) {
+            setAllCompanies(res.data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user]);
+
   const roleRef = useRef<HTMLDivElement>(null);
-  const searchBoxRef = useRef<HTMLDivElement>(null);
 
   const primary = user.roles.find((r) => r.is_primary) ?? user.roles[0];
   const visibleModules = MODULES.filter((m) => hasPermission(m.permission));
@@ -120,7 +132,6 @@ function StaffShell({ user }: { user: StaffUser }) {
   useEffect(() => {
     function onClick(e: MouseEvent) {
       if (roleRef.current && !roleRef.current.contains(e.target as Node)) setRoleMenu(false);
-      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) setDropdownOpen(false);
     }
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
@@ -157,18 +168,6 @@ function StaffShell({ user }: { user: StaffUser }) {
 
   const activeSegment = location.split('/')[2] || 'dashboard';
 
-  const allSearchItems = getErpSearchItems(go);
-  const qClean = topbarSearch.trim().toLowerCase();
-  const inlineResults = qClean
-    ? allSearchItems.filter(
-        (i) =>
-          i.title.toLowerCase().includes(qClean) ||
-          i.subtitle.toLowerCase().includes(qClean) ||
-          i.category.toLowerCase().includes(qClean) ||
-          (i.keywords && i.keywords.some((k) => k.toLowerCase().includes(qClean) || qClean.includes(k.toLowerCase())))
-      ).slice(0, 8)
-    : [];
-
   return (
     <div className="erp-app sx-app">
       <aside className={`sidebar ${mobileNav ? 'sidebar-open' : ''}`}>
@@ -183,8 +182,8 @@ function StaffShell({ user }: { user: StaffUser }) {
 
         <div className="workspace-chip">
           <span className="workspace-dot" />
-          <span>{user.warehouse ? `${user.warehouse.name} · ${user.warehouse.city ?? ''}`.trim() : 'Tous dépôts'}</span>
-          {user.warehouse && <WarehouseIcon size={13} />}
+          <span>{activeCompany ? `${activeCompany.brand_name || activeCompany.name} · ${activeCompany.city}` : (user.warehouse ? `${user.warehouse.name} · ${user.warehouse.city ?? ''}`.trim() : 'Tous dépôts')}</span>
+          <WarehouseIcon size={13} />
         </div>
 
         <nav className="side-nav sx-side-nav">
@@ -233,294 +232,21 @@ function StaffShell({ user }: { user: StaffUser }) {
       {mobileNav && <div className="sx-backdrop" onClick={() => setMobileNav(false)} />}
 
       <div className="app-main">
-        <header className="topbar">
-          <button className="mobile-trigger icon-button" onClick={() => setMobileNav(true)} aria-label="Ouvrir le menu">
-            <Menu size={19} />
-          </button>
-
-          <div className="crumb" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {activeSegment !== 'dashboard' && (
-              <button
-                className="icon-button"
-                onClick={() => {
-                  if (window.history.length > 1) {
-                    window.history.back();
-                  } else {
-                    go('dashboard');
-                  }
-                }}
-                title="Bouton Retour (Page précédente)"
-                aria-label="Retour"
-                style={{ width: 28, height: 28, marginRight: 2, borderRadius: 6 }}
-              >
-                <ArrowLeft size={14} />
-              </button>
-            )}
-            <button
-              onClick={() => go('dashboard')}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                color: activeSegment === 'dashboard' ? 'var(--text)' : 'var(--muted)',
-                cursor: 'pointer',
-                fontWeight: activeSegment === 'dashboard' ? 700 : 500,
-                fontSize: 13,
-              }}
-            >
-              {findModule('dashboard')?.label ?? 'Tableau de bord'}
-            </button>
-            {activeSegment !== 'dashboard' && (
-              <>
-                <ChevronRight size={13} style={{ color: 'var(--muted)' }} />
-                <strong style={{ fontSize: 13, color: 'var(--text)' }}>
-                  {findModule(activeSegment)?.label ?? activeSegment}
-                </strong>
-              </>
-            )}
-          </div>
-
-          <div className="topbar-right">
-            {/* Active Live Search Input with Instant Dropdown */}
-            <div className="topbar-search-box" ref={searchBoxRef}>
-              <div className="topbar-search-input-field">
-                <Search size={14} style={{ color: '#38bdf8', flex: 'none' }} />
-                <input
-                  type="text"
-                  value={topbarSearch}
-                  onChange={(e) => {
-                    setTopbarSearch(e.target.value);
-                    setDropdownOpen(true);
-                  }}
-                  onFocus={() => {
-                    if (topbarSearch.trim()) setDropdownOpen(true);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      if (inlineResults.length > 0) {
-                        inlineResults[0].action();
-                        setDropdownOpen(false);
-                        setTopbarSearch('');
-                      } else {
-                        setSearchOpen(true);
-                      }
-                    } else if (e.key === 'Escape') {
-                      setDropdownOpen(false);
-                    }
-                  }}
-                  placeholder="Rechercher commande, client, article, livreur..."
-                />
-                {topbarSearch && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTopbarSearch('');
-                      setDropdownOpen(false);
-                    }}
-                    style={{ background: 'transparent', border: 0, color: 'var(--muted)', cursor: 'pointer', padding: 2, display: 'grid', placeItems: 'center' }}
-                    title="Effacer"
-                  >
-                    <X size={13} />
-                  </button>
-                )}
-                <kbd
-                  className="search-kbd"
-                  onClick={() => setSearchOpen(true)}
-                  style={{ cursor: 'pointer' }}
-                  title="Ouvrir la palette complète (Ctrl + K)"
-                >
-                  Ctrl K
-                </kbd>
-              </div>
-
-              {/* Instant Dropdown when typing */}
-              {dropdownOpen && topbarSearch.trim().length > 0 && (
-                <div className="topbar-search-dropdown">
-                  <div
-                    style={{
-                      padding: '6px 10px',
-                      fontSize: '10.5px',
-                      fontWeight: 800,
-                      color: 'var(--muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      borderBottom: '1px solid var(--line)',
-                      marginBottom: '4px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <span>Résultats ({inlineResults.length})</span>
-                    <span
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        setSearchOpen(true);
-                      }}
-                      style={{ color: '#38bdf8', cursor: 'pointer', textTransform: 'none', fontWeight: 600 }}
-                    >
-                      Ouvrir en grand ↗
-                    </span>
-                  </div>
-
-                  {inlineResults.length === 0 ? (
-                    <div style={{ padding: '16px 12px', textAlign: 'center', color: 'var(--muted)', fontSize: '12px' }}>
-                      Aucun résultat pour « {topbarSearch} »
-                    </div>
-                  ) : (
-                    inlineResults.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className="topbar-search-dropdown-item"
-                          onClick={() => {
-                            item.action();
-                            setDropdownOpen(false);
-                            setTopbarSearch('');
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: 28,
-                              height: 28,
-                              borderRadius: 6,
-                              background: 'rgba(56, 189, 248, 0.1)',
-                              color: '#38bdf8',
-                              display: 'grid',
-                              placeItems: 'center',
-                              flex: 'none',
-                            }}
-                          >
-                            <Icon size={14} />
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                              style={{
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                color: 'var(--text)',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
-                              {item.title}
-                            </div>
-                            <div
-                              style={{
-                                fontSize: '10.5px',
-                                color: 'var(--muted)',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
-                              {item.subtitle}
-                            </div>
-                          </div>
-                          {item.badge && (
-                            <span
-                              style={{
-                                fontSize: '10px',
-                                padding: '2px 6px',
-                                borderRadius: 4,
-                                background: item.badgeColor ? `${item.badgeColor}20` : 'rgba(255,255,255,0.08)',
-                                color: item.badgeColor || 'var(--text)',
-                                fontWeight: 700,
-                                flex: 'none',
-                              }}
-                            >
-                              {item.badge}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-            </div>
-
-            <button
-              className="icon-button mobile-only-search"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Recherche globale (Ctrl + K)"
-              title="Recherche globale (Ctrl + K)"
-            >
-              <Search size={16} />
-            </button>
-            <button
-              className="icon-button sx-bell"
-              onClick={() => setNotifOpen(true)}
-              aria-label="Notifications & alertes"
-              title="Notifications & alertes"
-            >
-              <Bell size={16} />
-              {unreadNotifCount > 0 && <span className="sx-bell-badge">{unreadNotifCount}</span>}
-            </button>
-
-            {user.roles.length > 1 && (
-              <div className="sx-role" ref={roleRef}>
-                <button className="sx-role-btn" onClick={() => setRoleMenu((v) => !v)} data-testid="button-role-switcher">
-                  <ShieldCheck size={14} />
-                  <span>{primary?.name}</span>
-                  <ChevronDown size={13} />
-                </button>
-                {roleMenu && (
-                  <div className="sx-role-menu">
-                    <p className="sx-role-caption">Changer d’espace</p>
-                    {user.roles.map((r) => (
-                      <button
-                        key={r.code}
-                        className={`sx-role-item ${r.code === primary?.code ? 'active' : ''}`}
-                        onClick={() => handleSwitch(r.code)}
-                      >
-                        <span>{r.name}</span>
-                        {r.code === primary?.code && <ShieldCheck size={13} />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Staff Language Switcher FR / AR */}
-            <div className="sx-lang-pill" title="Langue / تغيير اللغة">
-              <button
-                type="button"
-                className={`sx-lang-btn ${staffLang === 'fr' ? 'active' : ''}`}
-                onClick={() => handleToggleLang('fr')}
-              >
-                FR
-              </button>
-              <span className="sx-lang-divider">|</span>
-              <button
-                type="button"
-                className={`sx-lang-btn ${staffLang === 'ar' ? 'active' : ''}`}
-                onClick={() => handleToggleLang('ar')}
-              >
-                العربية
-              </button>
-            </div>
-
-            <Link href="/login" className="icon-button" title="Changer de rôle / Portail Connexion" aria-label="Portail Connexion">
-              <LogIn size={16} />
-            </Link>
-            <button className="icon-button" onClick={toggleTheme} title="Basculer le thème" data-testid="button-theme-toggle">
-              {isLight ? <Moon size={16} /> : <Sun size={16} />}
-            </button>
-            <button
-              className="icon-button"
-              onClick={() => setLogoutModalOpen(true)}
-              title="Se déconnecter"
-              aria-label="Se déconnecter"
-              style={{ color: '#ef4444' }}
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
-        </header>
+        <SegmentedTopNavbar
+          user={user}
+          activeSegment={activeSegment}
+          onNavigate={go}
+          onOpenMobileNav={() => setMobileNav(true)}
+          onOpenSearchModal={() => setSearchOpen(true)}
+          onOpenNotifications={() => setNotifOpen(true)}
+          onOpenLogoutModal={() => setLogoutModalOpen(true)}
+          unreadCount={unreadNotifCount}
+          staffLang={staffLang}
+          onToggleLang={handleToggleLang}
+          activeCompany={activeCompany}
+          allCompanies={allCompanies}
+          onSelectCompany={(c) => setActiveCompany(c)}
+        />
 
         <main className="page-wrap">
           <Switch>

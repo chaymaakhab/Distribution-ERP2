@@ -15,7 +15,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'phone', 'password', 'is_active', 'locale', 'avatar', 'warehouse_id',
+        'name', 'email', 'commercial_code', 'commission_rate', 'phone', 'password', 'is_active', 'locale', 'avatar', 'warehouse_id', 'company_id',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -26,7 +26,13 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'commission_rate' => 'decimal:2',
         ];
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function roles()
@@ -37,6 +43,16 @@ class User extends Authenticatable
     public function warehouse()
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    public function customers()
+    {
+        return $this->hasMany(Customer::class, 'commercial_id');
+    }
+
+    public function createdCustomers()
+    {
+        return $this->hasMany(Customer::class, 'created_by_user_id');
     }
 
     public function notifications()

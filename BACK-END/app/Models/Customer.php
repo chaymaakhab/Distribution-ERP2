@@ -16,6 +16,7 @@ class Customer extends Authenticatable
         'phone', 'whatsapp', 'email', 'password', 'price_tier', 'credit_limit',
         'current_balance', 'overdue_amount',
         'status', 'locale', 'commercial_id',
+        'commercial_reference', 'commission_percentage', 'created_by_user_id',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -29,6 +30,7 @@ class Customer extends Authenticatable
             'credit_limit' => 'decimal:2',
             'current_balance' => 'decimal:2',
             'overdue_amount' => 'decimal:2',
+            'commission_percentage' => 'decimal:2',
         ];
     }
 
@@ -50,6 +52,11 @@ class Customer extends Authenticatable
     public function commercial()
     {
         return $this->belongsTo(User::class, 'commercial_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
     }
 
     public function creditNotes()

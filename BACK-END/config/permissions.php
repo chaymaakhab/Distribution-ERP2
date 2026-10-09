@@ -91,6 +91,7 @@ return [
             'permissions' => [
                 'dashboard.view',
                 'products.view', 'categories.view',
+                'customers.view', 'customers.create', 'customers.update', 'customer_accounts.manage',
                 'orders.view', 'orders.assign',
                 'stock.view', 'stock.transfer', 'stock.adjust', 'stock.inventory',
                 'warehouses.view',

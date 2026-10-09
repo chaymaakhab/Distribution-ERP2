@@ -4,19 +4,25 @@ import {
   ArrowUpRight, Building2, CheckCircle2, ChevronRight, Download, Plus,
   CreditCard, ExternalLink, X, Edit2, Trash2, Check,
   Printer, Receipt, Banknote, Calendar, Landmark, DollarSign, Eye,
+  Lock, Sparkles, UserCheck, Percent,
 } from 'lucide-react';
 import { api, formatMoney } from '../api';
+import { useStaffAuth } from '../auth';
 
 export interface CrmClient {
   id: number;
   code: string;
   name: string;
   company: string;
+  email?: string;
   city: string;
   phone: string;
   whatsapp: string;
   ice: string;
   commercial_name: string;
+  commercial_reference?: string;
+  commission_percentage?: number;
+  creator_name?: string;
   price_tier: 'revendeur' | 'grossiste' | 'chantier' | 'standard';
   credit_limit: number;
   current_balance: number;
@@ -212,7 +218,11 @@ const DEMO_CLIENTS: CrmClient[] = [
 ];
 
 export default function ClientsCrm() {
+  const { user: currentStaffUser } = useStaffAuth();
+  const isUserCommercial = currentStaffUser?.primary_role === 'commercial' || currentStaffUser?.roles?.some((r: any) => (r.code || r) === 'commercial');
+
   const [clients, setClients] = useState<CrmClient[]>(DEMO_CLIENTS);
+  const [commercialUsers, setCommercialUsers] = useState<any[]>([]);
   const [query, setQuery] = useState('');
   const [tierFilter, setTierFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -229,11 +239,15 @@ export default function ClientsCrm() {
             code: c.code,
             name: c.name || c.company,
             company: c.company || c.name,
+            email: c.email,
             city: c.city || 'Casablanca',
             phone: c.phone || '+212 522 00 00 00',
             whatsapp: c.whatsapp || (c.phone ? c.phone.replace(/[^0-9]/g, '') : '212600000000'),
             ice: c.ice || '003147829000064',
-            commercial_name: c.commercial?.name || 'Youssef Bennani',
+            commercial_name: c.commercial?.name || (c.commercial_reference ? `Commercial (${c.commercial_reference})` : 'Non attribué'),
+            commercial_reference: c.commercial_reference || c.commercial?.commercial_code,
+            commission_percentage: Number(c.commission_percentage) || Number(c.commercial?.commission_rate) || 5.0,
+            creator_name: c.creator?.name,
             price_tier: c.price_tier || 'revendeur',
             credit_limit: Number(c.credit_limit) || 50000,
             current_balance: Number(c.current_balance) || 0,
@@ -248,6 +262,12 @@ export default function ClientsCrm() {
       .catch((err) => {
         console.warn('Backend customers indisponibles, utilisation liste locale:', err);
       });
+
+    api.getUsers({ role: 'commercial' }).then((users: any[]) => {
+      if (Array.isArray(users) && users.length > 0) {
+        setCommercialUsers(users);
+      }
+    }).catch(() => {});
 
     api.getPayments()
       .then((res: any) => {
@@ -363,11 +383,13 @@ export default function ClientsCrm() {
   const [formContact, setFormContact] = useState('');
   const [formPhone, setFormPhone] = useState('+212 5');
   const [formEmail, setFormEmail] = useState('');
+  const [formPassword, setFormPassword] = useState('client1234');
   const [formCity, setFormCity] = useState('Casablanca');
   const [formIce, setFormIce] = useState('');
   const [formPriceTier, setFormPriceTier] = useState<'revendeur' | 'grossiste' | 'chantier' | 'standard'>('revendeur');
   const [formCreditLimit, setFormCreditLimit] = useState(50000);
-  const [formCommercial, setFormCommercial] = useState('Yassine Mansouri');
+  const [formCommercialId, setFormCommercialId] = useState<number | ''>('');
+  const [formCommissionRate, setFormCommissionRate] = useState<number>(5.0);
 
   function notify(msg: string) {
     setToast(msg);
@@ -380,17 +402,39 @@ export default function ClientsCrm() {
       notify('Veuillez renseigner le nom de la société.');
       return;
     }
+
+    const assignedComm = commercialUsers.find((u) => u.id === Number(formCommercialId));
+    const effectiveCommercialId = isUserCommercial
+      ? currentStaffUser?.id
+      : formCommercialId !== '' ? Number(formCommercialId) : undefined;
+
+    const effectiveCommercialName = isUserCommercial
+      ? (currentStaffUser?.name || 'Commercial')
+      : (assignedComm?.name || 'Non affecté');
+
+    const effectiveCommercialRef = isUserCommercial
+      ? (currentStaffUser?.commercial_code || `COM-${currentStaffUser?.id || '001'}`)
+      : (assignedComm?.commercial_code || (assignedComm?.id ? `COM-${assignedComm.id}` : undefined));
+
+    const effectiveCommissionRate = isUserCommercial
+      ? Number(currentStaffUser?.commission_rate ?? 5.0)
+      : Number(formCommissionRate || assignedComm?.commission_rate || 5.0);
+
     const nextCode = `CLT-${String(clients.length + 1).padStart(3, '0')}`;
     const newClient: CrmClient = {
       id: Date.now(),
       code: nextCode,
-      name: formContact.trim() || 'Gérant Principal',
+      name: formContact.trim() || formCompany.trim(),
       company: formCompany.trim(),
+      email: formEmail.trim() || undefined,
       phone: formPhone.trim() || '+212 5 22 00 00 00',
       whatsapp: formPhone.replace(/[^0-9]/g, '') || '212600000000',
       city: formCity.trim(),
       ice: formIce.trim() || '00' + Math.floor(1000000000000 + Math.random() * 9000000000000),
-      commercial_name: formCommercial,
+      commercial_name: effectiveCommercialName,
+      commercial_reference: effectiveCommercialRef,
+      commission_percentage: effectiveCommissionRate,
+      creator_name: currentStaffUser?.name,
       price_tier: formPriceTier,
       credit_limit: Number(formCreditLimit) || 50000,
       current_balance: 0,
@@ -406,15 +450,25 @@ export default function ClientsCrm() {
     api.createCustomer({
       company: newClient.company,
       name: newClient.name,
+      email: formEmail.trim() || undefined,
+      password: formPassword.trim() || undefined,
       city: newClient.city,
       phone: newClient.phone,
       whatsapp: newClient.whatsapp,
       ice: newClient.ice,
       price_tier: newClient.price_tier,
       credit_limit: newClient.credit_limit,
-    }).then(created => {
+      commercial_id: effectiveCommercialId,
+      commission_percentage: effectiveCommissionRate,
+    }).then((created: any) => {
       if (created?.id) {
-        setClients(prev => [{ ...newClient, id: created.id, code: created.code }, ...prev.filter(x => x.id !== newClient.id)]);
+        setClients(prev => [{
+          ...newClient,
+          id: created.id,
+          code: created.code,
+          commercial_reference: created.commercial_reference || newClient.commercial_reference,
+          commission_percentage: created.commission_percentage || newClient.commission_percentage,
+        }, ...prev.filter(x => x.id !== newClient.id)]);
       }
     }).catch(err => console.warn('Failed to save client on backend:', err));
 
@@ -423,8 +477,11 @@ export default function ClientsCrm() {
     setFormContact('');
     setFormPhone('+212 5');
     setFormEmail('');
+    setFormPassword('client1234');
     setFormIce('');
     setFormCreditLimit(50000);
+    setFormCommercialId('');
+    setFormCommissionRate(5.0);
 
     notify(`Client « ${newClient.company} » (${newClient.code}) enregistré avec succès !`);
   }
@@ -702,7 +759,21 @@ export default function ClientsCrm() {
                       </div>
                     </td>
                     <td>
-                      <span className="table-secondary">{c.commercial_name}</span>
+                      <div>
+                        <span className="table-secondary" style={{ fontWeight: 600 }}>{c.commercial_name}</span>
+                        {c.commercial_reference && (
+                          <div style={{ display: 'flex', gap: '4px', marginTop: '3px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '10px', background: 'rgba(59,130,246,0.1)', color: '#2563eb', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, fontFamily: 'monospace' }}>
+                              {c.commercial_reference}
+                            </span>
+                            {c.commission_percentage !== undefined && c.commission_percentage !== null && (
+                              <span style={{ fontSize: '10px', background: 'rgba(16,185,129,0.1)', color: '#059669', padding: '1px 5px', borderRadius: '4px', fontWeight: 600 }}>
+                                {c.commission_percentage}% comm.
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <span className="status-pill status-blue" style={{ textTransform: 'capitalize' }}>
@@ -1111,7 +1182,7 @@ export default function ClientsCrm() {
                 </label>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
                 <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
                   Plafond de Crédit Autorisé (DH)
                   <input
@@ -1132,28 +1203,143 @@ export default function ClientsCrm() {
                     }}
                   />
                 </label>
+              </div>
 
-                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
-                  Commercial Référent
-                  <select
-                    value={formCommercial}
-                    onChange={(e) => setFormCommercial(e.target.value)}
-                    style={{
-                      width: '100%',
-                      height: 38,
-                      padding: '0 10px',
-                      borderRadius: 6,
-                      border: '1px solid #cbd5e1',
-                      background: '#ffffff',
-                      color: '#0f172a',
-                      fontSize: 13,
-                    }}
-                  >
-                    <option value="Yassine Mansouri">Yassine Mansouri</option>
-                    <option value="Sara El Amrani">Sara El Amrani</option>
-                    <option value="Tariq Bennani">Tariq Bennani</option>
-                  </select>
-                </label>
+              {/* Attribution Commerciale & Commission */}
+              <div style={{ padding: '12px 14px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  💼 Attribution Commerciale & Commission
+                </div>
+
+                {isUserCommercial ? (
+                  <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '10px 12px', borderRadius: 6, fontSize: 12, color: '#065f46' }}>
+                    <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>✓ Rattaché directement à votre portefeuille commercial</span>
+                    </div>
+                    <div style={{ marginTop: 4, display: 'flex', gap: 12, fontSize: 11.5 }}>
+                      <span>Commercial : <b>{currentStaffUser?.name}</b></span>
+                      <span>Réf : <b>{currentStaffUser?.commercial_code || `COM-${currentStaffUser?.id || '001'}`}</b></span>
+                      <span>Commission : <b>{currentStaffUser?.commission_rate ?? 5}%</b></span>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 10 }}>
+                    <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                      Commercial Référent
+                      <select
+                        value={formCommercialId}
+                        onChange={(e) => {
+                          const val = e.target.value ? Number(e.target.value) : '';
+                          setFormCommercialId(val);
+                          if (val !== '') {
+                            const found = commercialUsers.find((u) => u.id === val);
+                            if (found?.commission_rate) {
+                              setFormCommissionRate(Number(found.commission_rate));
+                            }
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          height: 38,
+                          padding: '0 10px',
+                          borderRadius: 6,
+                          border: '1px solid #cbd5e1',
+                          background: '#ffffff',
+                          color: '#0f172a',
+                          fontSize: 13,
+                        }}
+                      >
+                        <option value="">Sélectionner un commercial...</option>
+                        {commercialUsers.length > 0 ? (
+                          commercialUsers.map((comm) => (
+                            <option key={comm.id} value={comm.id}>
+                              {comm.name} {comm.commercial_code ? `(${comm.commercial_code})` : ''} - {comm.commission_rate ?? 5}%
+                            </option>
+                          ))
+                        ) : (
+                          <>
+                            <option value="1">Yassine Mansouri (COM-001) - 5%</option>
+                            <option value="3">Sara El Amrani (COM-003) - 6%</option>
+                            <option value="4">Tariq Bennani (COM-004) - 5%</option>
+                          </>
+                        )}
+                      </select>
+                    </label>
+
+                    <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                      Commission (%)
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        value={formCommissionRate}
+                        onChange={(e) => setFormCommissionRate(Number(e.target.value))}
+                        style={{
+                          width: '100%',
+                          height: 38,
+                          padding: '0 10px',
+                          borderRadius: 6,
+                          border: '1px solid #cbd5e1',
+                          background: '#ffffff',
+                          color: '#0f172a',
+                          fontSize: 13,
+                        }}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Accès Espace Client B2B */}
+              <div style={{ padding: '12px 14px', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#1e40af', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  🔐 Identifiants Portail Client B2B
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10 }}>
+                  <label className="field-label" style={{ color: '#1e3a8a', fontWeight: 600, fontSize: 12 }}>
+                    Email de connexion portail
+                    <input
+                      type="email"
+                      value={formEmail}
+                      onChange={(e) => setFormEmail(e.target.value)}
+                      placeholder="client@entreprise.ma"
+                      style={{
+                        width: '100%',
+                        height: 38,
+                        padding: '0 10px',
+                        borderRadius: 6,
+                        border: '1px solid #93c5fd',
+                        background: '#ffffff',
+                        color: '#0f172a',
+                        fontSize: 13,
+                      }}
+                    />
+                  </label>
+
+                  <label className="field-label" style={{ color: '#1e3a8a', fontWeight: 600, fontSize: 12 }}>
+                    Mot de passe initial
+                    <input
+                      type="text"
+                      value={formPassword}
+                      onChange={(e) => setFormPassword(e.target.value)}
+                      placeholder="client1234"
+                      style={{
+                        width: '100%',
+                        height: 38,
+                        padding: '0 10px',
+                        borderRadius: 6,
+                        border: '1px solid #93c5fd',
+                        background: '#ffffff',
+                        color: '#0f172a',
+                        fontSize: 13,
+                      }}
+                    />
+                  </label>
+                </div>
+                <small style={{ color: '#3b82f6', fontSize: 11, display: 'block', marginTop: 4 }}>
+                  Le client pourra se connecter immédiatement sur le portail B2B avec ces identifiants pour passer ses commandes.
+                </small>
               </div>
             </div>
 
@@ -1288,9 +1474,22 @@ export default function ClientsCrm() {
                 <div style={{ fontSize: '11.5px', marginTop: '4px', color: '#64748b' }}>Ville: {selectedClient.city}</div>
               </div>
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                <small style={{ color: '#64748b', display: 'block', fontSize: 11, fontWeight: 600 }}>Conditions tarifaires</small>
+                <small style={{ color: '#64748b', display: 'block', fontSize: 11, fontWeight: 600 }}>Tarifs & Attribution Commerciale</small>
                 <b style={{ textTransform: 'capitalize', color: '#0284c7', fontSize: 13 }}>Tarif {selectedClient.price_tier}</b>
-                <div style={{ fontSize: '11.5px', marginTop: '4px', color: '#64748b' }}>Commercial: {selectedClient.commercial_name}</div>
+                <div style={{ fontSize: '11.5px', marginTop: '4px', color: '#64748b' }}>
+                  Commercial: <b>{selectedClient.commercial_name}</b>
+                  {selectedClient.commercial_reference && ` (${selectedClient.commercial_reference})`}
+                </div>
+                {selectedClient.commission_percentage !== undefined && selectedClient.commission_percentage !== null && (
+                  <div style={{ fontSize: '11px', marginTop: '2px', color: '#059669', fontWeight: 600 }}>
+                    Commission: {selectedClient.commission_percentage}%
+                  </div>
+                )}
+                {selectedClient.creator_name && (
+                  <div style={{ fontSize: '10.5px', marginTop: '2px', color: '#64748b' }}>
+                    Créé par: {selectedClient.creator_name}
+                  </div>
+                )}
               </div>
               <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
                 <small style={{ color: '#64748b', display: 'block', fontSize: 11, fontWeight: 600 }}>Encours & Crédit</small>
@@ -1487,9 +1686,19 @@ export default function ClientsCrm() {
                     onChange={(e) => setEditCommercial(e.target.value)}
                     style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
                   >
-                    <option value="Youssef Bennani">Youssef Bennani (Casablanca)</option>
-                    <option value="Ahmed Idrissi">Ahmed Idrissi (Marrakech / Sud)</option>
-                    <option value="Salma Benjelloun">Salma Benjelloun (Rabat / Nord)</option>
+                    {commercialUsers.length > 0 ? (
+                      commercialUsers.map((comm) => (
+                        <option key={comm.id} value={comm.name}>
+                          {comm.name} {comm.commercial_code ? `(${comm.commercial_code})` : ''}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Yassine Mansouri">Yassine Mansouri (COM-001)</option>
+                        <option value="Sara El Amrani">Sara El Amrani (COM-003)</option>
+                        <option value="Tariq Bennani">Tariq Bennani (COM-004)</option>
+                      </>
+                    )}
                   </select>
                 </label>
                 <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>

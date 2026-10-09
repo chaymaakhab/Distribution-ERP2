@@ -206,16 +206,31 @@ export default function AdministratorDashboard() {
         </div>
       </div>
 
-      {/* ── Role Quick Actions Bar (Admin) ── */}
+      {/* ── Role Quick Actions Bar (Admin d'Entreprise) ── */}
       <RoleQuickActionsBar
-        roleTitle="Administrateur"
+        roleTitle={`Administrateur · ${user.company?.brand_name || user.company?.name || 'Entreprise'}`}
         actions={[
+          {
+            id: 'qa-depot',
+            label: '+ Nouveau Dépôt',
+            description: 'Ouvrir ou configurer un dépôt dans votre quota',
+            icon: Building2,
+            primary: true,
+            onClick: () => setLocation(`/${workspace}/warehouses`),
+          },
+          {
+            id: 'qa-user',
+            label: '+ Nouveau Commercial / Équipe',
+            description: 'Créer un utilisateur, commercial ou livreur',
+            icon: Users,
+            primary: true,
+            onClick: () => setLocation(`/${workspace}/users`),
+          },
           {
             id: 'qa-cust',
             label: '+ Nouveau Client',
             description: 'Créer un compte client et fixer son plafond',
             icon: Users,
-            primary: true,
             onClick: () => setLocation(`/${workspace}/customers`),
           },
           {
@@ -225,22 +240,97 @@ export default function AdministratorDashboard() {
             icon: ShoppingBag,
             onClick: () => setLocation(`/${workspace}/orders`),
           },
-          {
-            id: 'qa-stock',
-            label: '+ Entrée Marchandise',
-            description: 'Réceptionner un arrivage au dépôt',
-            icon: Boxes,
-            onClick: () => setLocation(`/${workspace}/inventory`),
-          },
-          {
-            id: 'qa-user',
-            label: '+ Nouvel Utilisateur',
-            description: 'Créer un utilisateur et affecter ses rôles',
-            icon: Plus,
-            onClick: () => setLocation(`/${workspace}/users`),
-          },
         ]}
       />
+
+      {/* ── Entreprise & SaaS Subscription Quota Strip (User Request) ── */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+          gap: 12,
+          padding: '14px 18px',
+          background: 'var(--navy-2)',
+          borderRadius: 10,
+          border: '1px solid rgba(2, 132, 199, 0.3)',
+          marginBottom: 16,
+          alignItems: 'center',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 8,
+              background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+              color: '#ffffff',
+              display: 'grid',
+              placeItems: 'center',
+              fontWeight: 800,
+              fontSize: 14,
+              flexShrink: 0,
+            }}
+          >
+            <Building2 size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: 10.5, color: '#38bdf8', fontWeight: 800, textTransform: 'uppercase' }}>
+              Société · Abonnement SaaS {user.company?.subscription_plan?.toUpperCase() || 'PRO'}
+            </div>
+            <strong style={{ fontSize: 14, color: 'var(--text)' }}>
+              {user.company?.brand_name || user.company?.name || 'Hercules Distribution Maroc'}
+            </strong>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
+              ICE: {user.company?.ice || '002345678000045'} · Siège: {user.company?.city || 'Casablanca'}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 4 }}>
+            <span style={{ color: 'var(--muted)' }}>Dépôts autorisés :</span>
+            <b style={{ color: '#38bdf8' }}>{user.company?.warehouses_count ?? 4} / {user.company?.max_warehouses ?? 5}</b>
+          </div>
+          <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${Math.min(100, (((user.company?.warehouses_count ?? 4) / (user.company?.max_warehouses ?? 5)) * 100))}%`,
+                background: '#0284c7',
+              }}
+            />
+          </div>
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 4 }}>
+            <span style={{ color: 'var(--muted)' }}>Commerciaux &amp; Équipe :</span>
+            <b style={{ color: '#a855f7' }}>{user.company?.users_count ?? 12} / {user.company?.max_users ?? 20}</b>
+          </div>
+          <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${Math.min(100, (((user.company?.users_count ?? 12) / (user.company?.max_users ?? 20)) * 100))}%`,
+                background: '#a855f7',
+              }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(34, 197, 94, 0.1)', padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+          <div>
+            <span style={{ fontSize: 10, color: '#16a34a', fontWeight: 800, textTransform: 'uppercase' }}>Échéance de la Formule</span>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>
+              Valable jusqu’au {user.company?.subscription_end_date ?? '31/08/2027'}
+            </div>
+          </div>
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#22c55e', background: 'rgba(34, 197, 94, 0.2)', padding: '2px 6px', borderRadius: 4 }}>
+            {user.company?.days_remaining ?? 326}j
+          </span>
+        </div>
+      </div>
 
       {/* Operational KPIs */}
       <div className="sx-kpi-cards">

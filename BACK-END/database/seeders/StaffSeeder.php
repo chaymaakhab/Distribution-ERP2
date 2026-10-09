@@ -30,17 +30,17 @@ class StaffSeeder extends Seeder
 
         // One demo user per role. Password: password
         $users = [
-            ['superadmin', 'Super Admin', 'superadmin@hercules-erp.ma', null],
-            ['admin', 'Amine El Fassi', 'admin@hercules-erp.ma', null],
-            ['warehouse', 'Nadia El Amrani', 'depot@hercules-erp.ma', $casa?->id],
-            ['commercial', 'Youssef Bennani', 'commercial@hercules-erp.ma', null],
-            ['preparation', 'Karim Ouazzani', 'preparation@hercules-erp.ma', $casa?->id],
-            ['delivery', 'Mehdi Lahlou', 'livreur@hercules-erp.ma', $casa?->id],
-            ['pre_seller', 'Hamid El Meskini (Livreur-pré-vendeur)', 'prevendeur@hercules-erp.ma', $casa?->id],
-            ['accounting', 'Sofia Cherkaoui', 'compta@hercules-erp.ma', null],
+            ['superadmin', 'Super Admin', 'superadmin@hercules-erp.ma', null, null, null],
+            ['admin', 'Amine El Fassi', 'admin@hercules-erp.ma', null, null, null],
+            ['warehouse', 'Nadia El Amrani', 'depot@hercules-erp.ma', $casa?->id, null, null],
+            ['commercial', 'Youssef Bennani', 'commercial@hercules-erp.ma', null, 'COM-001', 5.00],
+            ['preparation', 'Karim Ouazzani', 'preparation@hercules-erp.ma', $casa?->id, null, null],
+            ['delivery', 'Mehdi Lahlou', 'livreur@hercules-erp.ma', $casa?->id, null, null],
+            ['pre_seller', 'Hamid El Meskini (Livreur-pré-vendeur)', 'prevendeur@hercules-erp.ma', $casa?->id, 'COM-003', 3.50],
+            ['accounting', 'Sofia Cherkaoui', 'compta@hercules-erp.ma', null, null, null],
         ];
 
-        foreach ($users as [$roleCode, $name, $email, $warehouseId]) {
+        foreach ($users as [$roleCode, $name, $email, $warehouseId, $commercialCode, $commRate]) {
             $role = Role::where('code', $roleCode)->first();
 
             $user = User::updateOrCreate(
@@ -52,6 +52,8 @@ class StaffSeeder extends Seeder
                     'is_active' => true,
                     'locale' => 'fr',
                     'warehouse_id' => $warehouseId,
+                    'commercial_code' => $commercialCode,
+                    'commission_rate' => $commRate ?? 5.00,
                 ]
             );
 

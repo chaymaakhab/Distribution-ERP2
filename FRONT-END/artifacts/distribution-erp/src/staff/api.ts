@@ -22,6 +22,33 @@ export interface StaffWarehouse {
   city: string | null;
 }
 
+export interface StaffCompany {
+  id: number;
+  code: string;
+  name: string;
+  brand_name?: string | null;
+  ice?: string | null;
+  rc?: string | null;
+  if_tax?: string | null;
+  patente?: string | null;
+  cnss?: string | null;
+  city: string;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  subscription_plan: 'starter' | 'pro' | 'enterprise' | 'custom';
+  subscription_status: 'active' | 'trial' | 'expired' | 'suspended';
+  subscription_start_date?: string | null;
+  subscription_end_date: string | null;
+  subscription_price?: number;
+  subscription_billing_cycle?: 'mensuel' | 'annuel';
+  days_remaining: number;
+  max_users: number;
+  max_warehouses: number;
+  users_count?: number;
+  warehouses_count?: number;
+}
+
 export interface StaffUser {
   id: number;
   name: string;
@@ -30,6 +57,7 @@ export interface StaffUser {
   avatar: string | null;
   locale: string | null;
   warehouse: StaffWarehouse | null;
+  company: StaffCompany | null;
   roles: StaffRole[];
   primary_role: string | null;
   permissions: string[];
@@ -119,6 +147,66 @@ export const api = {
   adminRevenue: () => request<{ data: RevenueData }>('/admin/revenue'),
   adminWarehouses: () => request<{ data: WarehouseNode[] }>('/admin/warehouses'),
   adminPerformance: () => request<{ data: PerformanceData }>('/admin/performance'),
+  getCommercialsClients: () => request<{
+    summary: {
+      total_commercials: number;
+      total_assigned_clients: number;
+      total_unassigned_clients: number;
+      total_turnover: number;
+      total_commissions: number;
+    };
+    commercials: Array<{
+      id: number;
+      name: string;
+      email: string;
+      phone: string;
+      commercial_code: string;
+      commission_rate: number;
+      clients_count: number;
+      total_orders: number;
+      total_turnover: number;
+      total_commission: number;
+      clients: Array<{
+        id: number;
+        code: string;
+        name: string;
+        company: string;
+        email: string;
+        phone: string;
+        city: string;
+        ice: string;
+        price_tier: string;
+        status: string;
+        credit_limit: number;
+        current_balance: number;
+        orders_count: number;
+        turnover: number;
+        commission_percentage: number;
+        commission_earned: number;
+        commercial_reference: string;
+        created_at: string;
+      }>;
+    }>;
+    unassigned_clients: Array<{
+      id: number;
+      code: string;
+      name: string;
+      company: string;
+      email: string;
+      phone: string;
+      city: string;
+      price_tier: string;
+      status: string;
+      orders_count: number;
+      turnover: number;
+      created_at: string;
+    }>;
+  }>('/admin/commercials-clients'),
+  updateCommercialCommission: (id: number, data: { commission_rate: number; commercial_code?: string }) =>
+    request<{ message: string; commercial: any }>(`/admin/commercials/${id}/commission-rate`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 
   // Customers CRM
   getCustomers: (params?: { q?: string; tier?: string; status?: string }) => {
@@ -390,7 +478,85 @@ export const api = {
   getRolesManagement: () => request<any[]>('/roles/management'),
   updateRolePermissions: (roleId: number, permissions: string[]) =>
     request<any>(`/roles/${roleId}/permissions`, { method: 'PUT', body: JSON.stringify({ permissions }) }),
+
+  // SaaS Multi-Company & Subscriptions
+  getSaasCompanies: (params?: { q?: string; status?: string; plan?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<{ status: string; data: SaasCompany[]; total: number }>(`/saas/companies${qry ? '?' + qry : ''}`);
+  },
+  createSaasCompany: (data: any) =>
+    request<{ status: string; message: string; data: SaasCompany }>('/saas/companies', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  getSaasCompany: (id: number) =>
+    request<{ status: string; data: SaasCompany }>(`/saas/companies/${id}`),
+  updateSaasCompany: (id: number, data: any) =>
+    request<{ status: string; message: string; data: SaasCompany }>(`/saas/companies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  updateSaasSubscription: (id: number, data: any) =>
+    request<{ status: string; message: string; data: SaasCompany }>(`/saas/companies/${id}/subscription`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  getSaasOverview: () =>
+    request<{ status: string; data: SaasOverview }>('/saas/overview'),
+  getMyCompany: () =>
+    request<{ status: string; data: SaasCompany }>('/saas/my-company'),
 };
+
+export interface SaasCompany {
+  id: number;
+  code: string;
+  name: string;
+  brand_name?: string | null;
+  ice?: string | null;
+  rc?: string | null;
+  if_tax?: string | null;
+  patente?: string | null;
+  cnss?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  city: string;
+  address?: string | null;
+  logo_url?: string | null;
+  admin_user_id?: number | null;
+  admin_user?: {
+    id: number;
+    name: string;
+    email: string;
+    phone?: string;
+  } | null;
+  subscription_plan: 'starter' | 'pro' | 'enterprise' | 'custom';
+  subscription_status: 'active' | 'trial' | 'expired' | 'suspended';
+  subscription_start_date?: string | null;
+  subscription_end_date: string | null;
+  subscription_price: number;
+  subscription_billing_cycle: 'mensuel' | 'annuel';
+  max_users: number;
+  max_warehouses: number;
+  users_count: number;
+  warehouses_count: number;
+  days_remaining: number;
+  is_expired?: boolean;
+  status: 'active' | 'suspended';
+}
+
+export interface SaasOverview {
+  total_companies: number;
+  active_subscriptions: number;
+  trial_subscriptions: number;
+  expired_subscriptions: number;
+  suspended_subscriptions: number;
+  mrr_mad: number;
+  arr_mad: number;
+  total_users_across_saas: number;
+  total_warehouses_across_saas: number;
+  expiring_soon_count: number;
+  expiring_soon: SaasCompany[];
+}
 
 
 export interface OverviewKpis {

@@ -16,6 +16,7 @@ import { AreaChart, BarList, ColumnChart, DonutChart, MultiSegmentProgress } fro
 import { MapCanvas, MapLegend } from '../components/MapCanvas';
 import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
 import DepotsMultiCityAnalytics from '../components/DepotsMultiCityAnalytics';
+import SaasCompaniesManagement from '../components/SaasCompaniesManagement';
 import '../admin.css';
 
 export interface PendingOperation {
@@ -326,8 +327,8 @@ export default function SuperAdminDashboard() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Super Admin Operation Validations (User requested: "super admin y3ti validation l chaque opiration par exemple reteur chno sbab dyalo o 3lach kan o wach produit saleh yrje3 l stock wela ba9i")
-  const [viewSection, setViewSection] = useState<'all' | 'depots' | 'tasks'>('all');
+  // Super Admin Operation Validations
+  const [viewSection, setViewSection] = useState<'all' | 'companies' | 'depots' | 'tasks'>('all');
   const [pendingOps, setPendingOps] = useState<PendingOperation[]>(INITIAL_PENDING_OPS);
   const [taskFilter, setTaskFilter] = useState<'all' | 'pending' | 'arbitrated' | 'returns' | 'credit' | 'finance'>('all');
   const [arbitrationModal, setArbitrationModal] = useState<PendingOperation | null>(null);
@@ -482,6 +483,14 @@ export default function SuperAdminDashboard() {
       <RoleQuickActionsBar
         roleTitle="Super Admin"
         actions={[
+          {
+            id: 'sa-company',
+            label: '+ Nouvelle Entreprise SaaS',
+            description: 'Créer une société cliente et son admin d’entreprise',
+            icon: Building2,
+            primary: true,
+            onClick: () => setViewSection('companies'),
+          },
           {
             id: 'sa-user',
             label: '+ Nouvel Utilisateur',
@@ -650,6 +659,26 @@ export default function SuperAdminDashboard() {
         </button>
         <button
           type="button"
+          onClick={() => setViewSection('companies')}
+          style={{
+            padding: '6px 14px',
+            borderRadius: 6,
+            border: viewSection === 'companies' ? '1px solid #0284c7' : '1px solid transparent',
+            background: viewSection === 'companies' ? '#0284c7' : 'transparent',
+            color: viewSection === 'companies' ? '#ffffff' : 'var(--text)',
+            fontWeight: 700,
+            fontSize: 12,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Building2 size={14} />
+          Sociétés Clientes &amp; Abonnements SaaS
+        </button>
+        <button
+          type="button"
           onClick={() => setViewSection('depots')}
           style={{
             padding: '6px 14px',
@@ -709,6 +738,17 @@ export default function SuperAdminDashboard() {
           <span>Ouvrir Module Dépôts ↗</span>
         </button>
       </div>
+
+      {/* ── SaaS Multi-Companies & Subscriptions Management (User Request) ── */}
+      {(viewSection === 'all' || viewSection === 'companies') && (
+        <div style={{ marginBottom: 20 }}>
+          <SaasCompaniesManagement
+            onSelectCompanyToView={() => {
+              setLocation(`/${workspace}/warehouses`);
+            }}
+          />
+        </div>
+      )}
 
       {/* When 'depots' view is selected, show DepotsMultiCityAnalytics right on top */}
       {viewSection === 'depots' && (

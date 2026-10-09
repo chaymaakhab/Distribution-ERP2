@@ -3,304 +3,453 @@ import { Link, useLocation } from 'wouter';
 import {
   ArrowRight, Package, Receipt, ShoppingBag, TrendingUp, Loader2,
   Repeat, Wallet, Zap, Wrench, Droplets, Settings2, BatteryCharging,
-  ShieldCheck, Truck, Headphones, MessageSquare,
-  Sparkles, Check, ChevronRight,
+  ShieldCheck, Truck, Headphones, MessageSquare, Sparkles, Check,
+  ChevronRight, Search, Plus, Clock, ExternalLink,
 } from 'lucide-react';
 import { api, type CustomerUser, type OrderSummary, type Product, type Balance } from '../api';
 import { formatMoney, useCart } from '../cart';
 import { useI18n } from '../i18n';
 import ProductCard from '../components/ProductCard';
 
+export function StatusBadge({ status, label }: { status: string; label: string }) {
+  const map: Record<string, string> = {
+    pending_validation: 'cx-badge-amber',
+    confirmed: 'cx-badge-blue',
+    prepared: 'cx-badge-blue',
+    assigned: 'cx-badge-blue',
+    in_delivery: 'cx-badge-amber',
+    delivered: 'cx-badge-green',
+    cancelled: 'cx-badge-red',
+    returned: 'cx-badge-slate',
+  };
+  return <span className={`cx-badge ${map[status] ?? 'cx-badge-slate'}`}>{label}</span>;
+}
+
 export default function Home({ user }: { user: CustomerUser }) {
   const [, setLocation] = useLocation();
-  const { add, addMany } = useCart();
-  const { t, isAr } = useI18n();
+  const { add, totalHt, count } = useCart();
+  const { t } = useI18n();
   const [products, setProducts] = useState<Product[] | null>(null);
   const [orders, setOrders] = useState<OrderSummary[] | null>(null);
   const [balance, setBalance] = useState<Balance | null>(null);
   const [added, setAdded] = useState<number | null>(null);
   const [habitualToast, setHabitualToast] = useState(false);
 
+  // Express Quick Order States
+  const [selectedSku, setSelectedSku] = useState<string>('');
+  const [quickQty, setQuickQty] = useState<number>(1);
+  const [quickSuccess, setQuickSuccess] = useState(false);
+
   useEffect(() => {
-    api.products().then((r) => setProducts(r.data.slice(0, 8))).catch(() => setProducts([]));
+    api.products().then((r) => setProducts(r.data)).catch(() => setProducts([]));
     api.orders().then((r) => setOrders(r.data.slice(0, 4))).catch(() => setOrders([]));
     api.balance().then((r) => setBalance(r.data)).catch(() => setBalance(null));
   }, []);
 
-  function quickAdd(p: Product) {
-    add(p, p.min_order_qty || 1);
+  function handleProductAdd(p: Product, qty: number = 1) {
+    add(p, qty);
     setAdded(p.id);
     setTimeout(() => setAdded((a) => (a === p.id ? null : a)), 1200);
   }
 
-  // CDC Section 7.3: Bouton "Ma commande habituelle" qui propose les produits commandés le plus souvent
+  // 1-Click Habitual Order (Commande habituelle)
   function handleHabitualOrder() {
     if (!products || products.length === 0) return;
-    products.slice(0, 3).forEach((p) => {
-      add(p, 2);
+    products.slice(0, 4).forEach((p) => {
+      add(p, p.min_order_qty || 2);
     });
     setHabitualToast(true);
-    setTimeout(() => setHabitualToast(false), 3000);
+    setTimeout(() => setHabitualToast(false), 3500);
   }
 
-  const commercialPhone = user.commercial?.email ? '212661234567' : '212661234567';
+  // Express SKU quick addition
+  function handleQuickSkuAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedSku || !products) return;
+    const target = products.find((p) => p.code === selectedSku || p.sku === selectedSku);
+    if (target) {
+      add(target, quickQty);
+      setQuickSuccess(true);
+      setTimeout(() => setQuickSuccess(false), 2000);
+      setSelectedSku('');
+      setQuickQty(1);
+    }
+  }
+
+  // Franco progress calculation (threshold 2500 DH HT)
+  const FRANCO_THRESHOLD = 2500;
+  const francoProgress = Math.min(100, Math.round((totalHt / FRANCO_THRESHOLD) * 100));
+  const remainingFranco = Math.max(0, FRANCO_THRESHOLD - totalHt);
+
+  const categories = [
+    { code: 'ELEC', name: 'Électricité Industrielle', icon: Zap, count: '38 articles' },
+    { code: 'OUTIL', name: 'Outillage & Électroportatif', icon: Wrench, count: '64 articles' },
+    { code: 'PLOMB', name: 'Plomberie & Pompage', icon: Droplets, count: '42 articles' },
+    { code: 'BAT', name: 'Quincaillerie & Fixations', icon: Settings2, count: '85 articles' },
+  ];
 
   return (
     <div className="cx-page">
-      {/* Promotional banner */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, #0284c7, #0369a1)',
-          borderRadius: '12px',
-          padding: '24px 28px',
-          color: '#ffffff',
-          marginBottom: '20px',
-          boxShadow: '0 4px 20px rgba(2, 132, 199, 0.2)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}
-      >
-        <div style={{ maxWidth: '640px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, marginBottom: '8px' }}>
-            <Sparkles size={14} /> {t('home.badge')} · {t('nav.tier')} {user.price_tier.toUpperCase()}
-          </div>
-          <h1 style={{ margin: '0 0 6px', fontSize: 'clamp(20px, 2.2vw, 26px)', fontWeight: 800 }}>
-            {t('home.title')}
-          </h1>
-          <p style={{ margin: 0, fontSize: '13px', opacity: 0.9 }}>
-            {t('home.subtitle')}
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '220px' }}>
-          {/* CDC Requirement: Bouton "Ma commande habituelle" */}
+      {/* Toast Notification when habitual order is clicked */}
+      {habitualToast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 99,
+            background: '#059669',
+            color: '#ffffff',
+            padding: '14px 22px',
+            borderRadius: '12px',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontWeight: 700,
+            fontSize: '14px',
+          }}
+        >
+          <Check size={20} /> Vos articles habituels ont été ajoutés au panier !
           <button
-            className="cx-btn"
-            onClick={handleHabitualOrder}
+            onClick={() => setLocation('/customer/cart')}
             style={{
               background: '#ffffff',
-              color: 'var(--cx-brand-dark)',
-              fontWeight: 800,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+              color: '#059669',
               border: 0,
+              padding: '6px 12px',
+              borderRadius: '8px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              marginLeft: '8px',
             }}
           >
-            <Repeat size={16} /> {t('home.habitual_order')}
+            Voir le panier
+          </button>
+        </div>
+      )}
+
+      {/* 1. Executive B2B Hero Banner */}
+      <section className="cx-hero-b2b">
+        <div className="cx-hero-glow-orb" />
+        <div className="cx-hero-content">
+          <div className="cx-hero-badge">
+            <Sparkles size={14} /> PARTENAIRE GROSSISTE AGRÉÉ · TARIF {user.price_tier.toUpperCase()}
+          </div>
+          <h1 className="cx-hero-title">
+            Bonjour, {user.company || user.name}
+          </h1>
+          <p className="cx-hero-desc">
+            Bénéficiez de vos grilles tarifaires négociées en direct d'usine, d'une expédition prioritaire sous 24-48h et de la facturation certifiée conforme ICE.
+          </p>
+
+          {/* Franco de port Tracker */}
+          <div className="cx-franco-meter">
+            <div className="cx-franco-labels">
+              <span>
+                {remainingFranco > 0 ? (
+                  <>Plus que <b>{formatMoney(remainingFranco)}</b> pour la <b>Livraison Offerte</b> 🚚</>
+                ) : (
+                  <span style={{ color: '#34d399', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <Check size={14} /> <b>Félicitations ! Franco de port atteint. Livraison Gratuite.</b>
+                  </span>
+                )}
+              </span>
+              <span>{francoProgress}%</span>
+            </div>
+            <div className="cx-franco-bar">
+              <div className="cx-franco-fill" style={{ width: `${francoProgress}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Hero Actions */}
+        <div className="cx-hero-actions">
+          <button className="cx-hero-btn-habitual" onClick={handleHabitualOrder}>
+            <Repeat size={18} /> {t('home.habitual_order')}
           </button>
           <button
             className="cx-btn"
             onClick={() => setLocation('/customer/catalog')}
             style={{
-              background: 'rgba(255,255,255,0.15)',
+              background: 'rgba(255, 255, 255, 0.12)',
               color: '#ffffff',
-              border: '1px solid rgba(255,255,255,0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(8px)',
             }}
           >
-            <ShoppingBag size={15} /> {t('home.browse_catalog')}
+            <Package size={17} /> {t('home.browse_catalog')}
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Reassurance strip */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '12px',
-          marginBottom: '20px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '8px', background: 'var(--cx-surface)', border: '1px solid var(--cx-border)' }}>
-          <Truck size={20} style={{ color: 'var(--cx-brand)' }} />
+      {/* 2. Executive KPI Cards Row */}
+      {balance && (
+        <section className="cx-kpi-grid">
+          <div className="cx-kpi-card" onClick={() => setLocation('/customer/invoices')} style={{ cursor: 'pointer' }}>
+            <div className="cx-kpi-icon blue">
+              <Wallet size={24} />
+            </div>
+            <div className="cx-kpi-info">
+              <small>Crédit disponible</small>
+              <b>{formatMoney(balance.credit_available)}</b>
+              <span>Plafond : {formatMoney(balance.credit_limit)}</span>
+            </div>
+          </div>
+
+          <div className="cx-kpi-card" onClick={() => setLocation('/customer/invoices')} style={{ cursor: 'pointer' }}>
+            <div className="cx-kpi-icon amber">
+              <Receipt size={24} />
+            </div>
+            <div className="cx-kpi-info">
+              <small>Reste à régler</small>
+              <b>{formatMoney(balance.remaining)}</b>
+              <span>Factures échues ou à terme</span>
+            </div>
+          </div>
+
+          <div className="cx-kpi-card" onClick={() => setLocation('/customer/orders')} style={{ cursor: 'pointer' }}>
+            <div className="cx-kpi-icon green">
+              <Truck size={24} />
+            </div>
+            <div className="cx-kpi-info">
+              <small>Dernière commande</small>
+              <b>{orders?.[0]?.ref || 'Aucune'}</b>
+              <span>{orders?.[0] ? `${orders[0].items_count} articles · ${orders[0].status_label}` : 'En attente'}</span>
+            </div>
+          </div>
+
+          <div className="cx-kpi-card" onClick={() => setLocation('/customer/profile')} style={{ cursor: 'pointer' }}>
+            <div className="cx-kpi-icon purple">
+              <Headphones size={24} />
+            </div>
+            <div className="cx-kpi-info">
+              <small>Commercial dédié</small>
+              <b>{user.commercial?.name || 'Agence Casablanca'}</b>
+              <span style={{ color: '#2563eb', fontWeight: 600 }}>Contacter sur WhatsApp</span>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 3. Express SKU / Reference Quick Order Box */}
+      <section className="cx-quick-order-widget">
+        <div className="cx-quick-order-title">
+          <div style={{ width: 42, height: 42, borderRadius: 10, background: 'var(--cx-brand-soft)', color: 'var(--cx-brand)', display: 'grid', placeItems: 'center' }}>
+            <Zap size={22} />
+          </div>
           <div>
-            <b style={{ fontSize: '12px', display: 'block' }}>Livraison Express</b>
-            <small style={{ color: 'var(--cx-muted)', fontSize: '11px' }}>24-48h depuis nos dépôts</small>
+            <h3>Saisie Express par Référence / SKU</h3>
+            <p>Ajoutez rapidement des références sans naviguer dans tout le catalogue.</p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '8px', background: 'var(--cx-surface)', border: '1px solid var(--cx-border)' }}>
-          <ShieldCheck size={20} style={{ color: 'var(--cx-brand)' }} />
+        <form className="cx-quick-order-form" onSubmit={handleQuickSkuAdd}>
+          <select
+            value={selectedSku}
+            onChange={(e) => setSelectedSku(e.target.value)}
+            aria-label="Sélectionner un article"
+          >
+            <option value="">-- Choisir une référence --</option>
+            {products?.map((p) => (
+              <option key={p.code} value={p.code}>
+                [{p.sku || p.code}] {p.name} — {formatMoney(p.price_ht)} HT
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="number"
+            min={1}
+            value={quickQty}
+            onChange={(e) => setQuickQty(Math.max(1, parseInt(e.target.value) || 1))}
+            title="Quantité"
+          />
+
+          <button
+            type="submit"
+            className="cx-btn cx-btn-primary"
+            disabled={!selectedSku}
+          >
+            {quickSuccess ? <><Check size={16} /> Ajouté</> : <><Plus size={16} /> Ajouter au panier</>}
+          </button>
+        </form>
+      </section>
+
+      {/* 4. Moroccan B2B Pillars of Trust */}
+      <section className="cx-pillars-grid">
+        <div className="cx-pillar-item">
+          <div className="cx-pillar-icon">
+            <ShieldCheck size={20} />
+          </div>
           <div>
-            <b style={{ fontSize: '12px', display: 'block' }}>Paiement à la livraison</b>
-            <small style={{ color: 'var(--cx-muted)', fontSize: '11px' }}>Espèces, chèque ou traite</small>
+            <b>Stock Direct Dépôt</b>
+            <small>Disponibilité temps réel certifiée</small>
           </div>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '8px', background: 'var(--cx-surface)', border: '1px solid var(--cx-border)' }}>
-          <Headphones size={20} style={{ color: 'var(--cx-brand)' }} />
+        <div className="cx-pillar-item">
+          <div className="cx-pillar-icon">
+            <Receipt size={20} />
+          </div>
           <div>
-            <b style={{ fontSize: '12px', display: 'block' }}>Commercial Dédié</b>
-            <small style={{ color: 'var(--cx-muted)', fontSize: '11px' }}>{user.commercial?.name || 'Youssef Bennani'}</small>
+            <b>Factures Conformes DGI</b>
+            <small>ICE, IF et TVA récupérable à 20%</small>
           </div>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '8px', background: 'var(--cx-surface)', border: '1px solid var(--cx-border)' }}>
-          <Wallet size={20} style={{ color: 'var(--cx-brand)' }} />
+        <div className="cx-pillar-item">
+          <div className="cx-pillar-icon">
+            <Truck size={20} />
+          </div>
           <div>
-            <b style={{ fontSize: '12px', display: 'block' }}>Plafond Crédit Pro</b>
-            <small style={{ color: 'var(--cx-muted)', fontSize: '11px' }}>{formatMoney(user.credit_limit)} DH autorisés</small>
+            <b>Flotte de Livraison Pro</b>
+            <small>Chauffeurs dédiés & tournées régulières</small>
           </div>
         </div>
-      </div>
-
-      {/* Account Balance Widget */}
-      <div className="cx-stat-row">
-        <Stat icon={Package} label="Mes Commandes" value={balance ? String(balance.orders_count) : '3'} tone="blue" />
-        <Stat icon={Receipt} label="Factures impayées" value={balance ? String(balance.unpaid_invoices) : '1'} tone="amber" />
-        <Stat icon={TrendingUp} label="Total facturé" value={balance ? `${formatMoney(balance.total_invoiced)} DH` : '38 805 DH'} tone="green" />
-        <Stat icon={Wallet} label="Solde en cours" value={balance ? `${formatMoney(balance.remaining)} DH` : '18 420 DH'} tone="slate" />
-      </div>
-
-      {/* Featured product categories */}
-      <section className="cx-section">
-        <div className="cx-section-head">
-          <div>
-            <span className="cx-eyebrow">RAYONS & CATÉGORIES</span>
-            <h2>Parcourir nos univers de produits</h2>
+        <div className="cx-pillar-item">
+          <div className="cx-pillar-icon">
+            <Headphones size={20} />
           </div>
-          <Link href="/customer/catalog" className="cx-more">
+          <div>
+            <b>SAV & Échanges 48h</b>
+            <small>Prise en charge directe par l'entrepôt</small>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Quick Category Navigation */}
+      <section>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div>
+            <span className="cx-eyebrow">RAYONS PRINCIPAUX</span>
+            <h2 style={{ fontSize: 18, fontWeight: 800, margin: '2px 0 0' }}>Explorer nos familles de produits</h2>
+          </div>
+          <Link href="/customer/catalog" className="cx-btn cx-btn-ghost sm">
             Tout le catalogue <ArrowRight size={14} />
           </Link>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
-            gap: '12px',
-          }}
-        >
-          {[
-            { name: 'Électricité', code: 'ELE', icon: Zap, desc: 'Câbles, disjoncteurs, tableaux' },
-            { name: 'Outillage Pro', code: 'OUT', icon: Wrench, desc: 'Perceuses, disques diamant' },
-            { name: 'Plomberie', code: 'PLO', icon: Droplets, desc: 'Pompes immergées, tuyaux PVC' },
-            { name: 'Quincaillerie', code: 'QUI', icon: Settings2, desc: 'Charnières, visserie, fixations' },
-            { name: 'Énergie', code: 'ENE', icon: BatteryCharging, desc: 'Groupes électrogènes, projecteurs' },
-          ].map((cat) => (
-            <button
-              key={cat.code}
-              type="button"
-              onClick={() => setLocation(`/customer/catalog?category=${cat.code}`)}
-              style={{
-                background: 'var(--cx-surface)',
-                border: '1px solid var(--cx-border)',
-                borderRadius: '10px',
-                padding: '14px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                textAlign: 'left',
-                color: 'var(--cx-text)',
-                font: 'inherit',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--cx-brand)')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--cx-border)')}
-            >
-              <div style={{ width: '40px', height: '40px', borderRadius: '9px', background: 'var(--cx-brand-soft)', color: 'var(--cx-brand)', display: 'grid', placeItems: 'center', marginBottom: '8px' }}>
-                <cat.icon size={20} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+          {categories.map((cat) => {
+            const Icon = cat.icon;
+            return (
+              <div
+                key={cat.code}
+                onClick={() => setLocation(`/customer/catalog?category=${cat.code}`)}
+                style={{
+                  background: 'var(--cx-surface)',
+                  border: '1px solid var(--cx-border)',
+                  borderRadius: '14px',
+                  padding: '18px 20px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                  boxShadow: 'var(--cx-shadow-sm)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--cx-brand)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--cx-border)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--cx-brand-soft)', color: 'var(--cx-brand)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <Icon size={22} />
+                </div>
+                <div>
+                  <b style={{ display: 'block', fontSize: 14 }}>{cat.name}</b>
+                  <small style={{ color: 'var(--cx-muted)' }}>{cat.count}</small>
+                </div>
               </div>
-              <b style={{ fontSize: '13px', display: 'block' }}>{cat.name}</b>
-              <small style={{ color: 'var(--cx-muted)', fontSize: '10.5px' }}>{cat.desc}</small>
-            </button>
-          ))}
+            );
+          })}
         </div>
       </section>
 
-      {/* Recommended Products Grid */}
-      <section className="cx-section">
-        <div className="cx-section-head">
+      {/* 6. Bestsellers & Featured Products Grid */}
+      <section>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
-            <span className="cx-eyebrow">SÉLECTION POUR VOTRE COMMERCE</span>
-            <h2>Produits les plus commandés au tarif {user.price_tier}</h2>
+            <span className="cx-eyebrow">RÉASSORT RAPIDE</span>
+            <h2 style={{ fontSize: 20, fontWeight: 800, margin: '2px 0 0' }}>Articles les plus commandés</h2>
           </div>
-          <Link href="/customer/catalog" className="cx-more">
-            Voir tous les produits <ArrowRight size={14} />
+          <Link href="/customer/catalog" className="cx-btn cx-btn-ghost sm">
+            Voir les {products?.length || 12} articles <ArrowRight size={14} />
           </Link>
         </div>
 
         {products === null ? (
-          <div className="cx-loading"><Loader2 className="cx-spin" size={20} /> Chargement des articles…</div>
-        ) : products.length === 0 ? (
-          <div className="cx-empty small"><p>Aucun produit disponible pour le moment.</p></div>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+            <Loader2 className="cx-spin" size={24} style={{ color: 'var(--cx-brand)' }} />
+          </div>
         ) : (
           <div className="cx-product-grid">
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} onAdd={quickAdd} added={added === p.id} />
+            {products.slice(0, 8).map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAdd={handleProductAdd}
+                added={added === product.id}
+              />
             ))}
           </div>
         )}
       </section>
 
-      {/* WhatsApp Dedicated Rep Box */}
-      <div
-        style={{
-          marginTop: '20px',
-          padding: '16px 20px',
-          borderRadius: '10px',
-          background: 'var(--cx-surface)',
-          border: '1px solid var(--cx-border)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(34,197,94,0.15)', color: '#22c55e', display: 'grid', placeItems: 'center' }}>
-            <MessageSquare size={20} />
+      {/* 7. Recent Orders & Tracking Section */}
+      {orders && orders.length > 0 && (
+        <section style={{ marginTop: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div>
+              <span className="cx-eyebrow">HISTORIQUE</span>
+              <h2 style={{ fontSize: 18, fontWeight: 800, margin: '2px 0 0' }}>Vos dernières commandes</h2>
+            </div>
+            <Link href="/customer/orders" className="cx-btn cx-btn-ghost sm">
+              Toutes mes commandes <ArrowRight size={14} />
+            </Link>
           </div>
-          <div>
-            <b style={{ fontSize: '13px', display: 'block' }}>Votre commercial attitré : {user.commercial?.name || 'Youssef Bennani'}</b>
-            <small style={{ color: 'var(--cx-muted)' }}>Des questions sur un devis, une livraison ou un tarif ? Contactez-le directement sur WhatsApp.</small>
-          </div>
-        </div>
-        <a
-          href={`https://wa.me/${commercialPhone}?text=Bonjour%20${encodeURIComponent(user.commercial?.name || 'Youssef')},%20je%20suis%20${encodeURIComponent(user.company || user.name)}%20sur%20Hercules%20Distribution.`}
-          target="_blank"
-          rel="noreferrer"
-          className="cx-btn"
-          style={{ background: '#22c55e', color: '#fff', fontWeight: 700 }}
-        >
-          <MessageSquare size={15} /> Échanger sur WhatsApp
-        </a>
-      </div>
 
-      {habitualToast && (
-        <div className="toast-note" style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 100 }}>
-          <Check size={16} /> Produits de votre commande habituelle ajoutés au panier !
-        </div>
+          <div className="cx-b2b-table-wrap">
+            <table className="cx-table">
+              <thead>
+                <tr>
+                  <th>Réf Commande</th>
+                  <th>Date</th>
+                  <th>Articles</th>
+                  <th>Montant TTC</th>
+                  <th>Statut Livraison</th>
+                  <th className="right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((o) => (
+                  <tr key={o.ref} style={{ cursor: 'pointer' }} onClick={() => setLocation(`/customer/order/${o.ref}`)}>
+                    <td><b>{o.ref}</b></td>
+                    <td>{new Date(o.date).toLocaleDateString('fr-FR')}</td>
+                    <td>{o.items_count} référence(s)</td>
+                    <td><b style={{ color: 'var(--cx-text)' }}>{formatMoney(o.total)}</b></td>
+                    <td><StatusBadge status={o.status} label={o.status_label} /></td>
+                    <td className="right">
+                      <button
+                        className="cx-btn cx-btn-ghost sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLocation(`/customer/order/${o.ref}`);
+                        }}
+                      >
+                        Suivi détaillé <ChevronRight size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
     </div>
-  );
-}
-
-function Stat({ icon: Icon, label, value, tone }: { icon: any; label: string; value: string; tone: string }) {
-  return (
-    <div className={`cx-stat cx-stat-${tone}`}>
-      <span className="cx-stat-icon"><Icon size={18} /></span>
-      <div>
-        <span className="cx-stat-label">{label}</span>
-        <strong className="cx-stat-value">{value}</strong>
-      </div>
-    </div>
-  );
-}
-
-export function StatusBadge({ status, label }: { status: string; label?: string }) {
-  const norm = (status || '').toLowerCase();
-  const tone = /livr|confirm|termin|ok/.test(norm)
-    ? 'cx-badge-green'
-    : /en_cours|route|prep|en_delivery|in_delivery/.test(norm)
-    ? 'cx-badge-blue'
-    : /attente|valider|brouillon|pending/.test(norm)
-    ? 'cx-badge-amber'
-    : 'cx-badge-slate';
-  return (
-    <span className={`cx-badge ${tone}`}>
-      {label || status}
-    </span>
   );
 }

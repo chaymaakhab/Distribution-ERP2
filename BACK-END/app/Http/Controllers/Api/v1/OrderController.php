@@ -142,6 +142,23 @@ class OrderController extends Controller
         });
     }
 
+    public function show($id)
+    {
+        $order = Order::with([
+            'customer',
+            'warehouse',
+            'commercial',
+            'items.product',
+            'invoice',
+            'deliverySlip',
+        ])
+        ->where('id', $id)
+        ->orWhere('ref', $id)
+        ->firstOrFail();
+
+        return response()->json($order);
+    }
+
     public function update(Request $request, $id)
     {
         $order = Order::where('id', $id)->orWhere('ref', $id)->firstOrFail();
@@ -166,6 +183,91 @@ class OrderController extends Controller
         $order->save();
 
         return response()->json($order);
+    }
+
+    public function generateDeliverySlip($id)
+    {
+        $order = Order::with(['customer', 'items.product'])->where('id', $id)->orWhere('ref', $id)->firstOrFail();
+
+        return DB::transaction(function () use ($order) {
+            $existing = \App\Models\DeliverySlip::where('order_id', $order->id)->first();
+            if ($existing) {
+                return response()->json($existing->load(['customer', 'items.product']));
+            }
+
+            $blRef = 'BL-' . date('Y') . '-' . str_pad((string) (\App\Models\DeliverySlip::count() + 1), 3, '0', STR_PAD_LEFT);
+            $totalHt = round($order->total / 1.2, 2);
+            $totalTva = round($order->total - $totalHt, 2);
+
+            $slip = \App\Models\DeliverySlip::create([
+                'ref' => $blRef,
+                'order_id' => $order->id,
+                'customer_id' => $order->customer_id,
+                'warehouse_id' => $order->warehouse_id,
+                'delivery_date' => now()->toDateString(),
+                'total_ht' => $totalHt,
+                'total_tva' => $totalTva,
+                'total_ttc' => $order->total,
+                'status' => 'valide',
+            ]);
+
+            foreach ($order->items as $item) {
+                \App\Models\DeliverySlipItem::create([
+                    'delivery_slip_id' => $slip->id,
+                    'product_id' => $item->product_id,
+                    'quantity_ordered' => $item->quantity,
+                    'quantity_delivered' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'total' => $item->total,
+                ]);
+            }
+
+            return response()->json($slip->load(['customer', 'items.product']), 201);
+        });
+    }
+
+    public function generateInvoice($id)
+    {
+        $order = Order::with(['customer', 'items.product'])->where('id', $id)->orWhere('ref', $id)->firstOrFail();
+
+        return DB::transaction(function () use ($order) {
+            $existing = \App\Models\Invoice::where('order_id', $order->id)->first();
+            if ($existing) {
+                return response()->json($existing->load(['customer', 'items.product']));
+            }
+
+            $invRef = 'FAC-' . date('Y') . '-' . str_pad((string) (\App\Models\Invoice::count() + 1), 4, '0', STR_PAD_LEFT);
+            $totalHt = round($order->total / 1.2, 2);
+            $totalTva = round($order->total - $totalHt, 2);
+
+            $invoice = \App\Models\Invoice::create([
+                'ref' => $invRef,
+                'order_id' => $order->id,
+                'customer_id' => $order->customer_id,
+                'warehouse_id' => $order->warehouse_id,
+                'total_ht' => $totalHt,
+                'tva_rate' => 20.00,
+                'tva_amount' => $totalTva,
+                'total_ttc' => $order->total,
+                'paid_amount' => 0.00,
+                'status' => 'Impayée',
+                'due_date' => now()->addDays(30)->toDateString(),
+            ]);
+
+            foreach ($order->items as $item) {
+                \App\Models\InvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->unit_price,
+                    'total_ht' => round($item->quantity * ($item->unit_price / 1.2), 2),
+                    'tva_rate' => 20.00,
+                    'total_ttc' => $item->total,
+                ]);
+            }
+
+            return response()->json($invoice->load(['customer', 'items.product']), 201);
+        });
     }
 
     public function destroy($id)

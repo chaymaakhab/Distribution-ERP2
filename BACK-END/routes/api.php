@@ -20,6 +20,17 @@ use App\Http\Controllers\Api\v1\TreasuryController;
 use App\Http\Controllers\Api\v1\InvoiceController;
 use App\Http\Controllers\Api\v1\VehicleController;
 use App\Http\Controllers\Api\v1\StockMovementController;
+use App\Http\Controllers\Api\v1\QuoteController;
+use App\Http\Controllers\Api\v1\DeliverySlipController;
+use App\Http\Controllers\Api\v1\PurchaseReceiptController;
+use App\Http\Controllers\Api\v1\InventoryAuditController;
+use App\Http\Controllers\Api\v1\AuditLogController;
+use App\Http\Controllers\Api\v1\CompanySettingController;
+use App\Http\Controllers\Api\v1\WarehouseController;
+use App\Http\Controllers\Api\v1\CommercialVisitController;
+use App\Http\Controllers\Api\v1\NotificationController;
+use App\Http\Controllers\Api\v1\PromotionController;
+use App\Http\Controllers\Api\v1\RoleManagementController;
 use App\Http\Controllers\Api\v1\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\v1\Customer\AuthController as CustomerAuthController;
 use App\Http\Controllers\Api\v1\Customer\CatalogController as CustomerCatalogController;
@@ -40,6 +51,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/switch-role', [AuthController::class, 'switchRole']);
 
         Route::get('/roles', [AuthController::class, 'roles'])->middleware('permission:roles.view');
+        Route::get('/roles/management', [RoleManagementController::class, 'index']);
+        Route::put('/roles/{id}/permissions', [RoleManagementController::class, 'updatePermissions']);
 
         // SuperAdmin / Administrateur : global dashboard, charts, map, rankings.
         Route::prefix('admin')->group(function () {
@@ -49,11 +62,23 @@ Route::prefix('v1')->group(function () {
             Route::get('/performance', [AdminDashboardController::class, 'performance'])->middleware('permission:reports.view');
         });
 
+        // Orders Management
         Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:orders.view');
+        Route::get('/orders/{id}', [OrderController::class, 'show'])->middleware('permission:orders.view');
         Route::post('/orders', [OrderController::class, 'store'])->middleware('permission:orders.create');
         Route::put('/orders/{id}', [OrderController::class, 'update']);
         Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
         Route::patch('/orders/{ref}/status', [OrderController::class, 'updateStatus'])->middleware('permission:orders.update');
+        Route::post('/orders/{id}/generate-delivery-slip', [OrderController::class, 'generateDeliverySlip']);
+        Route::post('/orders/{id}/generate-invoice', [OrderController::class, 'generateInvoice']);
+
+        // Quotes / Devis & Proformas
+        Route::get('/quotes', [QuoteController::class, 'index']);
+        Route::get('/quotes/{id}', [QuoteController::class, 'show']);
+        Route::post('/quotes', [QuoteController::class, 'store']);
+        Route::put('/quotes/{id}', [QuoteController::class, 'update']);
+        Route::patch('/quotes/{id}/status', [QuoteController::class, 'updateStatus']);
+        Route::post('/quotes/{id}/convert-to-order', [QuoteController::class, 'convertToOrder']);
 
         // Customers CRM
         Route::get('/customers', [CustomerController::class, 'index']);
@@ -88,6 +113,13 @@ Route::prefix('v1')->group(function () {
         Route::put('/stocks/{id}', [StockController::class, 'update']);
         Route::post('/stocks/transfer', [StockController::class, 'transfer']);
 
+        // Warehouses / Dépôts
+        Route::get('/warehouses', [WarehouseController::class, 'index']);
+        Route::get('/warehouses/{id}', [WarehouseController::class, 'show']);
+        Route::post('/warehouses', [WarehouseController::class, 'store']);
+        Route::put('/warehouses/{id}', [WarehouseController::class, 'update']);
+        Route::delete('/warehouses/{id}', [WarehouseController::class, 'destroy']);
+
         // Staff Users Management
         Route::get('/users', [UserController::class, 'index']);
         Route::post('/users', [UserController::class, 'store']);
@@ -99,11 +131,16 @@ Route::prefix('v1')->group(function () {
         Route::post('/returns', [ReturnController::class, 'store']);
         Route::patch('/returns/{id}/validate', [ReturnController::class, 'validateReturn']);
 
-        // Purchase Orders / Bons d'Achat & Réception
+        // Purchase Orders / Bons d'Achat
         Route::get('/purchase-orders', [PurchaseOrderController::class, 'index']);
         Route::get('/purchase-orders/{id}', [PurchaseOrderController::class, 'show']);
         Route::post('/purchase-orders', [PurchaseOrderController::class, 'store']);
         Route::patch('/purchase-orders/{id}/status', [PurchaseOrderController::class, 'updateStatus']);
+
+        // Purchase Receipts / Bons de Réception Fournisseur
+        Route::get('/purchase-receipts', [PurchaseReceiptController::class, 'index']);
+        Route::get('/purchase-receipts/{id}', [PurchaseReceiptController::class, 'show']);
+        Route::post('/purchase-receipts', [PurchaseReceiptController::class, 'store']);
 
         // Inter-depot Transfers / Transferts Inter-Dépôts
         Route::get('/transfers', [StockTransferController::class, 'index']);
@@ -120,6 +157,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/delivery-tours/{id}', [DeliveryTourController::class, 'show']);
         Route::patch('/delivery-tours/{tourId}/stops/{stopId}', [DeliveryTourController::class, 'updateStop']);
 
+        // Delivery Slips / Bons de Livraison (BL)
+        Route::get('/delivery-slips', [DeliverySlipController::class, 'index']);
+        Route::get('/delivery-slips/{id}', [DeliverySlipController::class, 'show']);
+        Route::post('/delivery-slips', [DeliverySlipController::class, 'store']);
+        Route::patch('/delivery-slips/{id}/status', [DeliverySlipController::class, 'updateStatus']);
+        Route::post('/delivery-slips/{id}/sign', [DeliverySlipController::class, 'sign']);
+
         // Invoicing & Credit Notes
         Route::get('/invoices', [InvoiceController::class, 'index']);
         Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
@@ -132,11 +176,47 @@ Route::prefix('v1')->group(function () {
         Route::get('/treasury/cheques', [TreasuryController::class, 'cheques']);
         Route::patch('/treasury/cheques/{id}/status', [TreasuryController::class, 'updateChequeStatus']);
 
-        // Fleet Vehicles & Movements
+        // Inventory Audits / Inventaires Physiques
+        Route::get('/inventory-audits', [InventoryAuditController::class, 'index']);
+        Route::get('/inventory-audits/{id}', [InventoryAuditController::class, 'show']);
+        Route::post('/inventory-audits', [InventoryAuditController::class, 'store']);
+        Route::post('/inventory-audits/{id}/adjust-stock', [InventoryAuditController::class, 'adjustStock']);
+
+        // Commercial Field Visits / Visites Commerciales Terrain
+        Route::get('/visits', [CommercialVisitController::class, 'index']);
+        Route::get('/visits/{id}', [CommercialVisitController::class, 'show']);
+        Route::post('/visits', [CommercialVisitController::class, 'store']);
+        Route::patch('/visits/{id}/checkin', [CommercialVisitController::class, 'checkin']);
+        Route::patch('/visits/{id}/complete', [CommercialVisitController::class, 'complete']);
+
+        // Notifications & Alerts
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::post('/notifications', [NotificationController::class, 'store']);
+        Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+        Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
+        Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+
+        // Promotions & Price Rules
+        Route::get('/promotions', [PromotionController::class, 'index']);
+        Route::get('/promotions/{id}', [PromotionController::class, 'show']);
+        Route::post('/promotions', [PromotionController::class, 'store']);
+        Route::put('/promotions/{id}', [PromotionController::class, 'update']);
+        Route::delete('/promotions/{id}', [PromotionController::class, 'destroy']);
+
+        // Company Settings & Legal Mentions
+        Route::get('/settings/company', [CompanySettingController::class, 'show']);
+        Route::put('/settings/company', [CompanySettingController::class, 'update']);
+
+        // Audit Trail Logs
+        Route::get('/audit-logs', [AuditLogController::class, 'index']);
+        Route::post('/audit-logs', [AuditLogController::class, 'store']);
+
+        // Fleet Vehicles & Stock Movements
         Route::get('/vehicles', [VehicleController::class, 'index']);
         Route::post('/vehicles', [VehicleController::class, 'store']);
         Route::get('/stock-movements', [StockMovementController::class, 'index']);
 
+        // Offline Data Synchronization
         Route::post('/sync', [SyncController::class, 'sync']);
     });
 

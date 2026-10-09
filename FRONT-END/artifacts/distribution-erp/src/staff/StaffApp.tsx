@@ -31,7 +31,7 @@ import ReturnsManagement from './pages/ReturnsManagement';
 import ReportsPage from './pages/ReportsPage';
 import SystemMaintenance from './pages/SystemMaintenance';
 import GlobalSearchModal, { getErpSearchItems } from './components/GlobalSearchModal';
-import NotificationsDrawer from './components/NotificationsDrawer';
+import NotificationsDrawer, { ALL_SYSTEM_NOTIFICATIONS, filterNotificationsByPermissions } from './components/NotificationsDrawer';
 import LogoutConfirmModal from './components/LogoutConfirmModal';
 import './components/global-search.css';
 import './components/notifications.css';
@@ -86,7 +86,9 @@ function StaffShell({ user }: { user: StaffUser }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
-  const [unreadNotifCount, setUnreadNotifCount] = useState(4);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(() => {
+    return filterNotificationsByPermissions(ALL_SYSTEM_NOTIFICATIONS, hasPermission, user.primary_role, user.permissions).filter((n) => !n.read).length;
+  });
   const [topbarSearch, setTopbarSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { theme, toggleTheme, isLight } = useTheme();
@@ -543,6 +545,9 @@ function StaffShell({ user }: { user: StaffUser }) {
         onClose={() => setNotifOpen(false)}
         onNavigate={go}
         onUnreadCountChange={setUnreadNotifCount}
+        hasPermission={hasPermission}
+        userRole={user.primary_role}
+        userPermissions={user.permissions}
       />
 
       <LogoutConfirmModal

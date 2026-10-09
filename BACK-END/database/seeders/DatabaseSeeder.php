@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ErpCompleteSeeder::class,
             SupplierSeeder::class,
             ExtendedModulesSeeder::class,
+            NewModulesSeeder::class,
         ]);
     }
 }

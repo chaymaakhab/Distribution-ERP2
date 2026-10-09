@@ -66,5 +66,20 @@ class Customer extends Authenticatable
     {
         return $this->hasMany(ChequeInHand::class);
     }
+
+    public function commercialVisits()
+    {
+        return $this->hasMany(CommercialVisit::class);
+    }
+
+    public function quotes()
+    {
+        return $this->hasMany(Quote::class);
+    }
+
+    public function deliverySlips()
+    {
+        return $this->hasMany(DeliverySlip::class);
+    }
 }
 

@@ -292,6 +292,104 @@ export const api = {
     const qry = new URLSearchParams(params as any).toString();
     return request<any[]>(`/stock-movements${qry ? '?' + qry : ''}`);
   },
+
+  // Quotes / Devis & Proformas
+  getQuotes: (params?: { customer_id?: number; status?: string; q?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/quotes${qry ? '?' + qry : ''}`);
+  },
+  getQuote: (id: number) => request<any>(`/quotes/${id}`),
+  createQuote: (data: any) =>
+    request<any>('/quotes', { method: 'POST', body: JSON.stringify(data) }),
+  updateQuoteStatus: (id: number, status: string) =>
+    request<any>(`/quotes/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  convertQuoteToOrder: (id: number) =>
+    request<any>(`/quotes/${id}/convert-to-order`, { method: 'POST' }),
+
+  // Delivery Slips (BL)
+  getDeliverySlips: (params?: { driver_id?: number; customer_id?: number; status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/delivery-slips${qry ? '?' + qry : ''}`);
+  },
+  getDeliverySlip: (id: number) => request<any>(`/delivery-slips/${id}`),
+  createDeliverySlip: (data: any) =>
+    request<any>('/delivery-slips', { method: 'POST', body: JSON.stringify(data) }),
+  signDeliverySlip: (id: number, data: { receiver_name: string; signature: string }) =>
+    request<any>(`/delivery-slips/${id}/sign`, { method: 'POST', body: JSON.stringify(data) }),
+
+  // Purchase Receipts (BR)
+  getPurchaseReceipts: (params?: { supplier_id?: number; warehouse_id?: number; status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/purchase-receipts${qry ? '?' + qry : ''}`);
+  },
+  createPurchaseReceipt: (data: any) =>
+    request<any>('/purchase-receipts', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Inventory Audits
+  getInventoryAudits: (params?: { warehouse_id?: number; status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/inventory-audits${qry ? '?' + qry : ''}`);
+  },
+  createInventoryAudit: (data: any) =>
+    request<any>('/inventory-audits', { method: 'POST', body: JSON.stringify(data) }),
+  adjustInventoryStock: (id: number) =>
+    request<any>(`/inventory-audits/${id}/adjust-stock`, { method: 'POST' }),
+
+  // Warehouses (Depots)
+  getWarehouses: (params?: { city?: string; status?: string; q?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/warehouses${qry ? '?' + qry : ''}`);
+  },
+  createWarehouse: (data: any) =>
+    request<any>('/warehouses', { method: 'POST', body: JSON.stringify(data) }),
+  updateWarehouse: (id: number, data: any) =>
+    request<any>(`/warehouses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteWarehouse: (id: number) =>
+    request<any>(`/warehouses/${id}`, { method: 'DELETE' }),
+
+  // Commercial Field Visits
+  getVisits: (params?: { commercial_id?: number; customer_id?: number; status?: string; date?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/visits${qry ? '?' + qry : ''}`);
+  },
+  createVisit: (data: any) =>
+    request<any>('/visits', { method: 'POST', body: JSON.stringify(data) }),
+  checkinVisit: (id: number, coords: { latitude: number; longitude: number }) =>
+    request<any>(`/visits/${id}/checkin`, { method: 'PATCH', body: JSON.stringify(coords) }),
+  completeVisit: (id: number, data: any) =>
+    request<any>(`/visits/${id}/complete`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  // Notifications
+  getNotifications: () =>
+    request<{ notifications: any[]; unread_count: number }>('/notifications'),
+  markNotificationRead: (id: number) =>
+    request<any>(`/notifications/${id}/read`, { method: 'PATCH' }),
+  markAllNotificationsRead: () =>
+    request<any>('/notifications/mark-all-read', { method: 'POST' }),
+
+  // Promotions
+  getPromotions: (params?: { status?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any[]>(`/promotions${qry ? '?' + qry : ''}`);
+  },
+  createPromotion: (data: any) =>
+    request<any>('/promotions', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Company Settings
+  getCompanySettings: () => request<any>('/settings/company'),
+  updateCompanySettings: (data: any) =>
+    request<any>('/settings/company', { method: 'PUT', body: JSON.stringify(data) }),
+
+  // Audit Logs
+  getAuditLogs: (params?: { q?: string; user_id?: number; action?: string }) => {
+    const qry = new URLSearchParams(params as any).toString();
+    return request<any>(`/audit-logs${qry ? '?' + qry : ''}`);
+  },
+
+  // Roles & Permissions Matrix
+  getRolesManagement: () => request<any[]>('/roles/management'),
+  updateRolePermissions: (roleId: number, permissions: string[]) =>
+    request<any>(`/roles/${roleId}/permissions`, { method: 'PUT', body: JSON.stringify({ permissions }) }),
 };
 
 

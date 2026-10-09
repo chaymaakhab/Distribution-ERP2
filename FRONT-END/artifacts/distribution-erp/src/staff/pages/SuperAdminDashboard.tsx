@@ -14,11 +14,13 @@ import {
 import { useStaffAuth } from '../auth';
 import { AreaChart, BarList, ColumnChart, DonutChart, MultiSegmentProgress } from '../components/Charts';
 import { MapCanvas, MapLegend } from '../components/MapCanvas';
+import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
+import DepotsMultiCityAnalytics from '../components/DepotsMultiCityAnalytics';
 import '../admin.css';
 
 export interface PendingOperation {
   id: number;
-  op_type: 'retour' | 'ajustement' | 'rebut';
+  op_type: 'retour' | 'derogation_credit' | 'avoir' | 'achat_fournisseur';
   ref: string;
   order_ref: string;
   client: string;
@@ -33,6 +35,7 @@ export interface PendingOperation {
   motif_initial: string;
   notes_initiales: string;
   status: 'en_attente' | 'arbitre';
+  priority?: 'urgente' | 'haute' | 'normale';
   decision_admin?: {
     motif_constate: string; // motif exact
     circonstance_cause: string; // cause racine
@@ -47,10 +50,11 @@ const INITIAL_PENDING_OPS: PendingOperation[] = [
   {
     id: 1,
     op_type: 'retour',
+    priority: 'urgente',
     ref: 'RET-2026-018',
     order_ref: 'CMD-2026-1248',
     client: 'Épicerie Centrale Saïd',
-    depot: 'DEP-02 Mohammedia',
+    depot: 'DEP-01 Casablanca Central',
     driver_name: 'Hamid Moukrim',
     driver_role: 'Livreur Dépôt → Client',
     driver_type: 'depot_to_client',
@@ -65,10 +69,11 @@ const INITIAL_PENDING_OPS: PendingOperation[] = [
   {
     id: 2,
     op_type: 'retour',
+    priority: 'haute',
     ref: 'RET-2026-014',
     order_ref: 'CMD-2026-1184',
     client: 'Commerce Général Tazi',
-    depot: 'DEP-04 Settat',
+    depot: 'DEP-02 Rabat Hub',
     driver_name: 'Tariq El Ouazzani',
     driver_role: 'Navette Inter-Dépôts',
     driver_type: 'depot_to_depot',
@@ -83,6 +88,7 @@ const INITIAL_PENDING_OPS: PendingOperation[] = [
   {
     id: 3,
     op_type: 'retour',
+    priority: 'normale',
     ref: 'RET-2026-019',
     order_ref: 'CMD-HW-2026-089',
     client: 'Épicerie Al Baraka (Commerce de proximité)',
@@ -96,6 +102,82 @@ const INITIAL_PENDING_OPS: PendingOperation[] = [
     date: 'Aujourd’hui 09:15',
     motif_initial: 'Erreur commande',
     notes_initiales: 'Récupéré lors de la tournée Derb Sultan par le pré-vendeur. Emballage scellé d’origine.',
+    status: 'en_attente',
+  },
+  {
+    id: 4,
+    op_type: 'derogation_credit',
+    priority: 'urgente',
+    ref: 'DER-2026-008',
+    order_ref: 'CMD-2408',
+    client: 'Maison du Bricolage',
+    depot: 'DEP-03 Marrakech',
+    driver_name: 'Ahmed Idrissi',
+    driver_role: 'Commercial Régional',
+    driver_type: 'depot_to_client',
+    product: 'Lot Outillage Pro & Pompes chantiers',
+    qty: 3,
+    total: 12450,
+    date: 'Aujourd’hui 09:40',
+    motif_initial: 'Dépassement de plafond crédit',
+    notes_initiales: 'Plafond accordé: 35 000 DH · Encours actuel: 38 200 DH (+3 200 DH excédent). Client historique solvable sollicitant dérogation expédition urgente.',
+    status: 'en_attente',
+  },
+  {
+    id: 5,
+    op_type: 'derogation_credit',
+    priority: 'haute',
+    ref: 'DER-2026-009',
+    order_ref: 'CMD-2409',
+    client: 'Comptoir Al Amal',
+    depot: 'DEP-05 Fès',
+    driver_name: 'Youssef Bennani',
+    driver_role: 'Commercial Grands Comptes',
+    driver_type: 'depot_to_client',
+    product: 'Matériel sanitaire & robinetterie',
+    qty: 8,
+    total: 32100,
+    date: 'Hier 16:30',
+    motif_initial: 'Dépassement de plafond crédit',
+    notes_initiales: 'Plafond crédit: 100 000 DH · Encours total: 104 500 DH. Demande de dérogation commerciale exceptionnelle pour chantier Al Qaraouiyine.',
+    status: 'en_attente',
+  },
+  {
+    id: 6,
+    op_type: 'avoir',
+    priority: 'haute',
+    ref: 'AVR-2026-004',
+    order_ref: 'FAC-2025-179',
+    client: 'Quincaillerie Saada',
+    depot: 'DEP-06 Agadir',
+    driver_name: 'Nadia Mansouri',
+    driver_role: 'Responsable Comptable',
+    driver_type: 'depot_to_client',
+    product: 'Ristourne annuelle sur CA HT 2024',
+    qty: 1,
+    total: 8450,
+    date: '26 Fév 2025',
+    motif_initial: 'Avoir commercial sur volume',
+    notes_initiales: 'Régularisation remise annuelle 3% contractuelle. Visa Super Admin obligatoire car montant supérieur au seuil délégataire de 5 000 DH.',
+    status: 'en_attente',
+  },
+  {
+    id: 7,
+    op_type: 'achat_fournisseur',
+    priority: 'urgente',
+    ref: 'BCA-2026-048',
+    order_ref: 'BC-2026-048',
+    client: 'Fournisseur Ingelec Maroc',
+    depot: 'DEP-05 Fès',
+    driver_name: 'Karim Tazi',
+    driver_role: 'Chef Approvisionnement',
+    driver_type: 'depot_to_depot',
+    product: 'Appareillage électrique & Câbles cuivre',
+    qty: 120,
+    total: 145000,
+    date: 'Hier 14:00',
+    motif_initial: 'Réapprovisionnement stratégique Dépôt Fès',
+    notes_initiales: 'Achat de réapprovisionnement dépassant 100 000 DH TTC. Engagement budgétaire soumis au visa préalable de la Direction Générale.',
     status: 'en_attente',
   },
 ];
@@ -246,6 +328,7 @@ export default function SuperAdminDashboard() {
 
   // Super Admin Operation Validations (User requested: "super admin y3ti validation l chaque opiration par exemple reteur chno sbab dyalo o 3lach kan o wach produit saleh yrje3 l stock wela ba9i")
   const [pendingOps, setPendingOps] = useState<PendingOperation[]>(INITIAL_PENDING_OPS);
+  const [taskFilter, setTaskFilter] = useState<'all' | 'pending' | 'arbitrated' | 'returns' | 'credit' | 'finance'>('all');
   const [arbitrationModal, setArbitrationModal] = useState<PendingOperation | null>(null);
   const [arbMotif, setArbMotif] = useState<string>('Produit endommagé');
   const [arbCause, setArbCause] = useState<string>('');
@@ -265,12 +348,32 @@ export default function SuperAdminDashboard() {
     if (!arbitrationModal) return;
 
     let decisionLabel = '';
-    if (arbStockDecision === 'reintegre_stock') {
-      decisionLabel = `Produit conforme : Réintégré en stock disponible (+${arbitrationModal.qty} unités)`;
-    } else if (arbStockDecision === 'mis_au_rebut_perte') {
-      decisionLabel = 'Avarie constatée : Mis au rebut / Perte comptable (0 stock vendable)';
+    if (arbitrationModal.op_type === 'retour') {
+      if (arbStockDecision === 'reintegre_stock') {
+        decisionLabel = `Produit conforme : Réintégré en stock disponible (+${arbitrationModal.qty} unités)`;
+      } else if (arbStockDecision === 'mis_au_rebut_perte') {
+        decisionLabel = 'Avarie constatée : Mis au rebut / Perte comptable (0 stock vendable)';
+      } else {
+        decisionLabel = 'Rejet du litige : Retour non fondé, réexpédition au client';
+      }
+    } else if (arbitrationModal.op_type === 'derogation_credit') {
+      if (arbStockDecision === 'reintegre_stock') {
+        decisionLabel = 'Dérogation accordée : Commande débloquée et transmise en préparation';
+      } else {
+        decisionLabel = 'Dérogation refusée : Maintien du blocage jusqu’au règlement de la créance';
+      }
+    } else if (arbitrationModal.op_type === 'avoir') {
+      if (arbStockDecision === 'reintegre_stock') {
+        decisionLabel = 'Avoir commercial approuvé & visé : Émission comptable autorisée';
+      } else {
+        decisionLabel = 'Demande d’avoir rejetée par la Direction Générale';
+      }
     } else {
-      decisionLabel = 'Rejet du litige : Retour non fondé, réexpédition au client';
+      if (arbStockDecision === 'reintegre_stock') {
+        decisionLabel = 'Bon d’achat approuvé : Bon de commande transmis au fournisseur';
+      } else {
+        decisionLabel = 'Bon d’achat mis en attente / refusé';
+      }
     }
 
     setPendingOps((prev) =>
@@ -294,7 +397,7 @@ export default function SuperAdminDashboard() {
       )
     );
 
-    notify(`Arbitrage Super Admin validé pour ${arbitrationModal.ref} : ${decisionLabel}`);
+    notify(`Décision Direction Générale validée pour ${arbitrationModal.ref} : ${decisionLabel}`);
     setArbitrationModal(null);
   }
 
@@ -373,6 +476,42 @@ export default function SuperAdminDashboard() {
           </button>
         </div>
       </div>
+
+      {/* ── Role Quick Actions Bar (Super Admin) ── */}
+      <RoleQuickActionsBar
+        roleTitle="Super Admin"
+        actions={[
+          {
+            id: 'sa-user',
+            label: '+ Nouvel Utilisateur',
+            description: 'Créer un utilisateur ERP et lui assigner des rôles',
+            icon: Users,
+            primary: true,
+            onClick: () => setLocation(`/${workspace}/users`),
+          },
+          {
+            id: 'sa-wh',
+            label: '+ Nouveau Dépôt / Ville',
+            description: 'Superviser ou ouvrir un nouveau dépôt régional',
+            icon: Warehouse,
+            onClick: () => setLocation(`/${workspace}/warehouses`),
+          },
+          {
+            id: 'sa-prod',
+            label: '+ Article Catalogue',
+            description: 'Ajouter une référence avec photo et tarifs',
+            icon: Building2,
+            onClick: () => setLocation(`/${workspace}/products`),
+          },
+          {
+            id: 'sa-sav',
+            label: '+ Déclarer Litige / SAV',
+            description: 'Ouvrir un dossier de litige ou retour',
+            icon: Undo2,
+            onClick: () => setLocation(`/${workspace}/returns`),
+          },
+        ]}
+      />
 
       {/* System Status Strip */}
       <div
@@ -475,186 +614,320 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
-      {/* ── Super Admin Operational Validations & Arbitrations Widget (User Request) ── */}
-      <section className="panel" style={{ padding: '16px', marginBottom: '16px', border: '1px solid rgba(2, 132, 199, 0.35)', background: 'var(--navy-1)' }}>
-        <div className="panel-heading" style={{ marginBottom: '14px', flexWrap: 'wrap', gap: 10 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Crown size={12} /> ARBITRAGE OPÉRATIONNEL & AUDIT DIRECTION
-              </span>
-              <span
-                style={{
-                  background: '#0284c7',
-                  color: '#ffffff',
-                  fontSize: 10.5,
-                  fontWeight: 700,
-                  borderRadius: 12,
-                  padding: '2px 8px',
-                }}
-              >
-                {pendingOps.filter((o) => o.status === 'en_attente').length} litiges en attente
-              </span>
-            </div>
-            <h2 style={{ margin: '4px 0 0' }}>
-              Validations des Opérations Sensibles (Retours Marchandises & Avaries)
-            </h2>
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)' }}>
-              Arbitrage hiérarchique : motif exact, circonstance et verdict qualité / réintégration en stock.
-            </p>
-          </div>
-          <button
-            className="button-secondary"
-            onClick={() => setLocation(`/${workspace}/returns`)}
-            style={{ fontSize: 12, height: 34, gap: 6 }}
-          >
-            <Undo2 size={14} /> Registre complet des retours <ArrowRight size={14} />
-          </button>
-        </div>
+      {/* ── Super Admin Hierarchical Validation Tasks & Alerts (User Request) ── */}
+      {(() => {
+        const pendingCount = pendingOps.filter((o) => o.status === 'en_attente').length;
+        const arbitratedCount = pendingOps.filter((o) => o.status === 'arbitre').length;
+        const filteredTasks = pendingOps.filter((op) => {
+          if (taskFilter === 'pending') return op.status === 'en_attente';
+          if (taskFilter === 'arbitrated') return op.status === 'arbitre';
+          if (taskFilter === 'returns') return op.op_type === 'retour';
+          if (taskFilter === 'credit') return op.op_type === 'derogation_credit';
+          if (taskFilter === 'finance') return op.op_type === 'avoir' || op.op_type === 'achat_fournisseur';
+          return true;
+        });
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
-          {pendingOps.map((op) => {
-            const isArbitrated = op.status === 'arbitre';
-            const isPreSeller = op.driver_type === 'pre_seller';
-            return (
+        return (
+          <section
+            className="panel"
+            style={{
+              padding: '18px',
+              marginBottom: '20px',
+              border: '1px solid rgba(2, 132, 199, 0.4)',
+              background: 'var(--navy-1)',
+              borderRadius: 12,
+            }}
+          >
+            {/* Urgent Alert Banner */}
+            {pendingCount > 0 && (
               <div
-                key={op.id}
                 style={{
-                  border: isArbitrated ? '1px solid #16a34a' : '1px solid var(--line)',
-                  borderRadius: 10,
-                  padding: 14,
-                  background: isArbitrated ? 'rgba(34,197,94,0.05)' : 'var(--navy-2)',
                   display: 'flex',
-                  flexDirection: 'column',
+                  alignItems: 'center',
                   justifyContent: 'space-between',
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  marginBottom: 16,
+                  flexWrap: 'wrap',
                   gap: 10,
                 }}
               >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                    <div>
-                      <code style={{ color: '#f59e0b', fontWeight: 700, fontSize: 12 }}>{op.ref}</code>
-                      <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 6 }}>({op.order_ref})</span>
-                      <b style={{ display: 'block', fontSize: 13, marginTop: 2 }}>{op.client}</b>
-                    </div>
-                    <span
-                      className={`status-pill ${isArbitrated ? 'status-green' : 'status-amber'}`}
-                      style={{ fontSize: 10.5 }}
-                    >
-                      {isArbitrated ? <CheckCircle2 size={11} /> : <AlertTriangle size={11} />}
-                      {isArbitrated ? 'Arbitré Super Admin' : 'En attente décision'}
-                    </span>
-                  </div>
-
-                  <div style={{ background: 'rgba(0,0,0,0.15)', padding: '8px 10px', borderRadius: 6, fontSize: 12, margin: '8px 0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--muted)' }}>Article litigieux :</span>
-                      <b>{op.product} (×{op.qty})</b>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                      <span style={{ color: 'var(--muted)' }}>Montant avoir :</span>
-                      <b style={{ color: '#0284c7' }}>{formatMoney(op.total)} DH</b>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                      <span style={{ color: 'var(--muted)' }}>Chauffeur :</span>
-                      <span style={{ fontSize: 11, color: isPreSeller ? '#10b981' : undefined }}>
-                        {isPreSeller ? '🚚 Pré-vendeur (Van Sales)' : '🚚 ' + op.driver_name}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                      <span style={{ color: 'var(--muted)' }}>Dépôt récepteur :</span>
-                      <span>{op.depot}</span>
-                    </div>
-                  </div>
-
-                  {isArbitrated && op.decision_admin ? (
-                    <div style={{ fontSize: 11, padding: 8, background: 'rgba(2,132,199,0.08)', borderRadius: 6, border: '1px solid #bae6fd' }}>
-                      <div style={{ color: '#0284c7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <ShieldCheck size={12} /> Décision validée :
-                      </div>
-                      <div style={{ marginTop: 2, color: 'var(--text)' }}>
-                        <b>Verdict stock :</b> {op.decision_admin.decision_label}
-                      </div>
-                      <div style={{ marginTop: 2, color: 'var(--muted)' }}>
-                        <b>Motif :</b> {op.decision_admin.motif_constate} · <b>Circonstance :</b> {op.decision_admin.circonstance_cause}
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: 11.5, color: 'var(--muted)', fontStyle: 'italic' }}>
-                      « {op.notes_initiales} »
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                  <button
-                    className="button-primary"
-                    onClick={() => handleOpenArbitration(op)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div
                     style={{
+                      width: 32,
                       height: 32,
-                      fontSize: 11.5,
-                      padding: '0 12px',
-                      background: isArbitrated ? '#334155' : '#0284c7',
-                      borderColor: isArbitrated ? '#475569' : '#0369a1',
-                      gap: 6,
+                      borderRadius: 6,
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      color: '#ef4444',
+                      display: 'grid',
+                      placeItems: 'center',
+                      flexShrink: 0,
                     }}
                   >
-                    <ShieldCheck size={13} />
-                    {isArbitrated ? 'Modifier l’arbitrage' : 'Arbitrer l’opération'}
-                  </button>
+                    <AlertTriangle size={18} />
+                  </div>
+                  <div>
+                    <strong style={{ color: '#ffffff', fontSize: 13, display: 'block' }}>
+                      Alerte : {pendingCount} demande{pendingCount > 1 ? 's' : ''} de validation prioritaire{pendingCount > 1 ? 's' : ''} en attente de votre arbitrage
+                    </strong>
+                    <span style={{ fontSize: 11, color: '#fca5a5' }}>
+                      Opérations sensibles suspendues : retours SAV, dépassements d’encours et engagements budgétaires.
+                    </span>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setTaskFilter('pending')}
+                  style={{
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    border: 0,
+                    borderRadius: 6,
+                    padding: '6px 14px',
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Filtrer tâches urgentes ({pendingCount})
+                </button>
               </div>
-            );
-          })}
-        </div>
-      </section>
+            )}
 
-      {/* Multi-Dépôt Performance Grid */}
-      <section className="panel" style={{ padding: '16px', marginBottom: '16px' }}>
-        <div className="panel-heading" style={{ marginBottom: '12px' }}>
-          <div>
-            <span className="eyebrow">RÉSEAU NATIONAL</span>
-            <h2>État en direct des 4 dépôts régionaux</h2>
-          </div>
-          <button className="more-button" onClick={() => setLocation(`/${workspace}/warehouses`)}>
-            Carte détaillée <ArrowRight size={14} />
-          </button>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '12px' }}>
-          {nodes.map((node) => (
-            <div
-              key={node.depot_code}
-              style={{
-                border: '1px solid var(--line)',
-                borderRadius: '8px',
-                padding: '14px',
-                background: 'var(--navy-2)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <div>
-                  <b style={{ fontSize: '13px' }}>{node.name}</b>
-                  <div style={{ fontSize: '11px', color: 'var(--muted)' }}>{node.city}</div>
+            {/* Header */}
+            <div className="panel-heading" style={{ marginBottom: '14px', flexWrap: 'wrap', gap: 10 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Crown size={13} /> CENTRE DE TÂCHES &amp; VALIDATIONS HIÉRARCHIQUES
+                  </span>
+                  <span
+                    style={{
+                      background: '#0284c7',
+                      color: '#ffffff',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      borderRadius: 12,
+                      padding: '2px 9px',
+                    }}
+                  >
+                    {pendingCount} en attente · {arbitratedCount} traitée{arbitratedCount > 1 ? 's' : ''}
+                  </span>
                 </div>
-                <span className="status-pill status-green" style={{ fontSize: '10px' }}>
-                  <i /> {node.status === 'online' ? 'Connecté' : node.status === 'synced' ? 'Synchronisé' : 'Actif'}
-                </span>
+                <h2 style={{ margin: '4px 0 0', fontSize: 17, fontWeight: 700 }}>
+                  Demandes d’Arbitrage &amp; Validations (Super Admin)
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)' }}>
+                  Arbitrage opérationnel avec verdict qualité, réintégration en stock et visa hiérarchique.
+                </p>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', margin: '8px 0', borderTop: '1px solid var(--line-soft)', borderBottom: '1px solid var(--line-soft)', padding: '6px 0' }}>
-                <span style={{ color: 'var(--muted)' }}>Chiffre d’affaires :</span>
-                <b>{formatMoney(node.revenue)} DH</b>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--muted)' }}>
-                <span>Articles en stock : <b>{node.stock_count}</b></span>
-                <span>Dernière synchro : {node.last_sync}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  className="button-secondary"
+                  onClick={() => setLocation(`/${workspace}/returns`)}
+                  style={{ fontSize: 11.5, height: 34, gap: 6 }}
+                >
+                  <Undo2 size={14} /> Registre Retours SAV <ArrowRight size={13} />
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
+
+            {/* Task Filter Tabs */}
+            <div className="table-tabs" style={{ marginBottom: 14, overflowX: 'auto', display: 'flex', gap: 4 }}>
+              <button
+                type="button"
+                className={`table-tab ${taskFilter === 'all' ? 'active-tab' : ''}`}
+                onClick={() => setTaskFilter('all')}
+              >
+                Toutes les Tâches ({pendingOps.length})
+              </button>
+              <button
+                type="button"
+                className={`table-tab ${taskFilter === 'pending' ? 'active-tab' : ''}`}
+                onClick={() => setTaskFilter('pending')}
+                style={{ color: pendingCount > 0 ? '#ef4444' : undefined, fontWeight: pendingCount > 0 ? 700 : undefined }}
+              >
+                À Arbitrer ({pendingCount})
+              </button>
+              <button
+                type="button"
+                className={`table-tab ${taskFilter === 'arbitrated' ? 'active-tab' : ''}`}
+                onClick={() => setTaskFilter('arbitrated')}
+              >
+                Traitées / Visées ({arbitratedCount})
+              </button>
+              <button
+                type="button"
+                className={`table-tab ${taskFilter === 'returns' ? 'active-tab' : ''}`}
+                onClick={() => setTaskFilter('returns')}
+              >
+                Retours SAV ({pendingOps.filter((o) => o.op_type === 'retour').length})
+              </button>
+              <button
+                type="button"
+                className={`table-tab ${taskFilter === 'credit' ? 'active-tab' : ''}`}
+                onClick={() => setTaskFilter('credit')}
+              >
+                Dérogations Crédit ({pendingOps.filter((o) => o.op_type === 'derogation_credit').length})
+              </button>
+              <button
+                type="button"
+                className={`table-tab ${taskFilter === 'finance' ? 'active-tab' : ''}`}
+                onClick={() => setTaskFilter('finance')}
+              >
+                Avoirs &amp; Achats ({pendingOps.filter((o) => o.op_type === 'avoir' || o.op_type === 'achat_fournisseur').length})
+              </button>
+            </div>
+
+            {/* Task Cards Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
+              {filteredTasks.length === 0 ? (
+                <div style={{ gridColumn: '1 / -1', padding: '28px 16px', textAlign: 'center', background: 'var(--navy-2)', borderRadius: 8, color: 'var(--muted)' }}>
+                  <CheckCircle2 size={28} style={{ color: '#22c55e', margin: '0 auto 6px' }} />
+                  <b>Aucune tâche dans cette catégorie.</b>
+                </div>
+              ) : (
+                filteredTasks.map((op) => {
+                  const isArbitrated = op.status === 'arbitre';
+                  let typeLabel = 'RETOUR SAV';
+                  let typeColor = '#f59e0b';
+                  if (op.op_type === 'derogation_credit') {
+                    typeLabel = 'DÉROGATION CRÉDIT';
+                    typeColor = '#a855f7';
+                  } else if (op.op_type === 'avoir') {
+                    typeLabel = 'AVOIR FINANCIER';
+                    typeColor = '#06b6d4';
+                  } else if (op.op_type === 'achat_fournisseur') {
+                    typeLabel = 'ACHAT STRATÉGIQUE';
+                    typeColor = '#3b82f6';
+                  }
+
+                  return (
+                    <div
+                      key={op.id}
+                      style={{
+                        border: isArbitrated ? '1px solid #16a34a' : '1px solid var(--line)',
+                        borderRadius: 10,
+                        padding: 14,
+                        background: isArbitrated ? 'rgba(34,197,94,0.05)' : 'var(--navy-2)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                      }}
+                    >
+                      <div>
+                        {/* Card Head */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span
+                                style={{
+                                  fontSize: 9.5,
+                                  fontWeight: 800,
+                                  padding: '1px 6px',
+                                  borderRadius: 4,
+                                  background: `${typeColor}20`,
+                                  color: typeColor,
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                {typeLabel}
+                              </span>
+                              <code style={{ color: '#38bdf8', fontWeight: 700, fontSize: 11.5 }}>{op.ref}</code>
+                            </div>
+                            <b style={{ display: 'block', fontSize: 13, marginTop: 4 }}>{op.client}</b>
+                          </div>
+                          <span
+                            className={`status-pill ${isArbitrated ? 'status-green' : op.priority === 'urgente' ? 'status-red' : 'status-amber'}`}
+                            style={{ fontSize: 10 }}
+                          >
+                            {isArbitrated ? <CheckCircle2 size={11} /> : <AlertTriangle size={11} />}
+                            {isArbitrated ? 'Arbitré Direction' : op.priority === 'urgente' ? '🔴 Urgente' : 'En attente'}
+                          </span>
+                        </div>
+
+                        {/* Content summary */}
+                        <div style={{ background: 'rgba(0,0,0,0.18)', padding: '8px 10px', borderRadius: 6, fontSize: 12, margin: '8px 0' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: 'var(--muted)' }}>Objet :</span>
+                            <b>{op.product} (×{op.qty})</b>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                            <span style={{ color: 'var(--muted)' }}>Montant engagé :</span>
+                            <b style={{ color: '#0284c7' }}>{formatMoney(op.total)} DH</b>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                            <span style={{ color: 'var(--muted)' }}>Initiateur :</span>
+                            <span style={{ fontSize: 11, color: 'var(--text)' }}>
+                              {op.driver_name} ({op.driver_role})
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                            <span style={{ color: 'var(--muted)' }}>Dépôt rattaché :</span>
+                            <span>{op.depot}</span>
+                          </div>
+                        </div>
+
+                        {/* Decision or initial note */}
+                        {isArbitrated && op.decision_admin ? (
+                          <div style={{ fontSize: 11, padding: 8, background: 'rgba(2,132,199,0.08)', borderRadius: 6, border: '1px solid #bae6fd' }}>
+                            <div style={{ color: '#0284c7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <ShieldCheck size={12} /> Décision validée :
+                            </div>
+                            <div style={{ marginTop: 2, color: 'var(--text)' }}>
+                              <b>Verdict :</b> {op.decision_admin.decision_label}
+                            </div>
+                            <div style={{ marginTop: 2, color: 'var(--muted)' }}>
+                              <b>Motif :</b> {op.decision_admin.motif_constate} · <b>Cause :</b> {op.decision_admin.circonstance_cause}
+                            </div>
+                            {op.decision_admin.visa_notes && (
+                              <div style={{ marginTop: 2, color: '#0284c7', fontStyle: 'italic' }}>
+                                Visa : « {op.decision_admin.visa_notes} »
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 11.5, color: 'var(--muted)', fontStyle: 'italic' }}>
+                            « {op.notes_initiales} »
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6, gap: 6 }}>
+                        <button
+                          type="button"
+                          className="button-primary"
+                          onClick={() => handleOpenArbitration(op)}
+                          style={{
+                            height: 32,
+                            fontSize: 11.5,
+                            padding: '0 12px',
+                            background: isArbitrated ? '#334155' : '#0284c7',
+                            borderColor: isArbitrated ? '#475569' : '#0369a1',
+                            gap: 6,
+                          }}
+                        >
+                          <ShieldCheck size={13} />
+                          {isArbitrated ? 'Modifier l’arbitrage' : 'Arbitrer la tâche'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* ── Multi-City Moroccan Depots Analytics (User Request) ── */}
+      <DepotsMultiCityAnalytics onNavigateToWarehouse={() => setLocation(`/${workspace}/warehouses`)} />
 
       {/* Charts & Analytics */}
       <div className="sx-grid-2" style={{ marginBottom: '16px' }}>

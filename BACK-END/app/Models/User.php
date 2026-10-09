@@ -39,6 +39,16 @@ class User extends Authenticatable
         return $this->belongsTo(Warehouse::class);
     }
 
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function commercialVisits()
+    {
+        return $this->hasMany(CommercialVisit::class, 'commercial_id');
+    }
+
     public function roleCodes(): array
     {
         return $this->roles->pluck('code')->all();

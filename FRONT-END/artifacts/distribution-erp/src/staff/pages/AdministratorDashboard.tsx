@@ -11,6 +11,8 @@ import {
 } from '../api';
 import { useStaffAuth } from '../auth';
 import { AreaChart, BarList } from '../components/Charts';
+import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
+import DepotsMultiCityAnalytics from '../components/DepotsMultiCityAnalytics';
 import '../admin.css';
 
 interface PendingApprovalOrder {
@@ -204,6 +206,42 @@ export default function AdministratorDashboard() {
         </div>
       </div>
 
+      {/* ── Role Quick Actions Bar (Admin) ── */}
+      <RoleQuickActionsBar
+        roleTitle="Administrateur"
+        actions={[
+          {
+            id: 'qa-cust',
+            label: '+ Nouveau Client',
+            description: 'Créer un compte client et fixer son plafond',
+            icon: Users,
+            primary: true,
+            onClick: () => setLocation(`/${workspace}/customers`),
+          },
+          {
+            id: 'qa-ord',
+            label: '+ Nouvelle Commande',
+            description: 'Saisir une nouvelle commande client',
+            icon: ShoppingBag,
+            onClick: () => setLocation(`/${workspace}/orders`),
+          },
+          {
+            id: 'qa-stock',
+            label: '+ Entrée Marchandise',
+            description: 'Réceptionner un arrivage au dépôt',
+            icon: Boxes,
+            onClick: () => setLocation(`/${workspace}/inventory`),
+          },
+          {
+            id: 'qa-user',
+            label: '+ Nouvel Utilisateur',
+            description: 'Créer un utilisateur et affecter ses rôles',
+            icon: Plus,
+            onClick: () => setLocation(`/${workspace}/users`),
+          },
+        ]}
+      />
+
       {/* Operational KPIs */}
       <div className="sx-kpi-cards">
         <div className="sx-card tone-blue">
@@ -393,6 +431,9 @@ export default function AdministratorDashboard() {
         </div>
         <AreaChart data={revenue?.by_day ?? []} />
       </section>
+
+      {/* ── Moroccan Cities & Depots Analytics (User Request) ── */}
+      <DepotsMultiCityAnalytics onNavigateToWarehouse={() => setLocation(`/${workspace}/warehouses`)} />
 
       {/* Operational Modules Navigation */}
       <section className="panel sx-panel">

@@ -236,7 +236,7 @@ function AppShell() {
             {isLight ? <Moon size={16} /> : <Sun size={16} />}
           </button>
           <div className="top-date"><CalendarDays size={14} /> 28 fév. 2025 <ChevronDown size={13} /></div>
-          <button className="help-button" onClick={() => notify('Aide produit : connectée au serveur API backend.')} aria-label="Aide"><CircleHelp size={17} /></button>
+          <button className="help-button" onClick={() => notify('Besoin d’aide ? Contactez votre administrateur.')} aria-label="Aide"><CircleHelp size={17} /></button>
         </div>
       </header>
       <main className="page-wrap">

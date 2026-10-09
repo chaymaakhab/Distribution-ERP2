@@ -727,7 +727,7 @@ export default function DepotsMultiCityAnalytics({
             }}
           >
             <span>7 Villes couvertes : Casa, Rabat, Marrakech, Tanger, Fès, Agadir, Oujda</span>
-            <span style={{ color: '#22c55e', fontWeight: 600 }}>100% Connecté SQL</span>
+            <span style={{ color: '#22c55e', fontWeight: 600 }}>Tous les dépôts connectés</span>
           </div>
         </div>
       </div>

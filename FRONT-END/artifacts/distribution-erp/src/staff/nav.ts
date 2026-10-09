@@ -59,12 +59,12 @@ export const MODULES: NavModule[] = [
   { segment: 'finance', label: 'Facturation & Échéances', icon: BadgeDollarSign, permission: 'invoices.view', group: 'Finance' },
   { segment: 'payments', label: 'Encaissements & Règlements', icon: HandCoins, permission: 'payments.view', group: 'Finance' },
 
-  { segment: 'companies', label: 'Multi-Sociétés (SaaS)', icon: Building, permission: 'settings.manage', group: 'Administration' },
+  { segment: 'companies', label: 'Sociétés & Filiales', icon: Building, permission: 'settings.manage', group: 'Administration' },
   { segment: 'users', label: 'Équipe & Utilisateurs', icon: UserCheck, permission: 'users.view', group: 'Administration' },
   { segment: 'roles', label: 'Rôles & Permissions', icon: ShieldCheck, permission: 'roles.view', group: 'Administration' },
   { segment: 'settings', label: 'Paramètres Système', icon: Settings, permission: 'settings.view', group: 'Administration' },
   { segment: 'audit', label: 'Journal d’audit', icon: ScrollText, permission: 'audit.view', group: 'Administration' },
-  { segment: 'maintenance', label: 'Maintenance & BD', icon: Database, permission: 'settings.manage', group: 'Administration' },
+  { segment: 'maintenance', label: 'Sauvegardes & Maintenance', icon: Database, permission: 'settings.manage', group: 'Administration' },
 ];
 
 export function findModule(segment: string): NavModule | undefined {

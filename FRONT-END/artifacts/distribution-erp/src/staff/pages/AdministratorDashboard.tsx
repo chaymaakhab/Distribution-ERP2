@@ -286,7 +286,7 @@ export default function AdministratorDashboard() {
           </div>
           <div>
             <div style={{ fontSize: 10.5, color: '#38bdf8', fontWeight: 800, textTransform: 'uppercase' }}>
-              Société · Abonnement SaaS {user.company?.subscription_plan?.toUpperCase() || 'PRO'}
+              Société · Formule {user.company?.subscription_plan?.toUpperCase() || 'PRO'}
             </div>
             <strong style={{ fontSize: 14, color: 'var(--text)' }}>
               {user.company?.brand_name || user.company?.name || 'Hercules Distribution Maroc'}

@@ -468,7 +468,7 @@ export default function SuperAdminDashboard() {
             style={{ fontSize: '11.5px', height: '36px' }}
           >
             <RefreshCw size={14} className={isSyncing ? 'spin-animate' : ''} />
-            {isSyncing ? 'Synchronisation...' : 'Forcer synchro réseau'}
+            {isSyncing ? 'Actualisation...' : 'Actualiser les données'}
           </button>
           <button
             className="button-primary"

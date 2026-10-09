@@ -443,7 +443,7 @@ export default function SaasCompaniesManagement({
         <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--line)' }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Dépôts Opérationnels</span>
           <div style={{ fontSize: 22, fontWeight: 800, color: '#a855f7', marginTop: 4 }}>
-            {totalDepotsSaaS} <small style={{ fontSize: 12 }}>hubs actifs</small>
+            {totalDepotsSaaS} <small style={{ fontSize: 12 }}>dépôts actifs</small>
           </div>
           <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
             Sur l’ensemble du réseau Maroc

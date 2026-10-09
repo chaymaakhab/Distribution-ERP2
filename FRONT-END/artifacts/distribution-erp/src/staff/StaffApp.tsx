@@ -395,8 +395,8 @@ function ModulePlaceholder({ module }: { module: NavModule }) {
         <div className="sx-empty-icon"><Icon size={22} /></div>
         <b>Module « {module.label} » en cours d’intégration</b>
         <span>
-          Les données métier, tableaux et actions de ce module seront branchés sur l’API dans une
-          prochaine itération. Votre permission <code>{module.permission}</code> est déjà active.
+          Les données, tableaux et actions de ce module seront disponibles très prochainement.
+          Votre accès à ce module est déjà activé.
         </span>
       </div>
     </div>

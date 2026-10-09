@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { api, formatMoney } from '../api';
 import { DonutChart, MultiSegmentProgress } from '../components/Charts';
+import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -597,6 +598,51 @@ export default function WarehouseDashboard({
           </button>
         </div>
       </div>
+
+      {/* ── Role Quick Actions Bar (Responsable Dépôt) ── */}
+      <RoleQuickActionsBar
+        roleTitle="Responsable Dépôt & Magasinier"
+        actions={[
+          {
+            id: 'qa-art',
+            label: '+ Nouvel Article Stock',
+            description: 'Ajouter une référence au stock physique du dépôt avec sa photo',
+            icon: Boxes,
+            primary: true,
+            onClick: () => setShowAddStockModal(true),
+          },
+          {
+            id: 'qa-drv',
+            label: '+ Ajouter Livreur (2 Types)',
+            description: 'Affecter un livreur client ou chauffeur de navette inter-dépôts',
+            icon: Truck,
+            onClick: () => setNewDriverModal(true),
+          },
+          {
+            id: 'qa-trf',
+            label: '+ Transfert Inter-Dépôts',
+            description: 'Émettre une demande de navette vers un autre dépôt',
+            icon: ArrowLeftRight,
+            onClick: () => setTransferModal(true),
+          },
+          {
+            id: 'qa-ret',
+            label: '+ Déclarer Avarie / Retour',
+            description: 'Enregistrer une marchandise retournée ou avariée',
+            icon: AlertTriangle,
+            onClick: () => {
+              if (onNavigate) onNavigate('returns');
+            },
+          },
+          {
+            id: 'qa-clo',
+            label: '+ Clôture Caisse Dépôt',
+            description: 'Arrêter la caisse et réconcilier les encaissements',
+            icon: ShieldCheck,
+            onClick: () => setClosingModal(true),
+          },
+        ]}
+      />
 
       {/* ── Main Tab Navigation ── */}
       <div className="table-tabs" style={{ marginBottom: 16 }}>

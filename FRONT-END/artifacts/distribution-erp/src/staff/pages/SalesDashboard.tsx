@@ -13,6 +13,7 @@ import DeliverySlipDocumentModal, { type DeliverySlipData } from '../components/
 import NewInvoiceModal from '../components/NewInvoiceModal';
 import QuoteDocumentModal, { type QuoteData } from '../components/QuoteDocumentModal';
 import NewQuoteModal from '../components/NewQuoteModal';
+import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -645,6 +646,52 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
           </button>
         </div>
       </div>
+
+      {/* ── Role Quick Actions Bar (Commercial) ── */}
+      <RoleQuickActionsBar
+        roleTitle="Commercial Terrain & Ventes"
+        actions={[
+          {
+            id: 'qa-ord',
+            label: '+ Nouvelle Commande',
+            description: 'Saisir une commande pour un client avec vérification de plafond',
+            icon: ShoppingBag,
+            primary: true,
+            onClick: () => setShowQuickOrderModal(true),
+          },
+          {
+            id: 'qa-vis',
+            label: '+ Planifier Visite',
+            description: 'Planifier un passage client terrain (prospection, suivi, recouvrement)',
+            icon: MapPin,
+            onClick: () => setShowNewVisitModal(true),
+          },
+          {
+            id: 'qa-quo',
+            label: '+ Établir Devis',
+            description: 'Créer une offre proforma officielle chiffrée',
+            icon: FileText,
+            onClick: () => setShowNewQuote(true),
+          },
+          {
+            id: 'qa-pay',
+            label: '+ Encaisser Client',
+            description: 'Percevoir un règlement terrain (espèces ou chèque)',
+            icon: CreditCard,
+            onClick: () => setShowPaymentModal(true),
+          },
+          {
+            id: 'qa-cli',
+            label: '+ Consulter Clients',
+            description: 'Ouvrir le registre complet CRM & Encours',
+            icon: Users,
+            onClick: () => {
+              if (onNavigate) onNavigate('customers');
+              else setActiveTab('clients');
+            },
+          },
+        ]}
+      />
 
       {/* ── Navigation Tabs ── */}
       <div className="table-tabs" style={{ marginBottom: 16, overflowX: 'auto', display: 'flex', gap: 4 }}>

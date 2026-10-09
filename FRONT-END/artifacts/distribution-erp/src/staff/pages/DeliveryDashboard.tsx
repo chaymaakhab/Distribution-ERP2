@@ -9,6 +9,7 @@ import {
 import { formatMoney } from '../api';
 import { DonutChart, MultiSegmentProgress } from '../components/Charts';
 import DeliverySlipDocumentModal, { type BLLineItem } from '../components/DeliverySlipDocumentModal';
+import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
 
 interface DeliveryStop {
   id: number;
@@ -493,6 +494,38 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
           </button>
         </div>
       </div>
+
+      {/* ── Role Quick Actions Bar (Livreur & Pré-Vendeur) ── */}
+      <RoleQuickActionsBar
+        roleTitle="Livreur & Pré-vendeur (Van Sales)"
+        actions={[
+          {
+            id: 'qa-van',
+            label: '+ Nouvelle Vente Terrain (Hwanet)',
+            description: 'Saisir une commande ou vente directe au camion pour une épicerie / commerce',
+            icon: ShoppingBag,
+            primary: true,
+            onClick: () => setShowVanSaleModal(true),
+          },
+          {
+            id: 'qa-clo',
+            label: '+ Clôturer Caisse Tournée',
+            description: 'Faire le compte des espèces et chèques perçus avant retour au dépôt',
+            icon: ShieldCheck,
+            onClick: () => setClosingModal(true),
+          },
+          {
+            id: 'qa-ret',
+            label: '+ Litige / Retour Colis',
+            description: 'Signaler un colis refusé ou avarie constatée chez le client',
+            icon: Undo2,
+            onClick: () => {
+              if (onNavigate) onNavigate('returns');
+              else setLocation('/delivery/returns');
+            },
+          },
+        ]}
+      />
 
       {/* Visual Progression Bars & Van Overview */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12, marginBottom: 16 }}>

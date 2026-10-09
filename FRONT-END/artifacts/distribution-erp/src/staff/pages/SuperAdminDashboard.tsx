@@ -1234,107 +1234,179 @@ export default function SuperAdminDashboard() {
                 />
               </label>
 
-              {/* 3. Sort du Stock & Décision Qualité */}
+              {/* 3. Sort du Stock & Décision Qualité / Décision Hiérarchique */}
               <div>
                 <span className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12, marginBottom: 6, display: 'block' }}>
-                  3. Sort du Stock & Décision Qualité *
+                  {arbitrationModal.op_type === 'retour'
+                    ? '3. Sort du Stock & Décision Qualité *'
+                    : '3. Verdict & Décision Direction Générale *'}
                 </span>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-                  {/* Option A: Reintegration */}
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 10,
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: arbStockDecision === 'reintegre_stock' ? '2px solid #16a34a' : '1px solid #cbd5e1',
-                      background: arbStockDecision === 'reintegre_stock' ? 'rgba(22,163,74,0.08)' : '#ffffff',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="sa_arb_stock"
-                      value="reintegre_stock"
-                      checked={arbStockDecision === 'reintegre_stock'}
-                      onChange={() => setArbStockDecision('reintegre_stock')}
-                      style={{ marginTop: 2, accentColor: '#16a34a' }}
-                    />
-                    <div>
-                      <b style={{ color: '#15803d', fontSize: 12.5 }}>
-                        ✓ Conforme : Réintégrer en stock vendable (+{arbitrationModal.qty} unités)
-                      </b>
-                      <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
-                        Marchandise conforme, saine et scellée. Réintégrée physiquement et comptablement dans le stock disponible du dépôt.
-                      </small>
-                    </div>
-                  </label>
+                  {arbitrationModal.op_type === 'retour' ? (
+                    <>
+                      {/* Option A: Reintegration */}
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          border: arbStockDecision === 'reintegre_stock' ? '2px solid #16a34a' : '1px solid #cbd5e1',
+                          background: arbStockDecision === 'reintegre_stock' ? 'rgba(22,163,74,0.08)' : '#ffffff',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="sa_arb_stock"
+                          value="reintegre_stock"
+                          checked={arbStockDecision === 'reintegre_stock'}
+                          onChange={() => setArbStockDecision('reintegre_stock')}
+                          style={{ marginTop: 2, accentColor: '#16a34a' }}
+                        />
+                        <div>
+                          <b style={{ color: '#15803d', fontSize: 12.5 }}>
+                            ✓ Conforme : Réintégrer en stock vendable (+{arbitrationModal.qty} unités)
+                          </b>
+                          <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                            Marchandise conforme, saine et scellée. Réintégrée physiquement et comptablement dans le stock disponible du dépôt.
+                          </small>
+                        </div>
+                      </label>
 
-                  {/* Option B: Scrap / Loss */}
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 10,
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: arbStockDecision === 'mis_au_rebut_perte' ? '2px solid #f59e0b' : '1px solid #cbd5e1',
-                      background: arbStockDecision === 'mis_au_rebut_perte' ? 'rgba(245,158,11,0.08)' : '#ffffff',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="sa_arb_stock"
-                      value="mis_au_rebut_perte"
-                      checked={arbStockDecision === 'mis_au_rebut_perte'}
-                      onChange={() => setArbStockDecision('mis_au_rebut_perte')}
-                      style={{ marginTop: 2, accentColor: '#f59e0b' }}
-                    />
-                    <div>
-                      <b style={{ color: '#b45309', fontSize: 12.5 }}>
-                        ✗ Non conforme (Avarie / Rebut) : Mise au rebut & Perte comptable (0 stock vendable)
-                      </b>
-                      <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
-                        Marchandise avariée, détruite ou impropre à la vente. NON réintégrée dans le stock disponible. PV de destruction & enregistrement de la perte.
-                      </small>
-                    </div>
-                  </label>
+                      {/* Option B: Scrap / Loss */}
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          border: arbStockDecision === 'mis_au_rebut_perte' ? '2px solid #f59e0b' : '1px solid #cbd5e1',
+                          background: arbStockDecision === 'mis_au_rebut_perte' ? 'rgba(245,158,11,0.08)' : '#ffffff',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="sa_arb_stock"
+                          value="mis_au_rebut_perte"
+                          checked={arbStockDecision === 'mis_au_rebut_perte'}
+                          onChange={() => setArbStockDecision('mis_au_rebut_perte')}
+                          style={{ marginTop: 2, accentColor: '#f59e0b' }}
+                        />
+                        <div>
+                          <b style={{ color: '#b45309', fontSize: 12.5 }}>
+                            ✗ Non conforme (Avarie / Rebut) : Mise au rebut &amp; Perte comptable (0 stock vendable)
+                          </b>
+                          <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                            Marchandise avariée, détruite ou impropre à la vente. NON réintégrée dans le stock disponible. PV de destruction &amp; perte comptable.
+                          </small>
+                        </div>
+                      </label>
 
-                  {/* Option C: Refusal */}
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 10,
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      border: arbStockDecision === 'refuse' ? '2px solid #ef4444' : '1px solid #cbd5e1',
-                      background: arbStockDecision === 'refuse' ? 'rgba(239,68,68,0.08)' : '#ffffff',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="sa_arb_stock"
-                      value="refuse"
-                      checked={arbStockDecision === 'refuse'}
-                      onChange={() => setArbStockDecision('refuse')}
-                      style={{ marginTop: 2, accentColor: '#ef4444' }}
-                    />
-                    <div>
-                      <b style={{ color: '#b91c1c', fontSize: 12.5 }}>
-                        ⛔ Refusé : Rejet du retour client (Délai dépassé ou motif irrecevable)
-                      </b>
-                      <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
-                        Retour rejeté au quai. Aucun avoir accordé au client et réexpédition à sa charge.
-                      </small>
-                    </div>
-                  </label>
+                      {/* Option C: Refusal */}
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          border: arbStockDecision === 'refuse' ? '2px solid #ef4444' : '1px solid #cbd5e1',
+                          background: arbStockDecision === 'refuse' ? 'rgba(239,68,68,0.08)' : '#ffffff',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="sa_arb_stock"
+                          value="refuse"
+                          checked={arbStockDecision === 'refuse'}
+                          onChange={() => setArbStockDecision('refuse')}
+                          style={{ marginTop: 2, accentColor: '#ef4444' }}
+                        />
+                        <div>
+                          <b style={{ color: '#b91c1c', fontSize: 12.5 }}>
+                            ⛔ Refusé : Rejet du retour client (Délai dépassé ou motif irrecevable)
+                          </b>
+                          <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                            Retour rejeté au quai. Aucun avoir accordé au client et réexpédition à sa charge.
+                          </small>
+                        </div>
+                      </label>
+                    </>
+                  ) : (
+                    <>
+                      {/* Option A: Approval */}
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          border: arbStockDecision === 'reintegre_stock' ? '2px solid #16a34a' : '1px solid #cbd5e1',
+                          background: arbStockDecision === 'reintegre_stock' ? 'rgba(22,163,74,0.08)' : '#ffffff',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="sa_arb_stock"
+                          value="reintegre_stock"
+                          checked={arbStockDecision === 'reintegre_stock'}
+                          onChange={() => setArbStockDecision('reintegre_stock')}
+                          style={{ marginTop: 2, accentColor: '#16a34a' }}
+                        />
+                        <div>
+                          <b style={{ color: '#15803d', fontSize: 12.5 }}>
+                            ✓ Accorder la validation / Dérogation exceptionnelle
+                          </b>
+                          <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                            Autoriser le déblocage de l’opération, la préparation de commande ou l’imputation comptable.
+                          </small>
+                        </div>
+                      </label>
+
+                      {/* Option B: Refusal */}
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          border: arbStockDecision === 'refuse' ? '2px solid #ef4444' : '1px solid #cbd5e1',
+                          background: arbStockDecision === 'refuse' ? 'rgba(239,68,68,0.08)' : '#ffffff',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="sa_arb_stock"
+                          value="refuse"
+                          checked={arbStockDecision === 'refuse'}
+                          onChange={() => setArbStockDecision('refuse')}
+                          style={{ marginTop: 2, accentColor: '#ef4444' }}
+                        />
+                        <div>
+                          <b style={{ color: '#b91c1c', fontSize: 12.5 }}>
+                            ⛔ Rejeter la demande / Maintien du blocage
+                          </b>
+                          <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
+                            Refus de dérogation ou mise en attente jusqu’à régularisation financière.
+                          </small>
+                        </div>
+                      </label>
+                    </>
+                  )}
                 </div>
               </div>
 

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { DonutChart, MultiSegmentProgress } from '../components/Charts';
 import DeliverySlipDocumentModal, { type DeliverySlipData } from '../components/DeliverySlipDocumentModal';
+import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
 
 interface PrepItem {
   id: number;
@@ -248,6 +249,40 @@ export default function PreparationDashboard() {
           </button>
         </div>
       </div>
+
+      {/* ── Role Quick Actions Bar (Préparateur) ── */}
+      <RoleQuickActionsBar
+        roleTitle="Préparateur de Commandes"
+        actions={[
+          {
+            id: 'qa-scan',
+            label: '+ Scanner Code-Barres',
+            description: 'Activer la douchette ou caméra pour scanner un article',
+            icon: Scan,
+            primary: true,
+            onClick: () => {
+              if (!cameraActive) startCamera(cameraFacing);
+            },
+          },
+          {
+            id: 'qa-short',
+            label: '+ Signaler Manquant',
+            description: 'Déclarer une rupture de stock ou quantité incomplète',
+            icon: AlertTriangle,
+            onClick: () => {
+              const pending = items.find((i) => i.status === 'pending');
+              if (pending) handleReportShort(pending.id);
+            },
+          },
+          {
+            id: 'qa-bl',
+            label: '+ Éditer Bon de Livraison',
+            description: 'Générer et prévisualiser le Bon de Livraison BL officiel',
+            icon: Printer,
+            onClick: () => setActiveBlOrder('CMD-2405'),
+          },
+        ]}
+      />
 
       {/* KPI Cards */}
       <div className="metric-grid">

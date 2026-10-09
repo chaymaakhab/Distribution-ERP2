@@ -15,6 +15,7 @@ import QuoteDocumentModal, { type QuoteData } from '../components/QuoteDocumentM
 import NewQuoteModal from '../components/NewQuoteModal';
 import CreditNoteDocumentModal, { type CreditNoteData } from '../components/CreditNoteDocumentModal';
 import NewCreditNoteModal from '../components/NewCreditNoteModal';
+import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
 
 interface Cheque {
   id: number;
@@ -619,6 +620,52 @@ export default function AccountingDashboard() {
           </button>
         </div>
       </div>
+
+      {/* ── Role Quick Actions Bar (Comptabilité) ── */}
+      <RoleQuickActionsBar
+        roleTitle="Comptabilité & Finance"
+        actions={[
+          {
+            id: 'qa-pay',
+            label: '+ Encaisser Paiement',
+            description: 'Enregistrer un règlement (Espèces, Carte CMI, Chèque, Effet ou Virement)',
+            icon: Receipt,
+            primary: true,
+            onClick: () => {
+              const openInv = invoices.find((i) => i.status !== 'Payée') || invoices[0];
+              setPayInvoice(openInv);
+            },
+          },
+          {
+            id: 'qa-fac',
+            label: '+ Nouvelle Facture',
+            description: 'Créer une facture avec TVA 20% légale marocaine',
+            icon: FileText,
+            onClick: () => setShowNewInvoice(true),
+          },
+          {
+            id: 'qa-dev',
+            label: '+ Nouveau Devis',
+            description: 'Établir une offre proforma officielle chiffrée',
+            icon: FileCheck,
+            onClick: () => setShowNewQuote(true),
+          },
+          {
+            id: 'qa-avr',
+            label: '+ Émettre un Avoir',
+            description: 'Émettre une facture d’avoir rectificative',
+            icon: Undo2,
+            onClick: () => setShowNewCreditNote(true),
+          },
+          {
+            id: 'qa-slip',
+            label: '+ Bordereau Banque',
+            description: 'Générer le bordereau de remise chèques et effets',
+            icon: Download,
+            onClick: () => setSlipModal(true),
+          },
+        ]}
+      />
 
       {/* ── Sub-navigation Tabs ── */}
       <div className="table-tabs" style={{ marginBottom: 16, overflowX: 'auto', display: 'flex', gap: 4 }}>

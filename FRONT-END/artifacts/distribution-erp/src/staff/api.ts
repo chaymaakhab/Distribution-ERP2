@@ -293,6 +293,8 @@ export const api = {
     request<any>('/drivers', { method: 'POST', body: JSON.stringify(data) }),
   updateDriverStatus: (id: number, status: string, mission?: string) =>
     request<any>(`/drivers/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, current_mission: mission }) }),
+  updateDriverLocation: (id: number, coords: { lat: number; lng: number; speed_kmh?: number }) =>
+    request<any>(`/drivers/${id}/location`, { method: 'PATCH', body: JSON.stringify(coords) }),
 
   // Stocks & Dépôts
   getStocks: (params?: { warehouse_id?: number }) => {

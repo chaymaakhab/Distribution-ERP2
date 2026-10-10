@@ -561,6 +561,38 @@ export interface OrderLine {
   total: number;
 }
 
+export interface OrderDepotInfo {
+  name: string;
+  code: string;
+  city: string;
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+export interface OrderDestinationInfo {
+  client_name: string;
+  company: string;
+  city: string;
+  address: string;
+  lat: number;
+  lng: number;
+  phone: string;
+}
+
+export interface OrderTrackingInfo {
+  driver_id?: number;
+  driver_name: string;
+  driver_phone: string;
+  vehicle_model: string;
+  vehicle_plate: string;
+  status: string;
+  lat: number;
+  lng: number;
+  speed_kmh: number;
+  eta_minutes: number;
+}
+
 export interface OrderDetail {
   ref: string;
   date: string;
@@ -570,6 +602,9 @@ export interface OrderDetail {
   status_label: string;
   total: number;
   discount: number;
+  depot?: OrderDepotInfo;
+  destination?: OrderDestinationInfo;
+  tracking?: OrderTrackingInfo | null;
   items: OrderLine[];
 }
 

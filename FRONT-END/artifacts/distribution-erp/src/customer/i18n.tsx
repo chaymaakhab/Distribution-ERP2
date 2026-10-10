@@ -23,7 +23,7 @@ const DICTIONARY: Record<string, Record<Language, string>> = {
   'nav.tier': { fr: 'Tarif', ar: 'التعريفة' },
 
   // Home Page
-  'home.badge': { fr: 'OFFRES B2B REVENDEURS', ar: 'عروض خاصة بالموزعين B2B' },
+  'home.badge': { fr: 'OFFRES REVENDEURS & GROSSISTES', ar: 'عروض خاصة بالموزعين والتجار' },
   'home.title': { fr: 'Commandez vos articles de quincaillerie & outillage au meilleur prix grossiste', ar: 'اطلب أدواتك ومعداتك بأفضل أسعار الجملة' },
   'home.subtitle': { fr: 'Livraison express 24-48h sur Casablanca, Rabat & partout au Maroc · Paiement sécurisé à la livraison.', ar: 'توصيل سريع خلال 24-48 ساعة في الدار البيضاء والرباط وكافة مدن المغرب · أداء آمن عند الاستلام.' },
   'home.habitual_order': { fr: 'Ma commande habituelle', ar: 'طلبيتي المعتادة' },
@@ -37,7 +37,7 @@ const DICTIONARY: Record<string, Record<Language, string>> = {
   'home.no_orders': { fr: 'Aucune commande récente', ar: 'لا توجد طلبيات حديثة' },
 
   // Catalog
-  'catalog.title': { fr: 'Catalogue produits B2B', ar: 'كتالوج المنتجات B2B' },
+  'catalog.title': { fr: 'Catalogue produits revendeurs', ar: 'كتالوج المنتجات' },
   'catalog.search_placeholder': { fr: 'Rechercher une référence, un nom...', ar: 'بحث عن كود أو اسم منتج...' },
   'catalog.all_categories': { fr: 'Toutes les catégories', ar: 'جميع الأصناف' },
   'catalog.sort_by': { fr: 'Trier par', ar: 'ترتيب حسب' },

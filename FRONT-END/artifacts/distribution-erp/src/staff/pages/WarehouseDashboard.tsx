@@ -9,6 +9,7 @@ import {
 import { api, formatMoney } from '../api';
 import { DonutChart, MultiSegmentProgress, AnimatedCounter, LivePulse } from '../components/Charts';
 import { RealLogisticsFleetMap } from '../components/RealLogisticsFleetMap';
+import { RealInterDepotTransfersMap } from '../components/RealInterDepotTransfersMap';
 import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -1366,13 +1367,16 @@ export default function WarehouseDashboard({
 
       {/* ════════════════════ TAB 3: MOUVEMENTS ════════════════════ */}
       {activeTab === 'movements' && (
-        <section className="panel list-panel">
-          <div className="list-panel-heading">
-            <div>
-              <span className="eyebrow">JOURNAL DES STOCKS</span>
-              <h2>Derniers mouvements & transferts inter-dépôts</h2>
+        <>
+          <RealInterDepotTransfersMap onOpenTransferModal={() => setTransferModal(true)} />
+
+          <section className="panel list-panel">
+            <div className="list-panel-heading">
+              <div>
+                <span className="eyebrow">JOURNAL DES STOCKS</span>
+                <h2>Derniers mouvements & transferts inter-dépôts</h2>
+              </div>
             </div>
-          </div>
           <table className="data-table module-table">
             <thead>
               <tr>
@@ -1398,7 +1402,8 @@ export default function WarehouseDashboard({
             </tbody>
           </table>
         </section>
-      )}
+      </>
+    )}
 
       {/* ════════════════════ TAB 4: CARTE LIVE FLOTTE & DÉPÔTS ════════════════════ */}
       {activeTab === 'fleet_map' && (

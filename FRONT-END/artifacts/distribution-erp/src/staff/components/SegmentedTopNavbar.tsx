@@ -496,7 +496,7 @@ export default function SegmentedTopNavbar({
           <a
             href="/superadmin"
             className="sx-saas-master-pill"
-            title="Accéder à l'espace autonome Super Admin SaaS (Vente de Packs & Abonnements)"
+            title="Accéder à la gestion centrale des abonnements et des entreprises"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -513,7 +513,7 @@ export default function SegmentedTopNavbar({
             }}
           >
             <Crown size={13} />
-            <span className="hide-mobile">SaaS Master</span>
+            <span className="hide-mobile">Abonnements</span>
           </a>
         )}
 

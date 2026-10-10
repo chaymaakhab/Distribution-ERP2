@@ -121,12 +121,44 @@ export function RealDeliveryRouteMap({
   const mapRef = useRef<L.Map | null>(null);
   const routePolylineRef = useRef<L.Polyline | null>(null);
   const layerGroupRef = useRef<L.LayerGroup | null>(null);
+  const driverMarkerRef = useRef<L.Marker | null>(null);
 
   const [simulatedDriverCoords, setSimulatedDriverCoords] = useState<[number, number]>(() => {
     // Current active stop or origin
     const active = stops.find((s) => s.status === 'in_route' || s.status === 'arrived');
     return active ? getStopCoords(active, 1) : DEPOT_ORIGIN.coords;
   });
+
+  const [isMovingLive, setIsMovingLive] = useState(false);
+  const [liveRatio, setLiveRatio] = useState(0.35);
+
+  // Live driver movement animation along the tour
+  useEffect(() => {
+    if (!isMovingLive) return;
+
+    const inRouteStop = stops.find((s) => s.status === 'in_route' || s.status === 'arrived');
+    const targetCoords = inRouteStop ? getStopCoords(inRouteStop, 1) : DEPOT_ORIGIN.coords;
+
+    const interval = setInterval(() => {
+      setLiveRatio((prev) => {
+        const next = prev >= 0.95 ? 0.05 : prev + 0.025;
+        const lat = DEPOT_ORIGIN.coords[0] + (targetCoords[0] - DEPOT_ORIGIN.coords[0]) * next;
+        const lng = DEPOT_ORIGIN.coords[1] + (targetCoords[1] - DEPOT_ORIGIN.coords[1]) * next;
+        setSimulatedDriverCoords([lat, lng]);
+
+        if (driverMarkerRef.current) {
+          driverMarkerRef.current.setLatLng([lat, lng]);
+        }
+
+        // Sync with backend telemetry API
+        api.updateDriverLocation(1, { lat, lng, speed_kmh: Math.round(45 + Math.random() * 15) }).catch(() => {});
+
+        return next;
+      });
+    }, 1400);
+
+    return () => clearInterval(interval);
+  }, [isMovingLive, stops]);
 
   // Init Map
   useEffect(() => {
@@ -307,6 +339,7 @@ export function RealDeliveryRouteMap({
     });
 
     const driverMarker = L.marker(driverLoc, { icon: driverIcon }).addTo(group);
+    driverMarkerRef.current = driverMarker;
     driverMarker.bindPopup(`
       <div style="font-family: system-ui; padding: 4px; min-width: 200px;">
         <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
@@ -389,6 +422,36 @@ export function RealDeliveryRouteMap({
         </div>
 
         <div style={{ pointerEvents: 'auto', display: 'flex', gap: 6 }}>
+          <button
+            onClick={() => setIsMovingLive(!isMovingLive)}
+            style={{
+              background: isMovingLive ? '#0284c7' : 'rgba(15, 23, 42, 0.92)',
+              backdropFilter: 'blur(10px)',
+              border: isMovingLive ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#ffffff',
+              fontSize: '11px',
+              fontWeight: 700,
+              padding: '6px 12px',
+              borderRadius: 8,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: '0 4px 12px rgba(2, 132, 199, 0.4)',
+            }}
+            title={isMovingLive ? 'Arrêter la simulation live' : 'Lancer la simulation de conduite GPS'}
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: isMovingLive ? '#22c55e' : '#f59e0b',
+                boxShadow: isMovingLive ? '0 0 8px #22c55e' : undefined,
+              }}
+            />
+            {isMovingLive ? 'Simulation Active' : '▶ Simuler Trajet'}
+          </button>
           <button
             onClick={handleCenterDriver}
             style={{

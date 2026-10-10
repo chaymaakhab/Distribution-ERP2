@@ -8,8 +8,7 @@ import {
   Package, Calendar, HelpCircle, Store, Sparkles
 } from 'lucide-react';
 import { useTheme } from '../lib/theme';
-import { api, formatMoney, type SaasCompany, type SaasOverview } from '../staff/api';
-import { useStaffAuth } from '../staff/auth';
+import { api, formatMoney, getStoredUser, clearSession, type SaasCompany, type SaasOverview, type StaffUser } from '../staff/api';
 import './superadmin.css';
 
 // Demo seed data if backend has no companies yet
@@ -194,8 +193,8 @@ export const SAAS_PACKS = [
       '1 Dépôt Logistique Central',
       'Jusqu’à 5 Comptes Utilisateurs',
       'Gestion Catalogue & Tarifs HT/TTC',
-      'Facturation B2B & Règlements simples',
-      'Portail Client B2B Inclus',
+      'Facturation & Règlements simples',
+      'Portail Client Revendeur Inclus',
       'Support par Email (48h)',
     ],
     color: '#10b981',
@@ -244,7 +243,14 @@ export const SAAS_PACKS = [
 export default function SuperAdminSaaSApp() {
   const [, setLocation] = useLocation();
   const { theme, toggleTheme, isLight } = useTheme();
-  const { user, logout } = useStaffAuth();
+
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch {}
+    clearSession();
+    setLocation('/login');
+  };
 
   const [activeTab, setActiveTab] = useState<'alerts' | 'companies' | 'packs' | 'revenue'>('alerts');
   const [companies, setCompanies] = useState<SaasCompany[]>(INITIAL_COMPANIES);
@@ -548,8 +554,8 @@ export default function SuperAdminSaaSApp() {
             <Crown size={22} />
           </div>
           <div className="saas-brand-title">
-            <b>HERCULES SaaS MASTER</b>
-            <span>PORTAIL SUPER ADMIN · VENTES &amp; ABONNEMENTS</span>
+            <b>HERCULES · GESTION DE LA PLATEFORME</b>
+            <span>PORTAIL CENTRAL · GESTION DES ABONNEMENTS</span>
           </div>
         </div>
 
@@ -626,10 +632,7 @@ export default function SuperAdminSaaSApp() {
           <button
             type="button"
             className="theme-toggle-btn"
-            onClick={() => {
-              logout();
-              setLocation('/login');
-            }}
+            onClick={handleLogout}
             title="Se déconnecter"
           >
             <LogOut size={16} />
@@ -642,9 +645,9 @@ export default function SuperAdminSaaSApp() {
         {/* Hero Section */}
         <div className="saas-hero-strip">
           <div>
-            <h1>Supervision Stratégique &amp; Ventes SaaS</h1>
+            <h1>Supervision Globale &amp; Abonnements des Entreprises</h1>
             <p>
-              Gestion exclusive des souscriptions d’entreprises, attribution des accès ERP et anticipation des fins de validité.
+              Gestion centrale des abonnements d’entreprises, attribution des accès et anticipation des fins de validité.
             </p>
           </div>
 
@@ -666,11 +669,11 @@ export default function SuperAdminSaaSApp() {
           </div>
         </div>
 
-        {/* ── High-Impact SaaS KPIs ── */}
+        {/* ── High-Impact KPIs ── */}
         <div className="saas-kpi-grid">
           <div className="saas-kpi-card">
             <div className="saas-kpi-top">
-              <span>Revenu Mensuel (MRR)</span>
+              <span>Revenu Mensuel Récurrent</span>
               <div className="saas-kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
                 <TrendingUp size={16} />
               </div>
@@ -679,7 +682,7 @@ export default function SuperAdminSaaSApp() {
               {formatMoney(metrics.mrr)} <small>DH/mois</small>
             </div>
             <div className="saas-kpi-sub" style={{ color: '#10b981' }}>
-              <span>ARR projeté : <b>{formatMoney(metrics.arr)} DH/an</b></span>
+              <span>Revenu Annuel Estimé : <b>{formatMoney(metrics.arr)} DH/an</b></span>
             </div>
           </div>
 
@@ -1187,10 +1190,10 @@ export default function SuperAdminSaaSApp() {
           <div>
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                💎 OFFRES COMMERCIALES &amp; TARIFS SAAS
+                💎 OFFRES COMMERCIALES &amp; FORMULES D’ADHÉSION
               </span>
               <h2 style={{ fontSize: 24, fontWeight: 900, margin: '4px 0 6px', color: 'var(--saas-text-primary)' }}>
-                Catalogue des Packs d’Abonnement Distribution ERP
+                Catalogue des Formules d’Abonnement des Entreprises
               </h2>
               <p style={{ fontSize: 13.5, color: 'var(--saas-text-secondary)', maxWidth: 640, margin: '0 auto' }}>
                 Chaque entreprise cliente souscrit à un pack déterminant ses quotas de dépôts régionaux, comptes collaborateurs et modules opérationnels.
@@ -1272,8 +1275,8 @@ export default function SuperAdminSaaSApp() {
           <section className="saas-section-panel">
             <div className="saas-panel-header">
               <div className="saas-panel-header-left">
-                <h3>📊 Performance Financière &amp; Répartition du Chiffre d’Affaires SaaS</h3>
-                <p>Analyse de la valeur souscrite par pack, cycle de facturation et projections annuelles.</p>
+                <h3>📊 Performance Financière &amp; Répartition du Chiffre d’Affaires</h3>
+                <p>Analyse de la valeur souscrite par formule, cycle de facturation et projections annuelles.</p>
               </div>
             </div>
 
@@ -1316,7 +1319,7 @@ export default function SuperAdminSaaSApp() {
                       <b>{metrics.expired} sociétés</b>
                     </div>
                     <div style={{ borderTop: '1px solid var(--saas-border)', paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                      <b>Chiffre d’Affaires Annuel Contractualisé (ARR) :</b>
+                      <b>Total Annuel Contractualisé :</b>
                       <b style={{ color: '#0284c7' }}>{formatMoney(metrics.arr)} DH</b>
                     </div>
                   </div>

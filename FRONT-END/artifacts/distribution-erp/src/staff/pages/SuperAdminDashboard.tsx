@@ -444,7 +444,65 @@ export default function SuperAdminDashboard() {
   const totalReceivables = kpis?.receivables ?? 428560;
 
   return (
-    <div className="dashboard-page sx-admin superadmin-workspace">
+    <div className="dashboard-page sx-admin superadmin-workspace" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* SaaS Master Direct Link Banner */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.15), rgba(180, 83, 9, 0.25))',
+        border: '1px solid rgba(245, 158, 11, 0.4)',
+        borderRadius: '10px',
+        padding: '12px 18px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px',
+        flexWrap: 'wrap',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: 38,
+            height: 38,
+            borderRadius: '8px',
+            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            color: '#fff',
+            display: 'grid',
+            placeItems: 'center',
+            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+          }}>
+            <Crown size={20} />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <b style={{ color: '#fbbf24', fontSize: '13.5px' }}>Espace Dédié Super Administrateur</b>
+              <span style={{ fontSize: '10.5px', background: 'rgba(245, 158, 11, 0.2)', color: '#fde68a', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                PORTAIL DÉDIÉ
+              </span>
+            </div>
+            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#cbd5e1' }}>
+              Souscription des formules (Starter, Pro, Entreprise), surveillance des échéances et gestion des entreprises abonnées.
+            </p>
+          </div>
+        </div>
+        <a
+          href="/superadmin"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: '#f59e0b',
+            color: '#0f172a',
+            fontWeight: 700,
+            fontSize: '12.5px',
+            padding: '8px 16px',
+            borderRadius: '7px',
+            textDecoration: 'none',
+            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)',
+          }}
+        >
+          <span>Ouvrir la Gestion des Abonnements</span>
+          <ArrowRight size={14} />
+        </a>
+      </div>
+
       {/* Executive Header */}
       <div className="page-heading dash-heading" style={{ flexWrap: 'wrap', gap: '12px' }}>
         <div>

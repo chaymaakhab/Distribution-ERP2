@@ -38,17 +38,17 @@ const ROLE_BLUE = '#0284c7';
 export const ALL_ROLES: RoleDef[] = [
   {
     id: 'superadmin',
-    name: 'Super Admin SaaS',
+    name: 'Super Administrateur',
     shortName: 'Super Admin',
     category: 'staff',
-    badge: 'Gestion Abonnements SaaS',
-    user_name: 'Super Admin SaaS',
+    badge: 'Gestion des Abonnements',
+    user_name: 'Super Administrateur',
     email: 'superadmin@hercules-erp.ma',
     password: 'password',
     home: '/superadmin',
     icon: Crown,
     color: '#f59e0b',
-    scope: 'Espace autonome Super Admin : Vente des packs, suivi des abonnements à échéance (<30j, expirés), gestion des entreprises clientes et quotas.',
+    scope: 'Espace central Super Administrateur : Attribution des formules, suivi des échéances (<30j, expirés), gestion des entreprises clientes et quotas.',
     role_code: 'superadmin',
   },
   {
@@ -159,7 +159,7 @@ export const ALL_ROLES: RoleDef[] = [
   {
     id: 'client',
     name: 'Portail Client',
-    shortName: 'Client B2B',
+    shortName: 'Client Pro',
     category: 'customer',
     badge: 'Portail Revendeur',
     user_name: 'Atlas Équipements',
@@ -406,7 +406,7 @@ export default function UnifiedLogin({
           <div className="unified-brand-badge">G</div>
           <div className="unified-brand-text">
             <b>GESTION ERP</b>
-            <small>DISTRIBUTION B2B · MAROC</small>
+            <small>DISTRIBUTION COMMERCIALE · MAROC</small>
           </div>
         </div>
 
@@ -431,7 +431,7 @@ export default function UnifiedLogin({
               onClick={() => handleSwitchPortal('saas')}
             >
               <Crown size={14} />
-              <span>Super Admin SaaS</span>
+              <span>Super Administrateur</span>
             </button>
             <button
               type="button"
@@ -447,23 +447,23 @@ export default function UnifiedLogin({
               onClick={() => handleSwitchPortal('customer')}
             >
               <Store size={14} />
-              <span>Client B2B</span>
+              <span>Client Pro</span>
             </button>
           </div>
 
-          {/* Super Admin SaaS Dedicated Information */}
+          {/* Super Admin Dedicated Information */}
           {portalMode === 'saas' && (
             <div className="role-active-banner saas-active-banner">
               <div className="role-active-top">
                 <span className="role-name" style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Crown size={15} /> Super Admin · SaaS Master
+                  <Crown size={15} /> Super Administrateur · Plateforme
                 </span>
                 <span className="role-scope-badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.4)' }}>
                   Espace Dédié Autonome
                 </span>
               </div>
               <p className="role-scope-desc">
-                Surveillance exclusive des abonnements à échéance (&lt;30j, expirés), gestion des entreprises clientes, activation de comptes et vente des Packs SaaS (Starter, Pro, Enterprise).
+                Surveillance des abonnements à échéance (&lt;30j, expirés), gestion des entreprises clientes, activation de comptes et attribution des formules (Starter, Pro, Enterprise).
               </p>
               <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                 <a
@@ -570,7 +570,7 @@ export default function UnifiedLogin({
                   }}
                 >
                   <UserPlus size={14} />
-                  <span>Créer un compte B2B</span>
+                  <span>Créer un compte Client Pro</span>
                 </button>
               </div>
 
@@ -800,7 +800,7 @@ export default function UnifiedLogin({
                     </>
                   ) : (
                     <>
-                      <span>Finaliser mon inscription B2B</span>
+                      <span>Finaliser mon inscription</span>
                       <ArrowRight size={15} />
                     </>
                   )}
@@ -945,7 +945,7 @@ export default function UnifiedLogin({
                     style={{ background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.4)', color: '#f59e0b' }}
                   >
                     <Crown size={13} />
-                    <span>Connexion 1-Clic Super Admin SaaS 👑</span>
+                    <span>Connexion 1-Clic Super Administrateur 👑</span>
                   </button>
                 )}
 

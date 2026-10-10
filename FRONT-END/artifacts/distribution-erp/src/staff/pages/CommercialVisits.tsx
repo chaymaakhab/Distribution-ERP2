@@ -2,9 +2,10 @@ import { useState } from 'react';
 import {
   MapPin, Search, Filter, Plus, CheckCircle2, Clock,
   Calendar, User, Building2, Check, AlertCircle, Phone,
-  FileText, ArrowRight, MessageSquare,
+  FileText, ArrowRight, MessageSquare, Map as MapIcon,
 } from 'lucide-react';
 import { api } from '../api';
+import { RealCommercialVisitsMap } from '../components/RealCommercialVisitsMap';
 
 interface CommercialVisitItem {
   id: number;
@@ -33,6 +34,7 @@ export default function CommercialVisits({ onNavigate }: { onNavigate?: (s: stri
   const [statusFilter, setStatusFilter] = useState('all');
   const [toast, setToast] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'map' | 'table'>('map');
 
   function notify(msg: string) {
     setToast(msg);
@@ -65,9 +67,26 @@ export default function CommercialVisits({ onNavigate }: { onNavigate?: (s: stri
         <div>
           <div className="eyebrow">VENTES / CRM TERRAIN & TOURNÉES COMMERCIALES</div>
           <h1>Visites Commerciales Terrain</h1>
-          <p>Planifiez les tournées des commerciaux, enregistrez les comptes-rendus et suivez le recouvrement.</p>
+          <p>Planifiez les tournées des commerciaux, enregistrez les comptes-rendus et suivez le recouvrement en direct sur la carte.</p>
         </div>
-        <div className="heading-actions">
+        <div className="heading-actions" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.6)', padding: 3, borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <button
+              className={viewMode === 'map' ? 'button-primary' : 'button-secondary'}
+              onClick={() => setViewMode('map')}
+              style={{ height: 32, fontSize: 12, padding: '0 12px', gap: 6 }}
+            >
+              <MapIcon size={14} /> Carte GPS
+            </button>
+            <button
+              className={viewMode === 'table' ? 'button-primary' : 'button-secondary'}
+              onClick={() => setViewMode('table')}
+              style={{ height: 32, fontSize: 12, padding: '0 12px', gap: 6 }}
+            >
+              <FileText size={14} /> Liste Agenda
+            </button>
+          </div>
+
           <button className="button-primary" onClick={() => setShowCreateModal(true)}>
             <Plus size={16} /> Planifier une visite
           </button>
@@ -92,6 +111,22 @@ export default function CommercialVisits({ onNavigate }: { onNavigate?: (s: stri
           <strong className="amber">{visits.filter((v) => v.status === 'Planifiée').length} planifiées</strong>
         </div>
       </div>
+
+      {/* Real Interactive Map for Commercial Visits */}
+      {viewMode === 'map' && (
+        <section className="panel" style={{ padding: '16px', borderRadius: '12px', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: 8 }}>
+            <div>
+              <span className="eyebrow">GÉOLOCALISATION CLIENTS & COMMERCIAUX</span>
+              <h2 style={{ margin: 0, fontSize: 16 }}>Carte Satellite & Itinéraires des Tournées</h2>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              {visits.length} points de visite répertoriés au Maroc
+            </div>
+          </div>
+          <RealCommercialVisitsMap visits={visits} onStatusChange={handleStatusChange} />
+        </section>
+      )}
 
       <section className="panel list-panel">
         <div className="list-panel-heading">

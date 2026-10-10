@@ -7,6 +7,7 @@ import {
 import { api, type OrderDetail as OrderDetailType } from '../api';
 import { formatMoney, useCart } from '../cart';
 import { StatusBadge } from './Home';
+import { CustomerOrderTrackingMap } from '../components/CustomerOrderTrackingMap';
 
 const TIMELINE = ['pending_validation', 'confirmed', 'prepared', 'assigned', 'in_delivery', 'delivered'];
 
@@ -128,6 +129,15 @@ export default function OrderDetail({ ref_ }: { ref_: string }) {
           ))}
         </div>
       )}
+
+      {/* Real Live Delivery Tracking Map */}
+      <CustomerOrderTrackingMap
+        orderRef={order.ref}
+        orderStatus={order.status}
+        depot={order.depot}
+        destination={order.destination}
+        tracking={order.tracking}
+      />
 
       {/* Order Items Table */}
       <div className="cx-b2b-table-wrap">

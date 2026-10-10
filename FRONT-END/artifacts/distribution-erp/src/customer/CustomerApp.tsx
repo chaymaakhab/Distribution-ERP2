@@ -58,7 +58,7 @@ function CustomerRoot() {
       <div className="cx-splash" style={{ display: 'grid', placeItems: 'center', height: '100vh', background: 'var(--cx-bg)' }}>
         <div style={{ textAlign: 'center' }}>
           <div className="cx-spinner cx-spin" style={{ width: 40, height: 40, border: '4px solid var(--cx-border)', borderTopColor: 'var(--cx-brand)', borderRadius: '50%', margin: '0 auto 16px' }} />
-          <p style={{ fontWeight: 600, color: 'var(--cx-muted)' }}>Chargement de votre espace B2B…</p>
+          <p style={{ fontWeight: 600, color: 'var(--cx-muted)' }}>Chargement de votre espace client…</p>
         </div>
       </div>
     );
@@ -170,7 +170,7 @@ function CustomerShell({
           </span>
           <span className="cx-brand-copy">
             <b>
-              HERCULES <span className="cx-pro-tag">PRO B2B</span>
+              HERCULES <span className="cx-pro-tag">PRO</span>
             </b>
             <small>{user.company || user.name}</small>
           </span>
@@ -332,7 +332,7 @@ function CustomerShell({
       <div className="cx-body-wrapper">
         <aside className="cx-desktop-sidebar">
           <div className="cx-sidebar-section">
-            <span className="cx-sidebar-heading">ESPACE B2B</span>
+            <span className="cx-sidebar-heading">ESPACE CLIENT PRO</span>
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = location === item.href || (item.href !== '/customer/home' && location.startsWith(item.href));
@@ -414,7 +414,7 @@ function CustomerShell({
 
           <footer className="cx-footer">
             <div>
-              <b>© 2026 HERCULES DISTRIBUTION MAROC SARL</b> · Plateforme B2B Grossistes & Revendeurs Agréés.
+              <b>© 2026 HERCULES DISTRIBUTION MAROC SARL</b> · Plateforme Grossistes &amp; Revendeurs Agréés.
             </div>
             <div className="cx-footer-links">
               <Link href="/customer/orders">Suivi Commandes</Link>
@@ -423,7 +423,7 @@ function CustomerShell({
               <ChevronRight size={12} />
               <Link href="/customer/invoices">Relevé Factures</Link>
               <ChevronRight size={12} />
-              <Link href="/customer/profile">Conditions & ICE</Link>
+              <Link href="/customer/profile">Conditions &amp; ICE</Link>
             </div>
           </footer>
         </div>
@@ -437,7 +437,7 @@ function NotFound({ onHome }: { onHome: () => void }) {
     <div className="cx-empty">
       <Search size={32} style={{ color: 'var(--cx-brand)' }} />
       <h2>Page introuvable</h2>
-      <p>Cette page n’existe pas dans votre espace client B2B.</p>
+      <p>Cette page n’existe pas dans votre espace client.</p>
       <button className="cx-btn cx-btn-primary" onClick={onHome}>
         Retour au tableau de bord
       </button>

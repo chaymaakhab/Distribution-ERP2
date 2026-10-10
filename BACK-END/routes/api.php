@@ -113,6 +113,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/drivers', [DriverController::class, 'index']);
         Route::post('/drivers', [DriverController::class, 'store']);
         Route::patch('/drivers/{id}/status', [DriverController::class, 'updateStatus']);
+        Route::patch('/drivers/{id}/location', [DriverController::class, 'updateLocation']);
 
         // Stocks & Inventories
         Route::get('/stocks', [StockController::class, 'index']);

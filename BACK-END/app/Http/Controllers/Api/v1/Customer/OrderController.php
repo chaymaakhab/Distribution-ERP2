@@ -34,7 +34,7 @@ class OrderController extends Controller
         $customer = $request->user();
 
         $order = $customer->orders()
-            ->with(['items.product'])
+            ->with(['items.product', 'warehouse', 'customer', 'deliverySlip.driver'])
             ->where('ref', $ref)
             ->firstOrFail();
 
@@ -188,6 +188,52 @@ class OrderController extends Controller
 
     private function presentDetail(Order $order): array
     {
+        $warehouse = $order->warehouse ?? \App\Models\Warehouse::first();
+        $customer = $order->customer;
+        $driver = $order->deliverySlip?->driver;
+
+        // Default driver fallback if in_delivery or assigned or for simulation
+        if (! $driver && in_array($order->status, ['assigned', 'in_delivery', 'delivered'])) {
+            $driver = \App\Models\Driver::where('status', 'en_tournee')->first() ?? \App\Models\Driver::first();
+        }
+
+        $depotCoords = [
+            'name' => $warehouse ? $warehouse->name : 'Dépôt Central Casablanca (Hub Ain Sebaâ)',
+            'code' => $warehouse ? $warehouse->code : 'DEP-01',
+            'city' => $warehouse ? $warehouse->city : 'Casablanca',
+            'address' => $warehouse ? $warehouse->address : 'Zone Industrielle Ain Sebaâ',
+            'lat' => $warehouse && $warehouse->lat ? (float) $warehouse->lat : 33.5980,
+            'lng' => $warehouse && $warehouse->lng ? (float) $warehouse->lng : -7.5340,
+        ];
+
+        $destCoords = [
+            'client_name' => $customer?->name ?? 'Client B2B',
+            'company' => $customer?->company ?? 'Établissement Client',
+            'city' => $customer?->city ?? $order->city ?? 'Casablanca',
+            'address' => $customer?->address ?? 'Boulevard Mohammed V',
+            'lat' => $customer && $customer->lat ? (float) $customer->lat : 33.5731,
+            'lng' => $customer && $customer->lng ? (float) $customer->lng : -7.5898,
+            'phone' => $customer?->phone ?? '+212 522 00 00 00',
+        ];
+
+        $trackingInfo = null;
+        if ($driver || in_array($order->status, ['assigned', 'in_delivery', 'delivered'])) {
+            $dLat = $driver && $driver->lat ? (float) $driver->lat : 33.5850;
+            $dLng = $driver && $driver->lng ? (float) $driver->lng : -7.5600;
+            $trackingInfo = [
+                'driver_id' => $driver?->id,
+                'driver_name' => $driver?->name ?? 'Mehdi Lahlou',
+                'driver_phone' => $driver?->phone ?? '+212 661 22 33 44',
+                'vehicle_model' => $driver?->vehicle_model ?? 'Renault Master 3.5T',
+                'vehicle_plate' => $driver?->vehicle_plate ?? '12345-A-6',
+                'status' => $driver?->status ?? 'en_tournee',
+                'lat' => $dLat,
+                'lng' => $dLng,
+                'speed_kmh' => $driver && $driver->speed_kmh ? (int) $driver->speed_kmh : 42,
+                'eta_minutes' => $order->status === 'delivered' ? 0 : 25,
+            ];
+        }
+
         return [
             'ref' => $order->ref,
             'date' => $order->date,
@@ -197,6 +243,9 @@ class OrderController extends Controller
             'status_label' => self::statusLabel($order->status),
             'total' => (float) $order->total,
             'discount' => (float) $order->discount,
+            'depot' => $depotCoords,
+            'destination' => $destCoords,
+            'tracking' => $trackingInfo,
             'items' => $order->items->map(fn ($item) => [
                 'product_id' => $item->product_id,
                 'code' => $item->product?->code,

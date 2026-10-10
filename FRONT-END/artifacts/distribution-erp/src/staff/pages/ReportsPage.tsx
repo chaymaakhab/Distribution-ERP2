@@ -45,7 +45,7 @@ const commercials = [
 const paymentMethodsDistribution = [
   { method: 'Chèques & Effets bancaires', amount: 486200, pct: 45, color: '#38bdf8' },
   { method: 'Espèces (Contre-Remboursement COD)', amount: 378400, pct: 35, color: '#22c55e' },
-  { method: 'Virements bancaires B2B', amount: 151360, pct: 14, color: '#a855f7' },
+  { method: 'Virements bancaires professionnels', amount: 151360, pct: 14, color: '#a855f7' },
   { method: 'Traites commerciales à terme (60j)', amount: 64840, pct: 6, color: '#f59e0b' },
 ];
 
@@ -396,7 +396,7 @@ export default function ReportsPage() {
             <div className="panel rp-chart-panel" style={{ flex: 1 }}>
               <div className="panel-heading">
                 <div>
-                  <span className="eyebrow">PORTEFEUILLE B2B</span>
+                  <span className="eyebrow">PORTEFEUILLE CLIENTS</span>
                   <h2>Top Clients par CA Généré</h2>
                 </div>
               </div>

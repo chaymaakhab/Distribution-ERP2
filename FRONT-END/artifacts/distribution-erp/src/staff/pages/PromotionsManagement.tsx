@@ -20,7 +20,7 @@ interface PromoItem {
 }
 
 const INITIAL_PROMOS: PromoItem[] = [
-  { id: 1, code: 'RAMADAN-2025', name: 'Offre Spéciale Ramadan B2B', type: 'Pourcentage', value: 10, category: 'Outillage & Électricité', min_order_amount: 10000, start_date: '01 Mar 2025', end_date: '31 Mar 2025', status: 'Active', usage_count: 24 },
+  { id: 1, code: 'RAMADAN-2025', name: 'Offre Spéciale Ramadan Pro', type: 'Pourcentage', value: 10, category: 'Outillage & Électricité', min_order_amount: 10000, start_date: '01 Mar 2025', end_date: '31 Mar 2025', status: 'Active', usage_count: 24 },
   { id: 2, code: 'FLASH-POMPES', name: 'Déstockage Pompage Inox', type: 'Pourcentage', value: 15, category: 'Plomberie', min_order_amount: 5000, start_date: '20 Fév 2025', end_date: '05 Mar 2025', status: 'Active', usage_count: 12 },
   { id: 3, code: 'FRANCO-FREE', name: 'Livraison Gratuite 1ère Commande', type: 'Franco de port', value: 0, category: 'Tout le catalogue', min_order_amount: 2000, start_date: '01 Jan 2025', end_date: '31 Déc 2025', status: 'Active', usage_count: 85 },
   { id: 4, code: 'PRINTEMPS-CAB', name: 'Pack Câblage Industriel 3G2.5', type: 'Montant Fixe', value: 500, category: 'Électricité', min_order_amount: 15000, start_date: '15 Mar 2025', end_date: '30 Avr 2025', status: 'Planifiée', usage_count: 0 },

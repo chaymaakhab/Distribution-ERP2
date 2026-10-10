@@ -150,7 +150,7 @@ export function RealOrdersExpeditionMap({
       const depHtml = `
         <div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%);">
           <div style="padding: 3px 6px; border-radius: 6px; background: #0f172a; border: 1.5px solid #3b82f6; color: #93c5fd; font-size: 10px; font-weight: 800; white-space: nowrap;">
-            🏭 ${dep.name}
+            ${dep.name}
           </div>
           <div style="width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #3b82f6;"></div>
         </div>
@@ -181,7 +181,7 @@ export function RealOrdersExpeditionMap({
 
       const tone = isDelivered ? '#10b981' : isInDelivery ? '#0284c7' : isPrep ? '#f59e0b' : '#a855f7';
       const bgTone = isDelivered ? '#064e3b' : isInDelivery ? '#075985' : isPrep ? '#78350f' : '#581c87';
-      const iconSymbol = isDelivered ? '✓' : isInDelivery ? '🚚' : isPrep ? '📦' : '⏳';
+      const iconSymbol = isDelivered ? '✓' : isInDelivery ? '•' : isPrep ? '•' : '—';
 
       if (isInDelivery || isPrep) {
         L.polyline([dep.coords, clientCoords], {
@@ -218,8 +218,8 @@ export function RealOrdersExpeditionMap({
             <b style="color: #38bdf8; font-size: 13px;">${o.ref}</b>
             <span style="font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: ${bgTone}; color: ${tone};">${o.status}</span>
           </div>
-          <p style="margin: 0 0 2px; font-size: 12px; font-weight: 700;">🏢 ${o.customer}</p>
-          <p style="margin: 0 0 4px; font-size: 11px; color: #94a3b8;">📍 Ville : ${o.city} · Dépôt : ${dep.name}</p>
+          <p style="margin: 0 0 2px; font-size: 12px; font-weight: 700;">${o.customer}</p>
+          <p style="margin: 0 0 4px; font-size: 11px; color: #94a3b8;">Ville : ${o.city} · Dépôt : ${dep.name}</p>
           <div style="display: flex; justify-content: space-between; font-size: 11.5px; background: rgba(255,255,255,0.06); padding: 4px 8px; border-radius: 6px; margin: 4px 0 6px;">
             <span>Articles : <b>${o.items_count} réf</b></span>
             <span style="color: #34d399; font-weight: 700;">${formatMoney(o.total)} DH</span>
@@ -284,10 +284,10 @@ export function RealOrdersExpeditionMap({
             }}
           >
             <option value="all">Toutes les commandes ({orders.length})</option>
-            <option value="in_delivery">🚚 En livraison active</option>
-            <option value="prep">📦 En préparation dépôt</option>
-            <option value="delivered">🟢 Livrées</option>
-            <option value="pending">🟣 À valider / Confirmées</option>
+            <option value="in_delivery">En livraison active</option>
+            <option value="prep">En préparation dépôt</option>
+            <option value="delivered">Livrées</option>
+            <option value="pending">À valider / Confirmées</option>
           </select>
         </div>
 

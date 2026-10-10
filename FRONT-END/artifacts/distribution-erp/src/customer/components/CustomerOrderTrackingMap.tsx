@@ -152,7 +152,7 @@ export function CustomerOrderTrackingMap({
     const depotHtml = `
       <div class="cx-depot-pin">
         <div style="background: #0f172a; color: #38bdf8; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 12px; border: 2px solid #38bdf8; box-shadow: 0 4px 10px rgba(0,0,0,0.25); white-space: nowrap; display: flex; align-items: center; gap: 4px;">
-          <span>🏭</span> <span>${depot?.name ?? 'Dépôt Expéditeur'}</span>
+          <span>${depot?.name ?? 'Dépôt Expéditeur'}</span>
         </div>
         <div style="width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid #38bdf8;"></div>
       </div>
@@ -167,7 +167,7 @@ export function CustomerOrderTrackingMap({
       .addTo(group)
       .bindPopup(`
         <div style="font-family: inherit; font-size: 12px; line-height: 1.4;">
-          <b style="color: #0284c7; font-size: 13px;">🏭 ${depot?.name ?? 'Dépôt Central'}</b>
+          <b style="color: #0284c7; font-size: 13px;">${depot?.name ?? 'Dépôt Central'}</b>
           <p style="margin: 4px 0 0; color: #64748b;">${depot?.address ?? 'Zone Industrielle'}, ${depot?.city ?? 'Maroc'}</p>
           <span style="font-size: 10.5px; color: #10b981; font-weight: 700;">Expédié et contrôlé</span>
         </div>
@@ -177,7 +177,7 @@ export function CustomerOrderTrackingMap({
     const destHtml = `
       <div class="cx-dest-pin">
         <div style="background: #0f172a; color: #10b981; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 12px; border: 2px solid #10b981; box-shadow: 0 4px 10px rgba(0,0,0,0.25); white-space: nowrap; display: flex; align-items: center; gap: 4px;">
-          <span>📍</span> <span>Votre Adresse</span>
+          <span>Votre Adresse</span>
         </div>
         <div style="width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid #10b981;"></div>
       </div>
@@ -192,9 +192,9 @@ export function CustomerOrderTrackingMap({
       .addTo(group)
       .bindPopup(`
         <div style="font-family: inherit; font-size: 12px; line-height: 1.4;">
-          <b style="color: #10b981; font-size: 13px;">🏢 ${destination?.company ?? destination?.client_name ?? 'Votre Point de Vente'}</b>
+          <b style="color: #10b981; font-size: 13px;">${destination?.company ?? destination?.client_name ?? 'Votre Point de Vente'}</b>
           <p style="margin: 4px 0 0; color: #64748b;">${destination?.address ?? 'Adresse de livraison'}, ${destination?.city ?? ''}</p>
-          <p style="margin: 2px 0 0; font-size: 11px; color: #0284c7;">📞 ${destination?.phone ?? ''}</p>
+          <p style="margin: 2px 0 0; font-size: 11px; color: #0284c7;">${destination?.phone ?? ''}</p>
         </div>
       `);
 
@@ -202,8 +202,8 @@ export function CustomerOrderTrackingMap({
     const truckHtml = `
       <div class="cx-truck-pin" style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
         <div class="cx-truck-pulse"></div>
-        <div style="width: 38px; height: 38px; border-radius: 50%; background: #0284c7; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.7); z-index: 10;">
-          <span style="font-size: 18px;">🚚</span>
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: #0284c7; border: 2.5px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.7); z-index: 10;">
+          <span style="font-size: 11px; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">LIV</span>
         </div>
       </div>
     `;
@@ -220,7 +220,7 @@ export function CustomerOrderTrackingMap({
     truckMarker.bindPopup(`
       <div style="font-family: inherit; font-size: 12px; line-height: 1.4; min-width: 190px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-          <b style="color: #0284c7; font-size: 13px;">🚚 Livreur en Approche</b>
+          <b style="color: #0284c7; font-size: 13px;">Livreur en Approche</b>
           <span style="background: #0284c722; color: #0284c7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800;">EN DIRECT</span>
         </div>
         <p style="margin: 0 0 2px; font-weight: 700; color: #1e293b;">${tracking?.driver_name ?? 'Chauffeur Hercules ERP'}</p>
@@ -231,7 +231,7 @@ export function CustomerOrderTrackingMap({
         </div>
         ${tracking?.driver_phone ? `
           <a href="tel:${tracking.driver_phone}" style="display: block; text-align: center; background: #0284c7; color: white; text-decoration: none; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 6px;">
-            📞 Appeler le chauffeur
+            Appeler le chauffeur
           </a>
         ` : ''}
       </div>

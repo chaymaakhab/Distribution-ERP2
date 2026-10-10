@@ -628,7 +628,7 @@ export default function SegmentedTopNavbar({
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 12, color: '#64748b' }}>Statut :</span>
                   <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: '#dcfce7', color: '#16a34a' }}>
-                    {currentCompany.subscription_status === 'active' ? '🟢 Actif' : currentCompany.subscription_status}
+                    {currentCompany.subscription_status === 'active' ? 'Actif' : currentCompany.subscription_status}
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -679,7 +679,7 @@ export default function SegmentedTopNavbar({
               </div>
 
               <div style={{ fontSize: 11, color: '#64748b', fontStyle: 'italic', background: '#f1f5f9', padding: '8px 10px', borderRadius: 6 }}>
-                💡 Pour étendre les quotas de dépôts ou d'utilisateurs de cette société, contactez la Direction Générale.
+                Pour étendre les quotas de dépôts ou d'utilisateurs de cette société, contactez la Direction Générale.
               </div>
             </div>
 

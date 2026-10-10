@@ -36,7 +36,7 @@ export const ALL_ROLES: RoleDef[] = [
     name: 'Super Administrateur',
     shortName: 'Super Admin',
     category: 'staff',
-    badge: 'Gestion Plateforme SaaS',
+    badge: 'Gestion de la Plateforme',
     user_name: 'Super Administrateur',
     email: 'superadmin@hercules-erp.ma',
     password: 'password',

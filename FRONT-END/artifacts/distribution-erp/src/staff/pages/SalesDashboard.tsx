@@ -1533,7 +1533,7 @@ export default function SalesDashboard({ onNavigate }: { onNavigate?: (module: s
                   <tr>
                     <th>N° QUITTANCE REÇU</th>
                     <th>DATE</th>
-                    <th>CLIENT B2B</th>
+                    <th>CLIENT</th>
                     <th>FACTURE APURÉE</th>
                     <th>MODE DE PAIEMENT</th>
                     <th>MONTANT ENCAISSÉ</th>

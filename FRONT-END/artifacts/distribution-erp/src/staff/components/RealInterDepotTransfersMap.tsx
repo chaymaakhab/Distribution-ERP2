@@ -190,7 +190,7 @@ export function RealInterDepotTransfersMap({
         <div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); cursor: pointer;">
           <div style="display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 8px; background: #0f172a; border: 2px solid #10b981; color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 6px 14px rgba(0,0,0,0.5); white-space: nowrap;">
             <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
-            <span>🏭 ${d.name}</span>
+            <span>${d.name}</span>
             ${outCount > 0 ? `<span style="background: #0284c7; color: white; padding: 1px 5px; border-radius: 10px; font-size: 9.5px;">▲ ${outCount}</span>` : ''}
             ${inCount > 0 ? `<span style="background: #10b981; color: white; padding: 1px 5px; border-radius: 10px; font-size: 9.5px;">▼ ${inCount}</span>` : ''}
           </div>
@@ -243,8 +243,8 @@ export function RealInterDepotTransfersMap({
         const vanHtml = `
           <div class="transit-van-pin" style="position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
             <div class="transit-radar-ping"></div>
-            <div style="width: 32px; height: 32px; border-radius: 50%; background: #0284c7; border: 2px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(2,132,199,0.7); z-index: 10;">
-              <span style="font-size: 15px;">🚛</span>
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: #0284c7; border: 2px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(2,132,199,0.7); z-index: 10;">
+              <span style="font-size: 9.5px; font-weight: 800; color: #ffffff;">NAV</span>
             </div>
           </div>
         `;
@@ -261,10 +261,10 @@ export function RealInterDepotTransfersMap({
         vanMarker.bindPopup(`
           <div style="font-family: inherit; min-width: 220px; padding: 4px; color: #f8fafc;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <b style="color: #38bdf8; font-size: 12.5px;">🚛 ${t.ref} · Navette Inter-Dépôt</b>
+              <b style="color: #38bdf8; font-size: 12.5px;">${t.ref} · Navette Inter-Dépôt</b>
               <span style="font-size: 10px; background: #0284c7; color: white; padding: 2px 6px; border-radius: 4px; font-weight: 700;">EN ROUTE</span>
             </div>
-            <p style="margin: 0 0 2px; font-size: 11.5px; font-weight: 700;">📦 ${t.quantity} ${t.unit} · ${t.product}</p>
+            <p style="margin: 0 0 2px; font-size: 11.5px; font-weight: 700;">${t.quantity} ${t.unit} · ${t.product}</p>
             <p style="margin: 0 0 4px; font-size: 11px; color: #cbd5e1;">De : <b>${t.source}</b> → Vers : <b>${t.destination}</b></p>
             <p style="margin: 0 0 4px; font-size: 11px; color: #94a3b8;">Chauffeur : ${t.driver_name} (${t.vehicle_plate})</p>
             <div style="display: flex; justify-content: space-between; font-size: 11px; background: rgba(255,255,255,0.06); padding: 4px 6px; border-radius: 6px;">

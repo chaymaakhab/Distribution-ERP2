@@ -618,7 +618,7 @@ export default function ClientsCrm() {
     <div className="module-page crm-page">
       <div className="page-heading">
         <div>
-          <div className="eyebrow">RELATION CLIENT B2B <span className="heading-slash">/</span> CRM & ENCOURS</div>
+          <div className="eyebrow">RELATION CLIENT <span className="heading-slash">/</span> CRM &amp; ENCOURS</div>
           <h1>Portefeuille Clients & Comptes</h1>
           <p>Gestion des comptes revendeurs, grilles tarifaires, encours de crédit et accès au portail de commande.</p>
         </div>
@@ -1031,7 +1031,7 @@ export default function ClientsCrm() {
             >
               <div>
                 <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
-                  RELATION CLIENT B2B · ENREGISTREMENT COMPTE
+                  RELATION CLIENT · ENREGISTREMENT COMPTE
                 </span>
                 <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
                   Enregistrer un nouveau client pro
@@ -1304,10 +1304,10 @@ export default function ClientsCrm() {
                 )}
               </div>
 
-              {/* Accès Espace Client B2B */}
+              {/* Accès Espace Client */}
               <div style={{ padding: '12px 14px', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#1e40af', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  Identifiants Portail Client B2B
+                  Identifiants Portail Client
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10 }}>
                   <label className="field-label" style={{ color: '#1e3a8a', fontWeight: 600, fontSize: 12 }}>
@@ -1351,7 +1351,7 @@ export default function ClientsCrm() {
                   </label>
                 </div>
                 <small style={{ color: '#3b82f6', fontSize: 11, display: 'block', marginTop: 4 }}>
-                  Le client pourra se connecter immédiatement sur le portail B2B avec ces identifiants pour passer ses commandes.
+                  Le client pourra se connecter immédiatement sur l’espace client avec ces identifiants pour passer ses commandes.
                 </small>
               </div>
             </div>

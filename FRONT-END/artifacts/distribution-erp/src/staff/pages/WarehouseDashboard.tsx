@@ -1037,7 +1037,7 @@ export default function WarehouseDashboard({
                 <span className="status-pill status-blue" style={{ fontSize: 11 }}>{clientDriversCount} livreurs</span>
               </div>
               <p style={{ margin: '6px 0 0', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.4 }}>
-                Distribution locale auprès des commerces, clients B2B et chantiers urbains. Véhicules légers (fourgons 3.5T).
+                Distribution locale auprès des commerces, revendeurs professionnels et chantiers urbains. Véhicules légers (fourgons 3.5T).
               </p>
             </div>
 
@@ -1533,7 +1533,7 @@ export default function WarehouseDashboard({
                       {formType === 'depot_to_client' && <Check size={15} style={{ color: '#38bdf8' }} />}
                     </div>
                     <small style={{ display: 'block', color: 'var(--muted)', marginTop: 5, fontSize: 10.5, lineHeight: 1.35 }}>
-                      Distribution directe aux magasins, B2B & chantiers.
+                      Distribution directe aux magasins, revendeurs &amp; chantiers.
                     </small>
                   </div>
 

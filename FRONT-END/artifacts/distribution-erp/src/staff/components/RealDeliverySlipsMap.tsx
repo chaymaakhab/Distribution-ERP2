@@ -118,7 +118,7 @@ export function RealDeliverySlipsMap({
             <span style="font-size: 10px; font-weight: 700; color: ${tone};">${slip.status}</span>
           </div>
           <h4 style="margin: 0 0 4px; font-size: 14px; color: #f8fafc;">${slip.customer}</h4>
-          <p style="margin: 0 0 3px; font-size: 11px; color: #94a3b8;">Destination: 📍 <b>${slip.city}</b></p>
+          <p style="margin: 0 0 3px; font-size: 11px; color: #94a3b8;">Destination: <b>${slip.city}</b></p>
           <p style="margin: 0 0 3px; font-size: 11px; color: #cbd5e1;">Chauffeur: <b>${slip.driver}</b></p>
           <p style="margin: 0 0 3px; font-size: 11px; color: #94a3b8;">Immatriculation: <code>${slip.truck_plate}</code></p>
           <div style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px;">
@@ -180,7 +180,7 @@ export function RealDeliverySlipsMap({
             fontWeight: 700,
           }}
         >
-          📍 {slips.length} Expéditions Cartographiées
+          {slips.length} Expéditions Cartographiées
         </div>
         <button
           onClick={handleFit}

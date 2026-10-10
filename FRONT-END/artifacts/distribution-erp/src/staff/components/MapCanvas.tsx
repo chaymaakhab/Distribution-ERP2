@@ -286,7 +286,7 @@ export function MapCanvas({
 
           <div style="font-size: 12px; color: #94a3b8; display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="color: #64748b;">📍</span>
+              <span style="color: #64748b; font-size: 11px;">Ville / Adresse :</span>
               <span style="color: #cbd5e1;">${w.address || w.city}</span>
             </div>
             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -299,7 +299,7 @@ export function MapCanvas({
             </div>
             ${w.manager_name ? `
             <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
-              <span style="color: #64748b;">👤</span>
+              <span style="color: #64748b; font-size: 11px;">Responsable :</span>
               <span style="color: #e2e8f0;">${w.manager_name} ${w.phone ? `(${w.phone})` : ''}</span>
             </div>` : ''}
           </div>

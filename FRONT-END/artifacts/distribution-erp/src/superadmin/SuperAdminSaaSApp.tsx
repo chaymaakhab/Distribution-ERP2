@@ -766,7 +766,7 @@ export default function SuperAdminSaaSApp() {
           <section className="saas-section-panel">
             <div className="saas-panel-header">
               <div className="saas-panel-header-left">
-                <h3>🚨 Suivi des Échéances &amp; Alertes de Renouvellement</h3>
+                <h3>Suivi des Échéances &amp; Alertes de Renouvellement</h3>
                 <p>
                   Liste prioritaire des entreprises dont l’abonnement arrive à terme ou nécessite une action commerciale.
                 </p>
@@ -828,7 +828,7 @@ export default function SuperAdminSaaSApp() {
                               <div>
                                 <b style={{ fontSize: 13, color: 'var(--saas-text-primary)' }}>{c.name}</b>
                                 <div style={{ fontSize: 11, color: 'var(--saas-text-muted)', display: 'flex', gap: 8 }}>
-                                  <span>📍 {c.city}</span>
+                                  <span>{c.city}</span>
                                   {c.ice && <span>ICE: {c.ice}</span>}
                                 </div>
                               </div>

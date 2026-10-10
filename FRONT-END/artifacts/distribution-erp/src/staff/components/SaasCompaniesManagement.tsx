@@ -576,9 +576,9 @@ export default function SaasCompaniesManagement({
                         </span>
                       </div>
                       <div style={{ fontSize: 11.5, color: 'var(--muted)', display: 'flex', gap: 10, marginTop: 3 }}>
-                        <span>📍 {c.city}</span>
+                        <span>{c.city}</span>
                         {c.ice && <span>ICE: <b>{c.ice}</b></span>}
-                        {c.phone && <span>📞 {c.phone}</span>}
+                        {c.phone && <span>Tél: {c.phone}</span>}
                       </div>
                     </div>
                   </div>
@@ -600,7 +600,7 @@ export default function SaasCompaniesManagement({
                         gap: 5,
                       }}
                     >
-                      <Crown size={12} /> PACK {c.subscription_plan}
+                      PACK {c.subscription_plan}
                     </span>
 
                     <span
@@ -613,7 +613,7 @@ export default function SaasCompaniesManagement({
                       }`}
                       style={{ fontSize: 11 }}
                     >
-                      {c.subscription_status === 'active' ? '🟢 Actif' : c.subscription_status === 'trial' ? '⏳ Essai' : '🔴 Expiré'}
+                      {c.subscription_status === 'active' ? 'Actif' : c.subscription_status === 'trial' ? 'Essai' : 'Expiré'}
                     </span>
                   </div>
                 </div>
@@ -632,7 +632,7 @@ export default function SaasCompaniesManagement({
                   {/* Admin User */}
                   <div>
                     <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>
-                      👤 Administrateur d’Entreprise
+                      Administrateur d’Entreprise
                     </span>
                     <strong style={{ display: 'block', fontSize: 13, color: '#ffffff', marginTop: 2 }}>
                       {c.admin_user?.name ?? 'Non assigné'}
@@ -645,7 +645,7 @@ export default function SaasCompaniesManagement({
                   {/* Quotas Depots & Users */}
                   <div>
                     <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>
-                      📦 Utilisation Quotas
+                      Utilisation Quotas
                     </span>
                     <div style={{ fontSize: 12, marginTop: 2, display: 'flex', gap: 12 }}>
                       <span>Dépôts : <b>{c.warehouses_count ?? 1} / {c.max_warehouses}</b></span>
@@ -664,7 +664,7 @@ export default function SaasCompaniesManagement({
                   {/* Subscription Expiration & Pricing */}
                   <div>
                     <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>
-                      📅 Échéance &amp; Facturation
+                      Échéance &amp; Facturation
                     </span>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
                       <strong style={{ fontSize: 12.5, color: isNearExpiry ? '#f59e0b' : '#22c55e' }}>

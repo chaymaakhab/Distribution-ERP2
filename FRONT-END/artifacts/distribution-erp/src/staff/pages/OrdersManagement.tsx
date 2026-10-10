@@ -668,7 +668,7 @@ export default function OrdersManagement() {
                     }}
                   >
                     <option value="Commercial">Commercial terrain</option>
-                    <option value="Portail client">Portail client B2B</option>
+                    <option value="Portail client">Portail client direct</option>
                     <option value="Téléphone">Téléphone / Comptoir</option>
                   </select>
                 </div>
@@ -1052,7 +1052,7 @@ export default function OrdersManagement() {
                   style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
                 >
                   <option value="Commercial">Commercial (Vente terrain)</option>
-                  <option value="Portail client">Portail client B2B</option>
+                  <option value="Portail client">Portail client direct</option>
                   <option value="Téléphone">Téléphone / WhatsApp</option>
                   <option value="Livreur-pré-vendeur">Livreur-pré-vendeur (Van Sales)</option>
                 </select>

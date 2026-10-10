@@ -153,7 +153,7 @@ export function RealCommercialVisitsMap({ visits, onStatusChange }: RealCommerci
       const hubHtml = `
         <div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); opacity: 0.85;">
           <div style="padding: 3px 6px; border-radius: 6px; background: #0f172a; border: 1.5px solid #3b82f6; color: #93c5fd; font-size: 10px; font-weight: 700; white-space: nowrap;">
-            🏢 ${hub.name}
+            ${hub.name}
           </div>
           <div style="width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #3b82f6;"></div>
         </div>
@@ -177,7 +177,7 @@ export function RealCommercialVisitsMap({ visits, onStatusChange }: RealCommerci
 
       const tone = isDone ? '#10b981' : isCurrent ? '#0284c7' : isPostponed ? '#f59e0b' : '#8b5cf6';
       const bgTone = isDone ? '#064e3b' : isCurrent ? '#075985' : isPostponed ? '#78350f' : '#4c1d95';
-      const iconSymbol = isDone ? '✓' : isCurrent ? '🚶' : isPostponed ? '⏳' : '📅';
+      const iconSymbol = isDone ? '✓' : isCurrent ? '•' : isPostponed ? '—' : '•';
 
       const visitHtml = `
         <div class="visit-pin" style="position: relative;">
@@ -210,14 +210,14 @@ export function RealCommercialVisitsMap({ visits, onStatusChange }: RealCommerci
               ${v.status}
             </span>
           </div>
-          <p style="margin: 0 0 3px; font-size: 11px; color: #cbd5e1;">👤 Commercial: <b>${v.commercial}</b></p>
-          <p style="margin: 0 0 3px; font-size: 11px; color: #cbd5e1;">⏰ Horaire: <b>${v.scheduled_at}</b></p>
-          <p style="margin: 0 0 6px; font-size: 11px; color: #e2e8f0;">🎯 Type: <b>${v.type}</b></p>
-          ${v.notes ? `<p style="margin: 0 0 8px; font-size: 10.5px; color: #cbd5e1; background: rgba(255,255,255,0.06); padding: 5px 8px; border-radius: 6px;">📝 ${v.notes}</p>` : ''}
-          ${v.order_taken ? `<p style="margin: 0 0 8px; font-size: 10.5px; color: #34d399; font-weight: 700;">✅ Commande terrain signée</p>` : ''}
+          <p style="margin: 0 0 3px; font-size: 11px; color: #cbd5e1;">Commercial: <b>${v.commercial}</b></p>
+          <p style="margin: 0 0 3px; font-size: 11px; color: #cbd5e1;">Horaire: <b>${v.scheduled_at}</b></p>
+          <p style="margin: 0 0 6px; font-size: 11px; color: #e2e8f0;">Type: <b>${v.type}</b></p>
+          ${v.notes ? `<p style="margin: 0 0 8px; font-size: 10.5px; color: #cbd5e1; background: rgba(255,255,255,0.06); padding: 5px 8px; border-radius: 6px;">${v.notes}</p>` : ''}
+          ${v.order_taken ? `<p style="margin: 0 0 8px; font-size: 10.5px; color: #34d399; font-weight: 700;">✓ Commande terrain signée</p>` : ''}
           <div style="display: flex; gap: 6px; margin-top: 4px;">
             <button id="btn-in-progress-${v.id}" style="flex: 1; background: #0284c7; color: white; border: none; padding: 5px 6px; border-radius: 6px; font-size: 10.5px; font-weight: 700; cursor: pointer;">
-              📍 Check-in
+              Check-in
             </button>
             <button id="btn-complete-${v.id}" style="flex: 1; background: #10b981; color: white; border: none; padding: 5px 6px; border-radius: 6px; font-size: 10.5px; font-weight: 700; cursor: pointer;">
               ✓ Réalisée
@@ -312,10 +312,10 @@ export function RealCommercialVisitsMap({ visits, onStatusChange }: RealCommerci
             }}
           >
             <option value="all">Tous les statuts</option>
-            <option value="En cours">🔵 En cours (sur place)</option>
-            <option value="Réalisée">🟢 Réalisée</option>
-            <option value="Planifiée">🟣 Planifiée</option>
-            <option value="Reportée">🟠 Reportée</option>
+            <option value="En cours">En cours (sur place)</option>
+            <option value="Réalisée">Réalisée</option>
+            <option value="Planifiée">Planifiée</option>
+            <option value="Reportée">Reportée</option>
           </select>
         </div>
 

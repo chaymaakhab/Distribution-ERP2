@@ -203,7 +203,7 @@ export function RealDeliveryRouteMap({
     const depotHtml = `
       <div class="route-pin">
         <div class="route-pin-badge" style="border-color: #3b82f6; background: #1e3a8a; color: #93c5fd;">
-          <span>🏭 DÉPÔT DÉPART</span>
+          <span>DÉPÔT DÉPART</span>
         </div>
         <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid #3b82f6;"></div>
       </div>
@@ -239,7 +239,7 @@ export function RealDeliveryRouteMap({
 
       const toneBorder = isDelivered ? '#10b981' : isInRoute ? '#0284c7' : isRefused ? '#ef4444' : '#f59e0b';
       const toneBg = isDelivered ? '#064e3b' : isInRoute ? '#075985' : isRefused ? '#7f1d1d' : '#78350f';
-      const statusIcon = isDelivered ? '✓' : isInRoute ? '🚚' : isRefused ? '✕' : '⏳';
+      const statusIcon = isDelivered ? '✓' : isInRoute ? '•' : isRefused ? '✕' : '—';
 
       const stopHtml = `
         <div class="route-pin" id="stop-pin-${stop.id}">
@@ -268,15 +268,15 @@ export function RealDeliveryRouteMap({
             <span style="font-size: 10px; font-weight: 700; color: ${toneBorder}; text-transform: uppercase;">${stop.status}</span>
           </div>
           <h4 style="margin: 0 0 4px; font-size: 14px; color: #f8fafc;">${stop.client}</h4>
-          <p style="margin: 0 0 6px; font-size: 11.5px; color: #94a3b8;">📍 ${stop.address}, ${stop.city}</p>
+          <p style="margin: 0 0 6px; font-size: 11.5px; color: #94a3b8;">${stop.address}, ${stop.city}</p>
           <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px;">
             <span style="color: #64748b;">À Encaisser:</span>
             <b style="color: #34d399;">${formatMoney(stop.amount_to_collect)} DH</b>
           </div>
-          ${stop.client_note ? `<p style="font-size: 10.5px; color: #eab308; background: rgba(234,179,8,0.1); padding: 4px 6px; border-radius: 4px; margin-bottom: 8px;">📝 ${stop.client_note}</p>` : ''}
+          ${stop.client_note ? `<p style="font-size: 10.5px; color: #eab308; background: rgba(234,179,8,0.1); padding: 4px 6px; border-radius: 4px; margin-bottom: 8px;">${stop.client_note}</p>` : ''}
           <div style="display: flex; gap: 6px;">
             <a href="tel:${stop.phone}" style="flex: 1; text-align: center; background: #1e293b; color: #f8fafc; text-decoration: none; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1);">
-              📞 Appel
+              Appel
             </a>
             ${stop.status === 'in_route' || stop.status === 'arrived' ? `
             <button id="btn-val-${stop.id}" style="flex: 2; background: #0284c7; color: white; border: none; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
@@ -325,8 +325,8 @@ export function RealDeliveryRouteMap({
     const driverHtml = `
       <div class="driver-truck-pin" style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
         <div class="driver-radar-ring"></div>
-        <div style="width: 38px; height: 38px; border-radius: 50%; background: #0284c7; border: 3px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.7); z-index: 10;">
-          <span style="font-size: 18px;">🚚</span>
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: #0284c7; border: 2.5px solid #ffffff; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.7); z-index: 10;">
+          <span style="font-size: 11px; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">LIV</span>
         </div>
       </div>
     `;

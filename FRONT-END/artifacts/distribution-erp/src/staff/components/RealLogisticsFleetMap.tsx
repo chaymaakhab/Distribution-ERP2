@@ -103,7 +103,7 @@ export function RealLogisticsFleetMap({
         <div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); cursor: pointer;">
           <div style="display: flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 8px; background: #0f172a; border: 2px solid ${dep.tone}; color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
             <span style="width: 7px; height: 7px; border-radius: 50%; background: ${dep.tone};"></span>
-            <span>🏭 ${dep.code} · ${dep.city}</span>
+            <span>${dep.code} · ${dep.city}</span>
           </div>
           <div style="width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid ${dep.tone};"></div>
         </div>
@@ -157,14 +157,14 @@ export function RealLogisticsFleetMap({
       const isPreSeller = driver.driver_type === 'pre_seller';
       const isMoving = driver.status === 'en_tournee' || driver.status === 'en_transit';
 
-      const typeBadge = isTransit ? '🚛 Transit Inter-Dépôt' : isPreSeller ? '🛍️ Pré-vendeur' : '🚚 Dépôt → Clients';
+      const typeBadge = isTransit ? 'Transit Inter-Dépôt' : isPreSeller ? 'Pré-vendeur' : 'Dépôt → Clients';
       const tone = isMoving ? '#0284c7' : '#10b981';
 
       const driverHtml = `
         <div style="position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%);">
           ${isMoving ? `<div style="position: absolute; width: 36px; height: 36px; border-radius: 50%; background: rgba(2,132,199,0.3); border: 2px solid #38bdf8; animation: markerPulsePing 2s infinite; pointer-events: none;"></div>` : ''}
-          <div style="width: 32px; height: 32px; border-radius: 50%; background: #0f172a; border: 2px solid ${tone}; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2;">
-            ${isTransit ? '🚛' : '🚚'}
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: #0f172a; border: 2px solid ${tone}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2;">
+            ${isTransit ? 'NAV' : 'VAN'}
           </div>
           <span style="font-size: 9.5px; font-weight: 800; background: #0f172a; color: #f8fafc; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); margin-top: 3px; white-space: nowrap;">
             ${driver.name}
@@ -190,9 +190,9 @@ export function RealLogisticsFleetMap({
           <p style="margin: 0 0 3px; font-size: 11px; color: #cbd5e1;">Rôle: <b>${typeBadge}</b></p>
           <p style="margin: 0 0 3px; font-size: 11px; color: #cbd5e1;">Véhicule: <b>${driver.vehicle_model} (${driver.vehicle_plate})</b></p>
           <p style="margin: 0 0 4px; font-size: 11px; color: #94a3b8;">Base: ${driver.base_depot} · Trajet: ${driver.assigned_city_or_route}</p>
-          ${driver.current_mission ? `<p style="margin: 0 0 6px; font-size: 10.5px; color: #eab308; background: rgba(234,179,8,0.1); padding: 4px 6px; border-radius: 4px;">📦 Mission: ${driver.current_mission}</p>` : ''}
+          ${driver.current_mission ? `<p style="margin: 0 0 6px; font-size: 10.5px; color: #eab308; background: rgba(234,179,8,0.1); padding: 4px 6px; border-radius: 4px;">Mission: ${driver.current_mission}</p>` : ''}
           <a href="tel:${driver.phone}" style="display: block; text-align: center; background: #0284c7; color: white; text-decoration: none; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-top: 4px;">
-            📞 Appeler ${driver.phone}
+            Appeler ${driver.phone}
           </a>
         </div>
       `);

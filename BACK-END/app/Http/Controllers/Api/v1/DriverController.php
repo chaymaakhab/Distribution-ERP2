@@ -62,4 +62,27 @@ class DriverController extends Controller
 
         return response()->json($driver);
     }
+
+    public function updateLocation(Request $request, $id)
+    {
+        $driver = Driver::findOrFail($id);
+
+        $validated = $request->validate([
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+            'speed_kmh' => 'nullable|integer|min:0',
+        ]);
+
+        $driver->update([
+            'lat' => $validated['lat'],
+            'lng' => $validated['lng'],
+            'speed_kmh' => $validated['speed_kmh'] ?? 0,
+            'last_location_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Coordonnées GPS mises à jour.',
+            'driver' => $driver,
+        ]);
+    }
 }

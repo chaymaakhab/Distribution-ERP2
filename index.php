@@ -4,7 +4,9 @@
  * Redirects automatically to the modern Vite Frontend (Port 3000)
  */
 
-$viteHost = 'http://' . ($_SERVER['SERVER_NAME'] ?? 'localhost') . ':3000';
+$host = $_SERVER['SERVER_NAME'] ?? 'localhost';
+$port = isset($_GET['port']) ? intval($_GET['port']) : 5173;
+$viteHost = "http://{$host}:{$port}";
 $targetUrl = $viteHost . '/customer/home';
 
 // Optional: If direct redirect header is allowed

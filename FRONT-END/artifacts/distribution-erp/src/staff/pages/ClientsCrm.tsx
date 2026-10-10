@@ -1221,7 +1221,7 @@ export default function ClientsCrm() {
               {/* Attribution Commerciale & Commission */}
               <div style={{ padding: '12px 14px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  💼 Attribution Commerciale & Commission
+                  Attribution Commerciale &amp; Commission
                 </div>
 
                 {isUserCommercial ? (
@@ -1307,7 +1307,7 @@ export default function ClientsCrm() {
               {/* Accès Espace Client B2B */}
               <div style={{ padding: '12px 14px', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#1e40af', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  🔐 Identifiants Portail Client B2B
+                  Identifiants Portail Client B2B
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10 }}>
                   <label className="field-label" style={{ color: '#1e3a8a', fontWeight: 600, fontSize: 12 }}>

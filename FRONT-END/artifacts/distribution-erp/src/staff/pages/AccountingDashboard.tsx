@@ -1496,7 +1496,7 @@ export default function AccountingDashboard() {
             <table className="data-table module-table">
               <thead>
                 <tr>
-                  <th>CLIENT B2B &amp; ICE</th>
+                  <th>CLIENT &amp; ICE</th>
                   <th>VILLE</th>
                   <th>NON ÉCHU (&lt;0j)</th>
                   <th>1 À 30 JOURS</th>
@@ -1737,7 +1737,7 @@ export default function AccountingDashboard() {
                   <td>{formatMoney(totalInvoiced / 1.2)} DH</td>
                   <td><span className="status-pill status-blue">20%</span></td>
                   <td><b>{formatMoney((totalInvoiced / 1.2) * 0.2)} DH</b></td>
-                  <td>Factures de vente de marchandises B2B</td>
+                  <td>Factures de vente de marchandises</td>
                 </tr>
                 <tr>
                   <td><b>Déduction TVA sur avoirs émis</b></td>

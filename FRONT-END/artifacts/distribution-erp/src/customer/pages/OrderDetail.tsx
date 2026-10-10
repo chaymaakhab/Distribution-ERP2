@@ -17,7 +17,7 @@ function stepLabel(step: string): string {
     confirmed: 'Validée par l’ERP',
     prepared: 'Préparée au dépôt',
     assigned: 'Assignée au camion',
-    in_delivery: 'En cours de tournée 🚚',
+    in_delivery: 'En cours de tournée',
     delivered: 'Livrée & Réceptionnée',
   };
   return map[step] || step;
@@ -92,7 +92,7 @@ export default function OrderDetail({ ref_ }: { ref_: string }) {
       <div className="cx-page-head">
         <div>
           <span className="cx-eyebrow">
-            BON DE COMMANDE B2B · {new Date(order.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+            BON DE COMMANDE COMMERCIAL · {new Date(order.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
           </span>
           <h1>{order.ref}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>

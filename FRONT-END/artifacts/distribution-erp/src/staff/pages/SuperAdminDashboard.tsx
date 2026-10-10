@@ -1076,7 +1076,7 @@ export default function SuperAdminDashboard() {
                             style={{ fontSize: 10 }}
                           >
                             {isArbitrated ? <CheckCircle2 size={11} /> : <AlertTriangle size={11} />}
-                            {isArbitrated ? 'Arbitré Direction' : op.priority === 'urgente' ? '🔴 Urgente' : 'En attente'}
+                            {isArbitrated ? 'Arbitré Direction' : op.priority === 'urgente' ? 'Urgente' : 'En attente'}
                           </span>
                         </div>
 
@@ -1410,7 +1410,7 @@ export default function SuperAdminDashboard() {
                 <div>
                   <span style={{ color: '#64748b', display: 'block' }}>Chauffeur :</span>
                   <span style={{ color: '#334155' }}>
-                    {arbitrationModal.driver_type === 'pre_seller' ? '🚚 Pré-vendeur (Van Sales)' : arbitrationModal.driver_name}
+                    {arbitrationModal.driver_type === 'pre_seller' ? 'Pré-vendeur (Van Sales)' : arbitrationModal.driver_name}
                   </span>
                 </div>
               </div>

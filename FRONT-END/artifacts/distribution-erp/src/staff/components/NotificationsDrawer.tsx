@@ -136,7 +136,7 @@ export const ALL_SYSTEM_NOTIFICATIONS: ErpNotification[] = [
     id: 'n-com-1',
     type: 'operation',
     priority: 'normal',
-    title: 'Nouvelle commande B2B · CMD-2407',
+    title: 'Nouvelle commande client · CMD-2407',
     message: 'Commande de 28 400 DH soumise par Atlas Équipements. En attente de validation commerciale.',
     time: 'Aujourd’hui 09:30',
     read: false,

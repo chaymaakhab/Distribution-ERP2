@@ -648,7 +648,7 @@ export default function CommercialsPortfolioManagement() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#38bdf8' }}>
-                SUPERVISION COMMERCIALE & COMMISSIONNEMENT B2B
+                SUPERVISION COMMERCIALE &amp; COMMISSIONNEMENT
               </span>
               <span style={{ background: 'rgba(56,189,248,0.2)', color: '#38bdf8', padding: '2px 8px', borderRadius: 4, fontSize: 10.5, fontWeight: 700 }}>
                 DIRECTION & SUPER ADMIN
@@ -1528,7 +1528,7 @@ export default function CommercialsPortfolioManagement() {
                     }}
                   />
                   <small style={{ color: '#64748b', fontSize: 11, marginTop: 3, display: 'block' }}>
-                    Ce code permet au client de s’auto-affilier lors de son inscription sur le portail B2B.
+                    Ce code permet au client de s’auto-affilier lors de son inscription sur l’espace client.
                   </small>
                 </label>
 

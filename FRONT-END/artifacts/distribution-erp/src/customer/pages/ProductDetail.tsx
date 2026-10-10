@@ -115,7 +115,7 @@ export default function ProductDetail({ code }: { code: string }) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span className="cx-card-cat">{product.category}</span>
-              <span className="cx-badge-tier">TARIF DISTRIBUTEUR B2B</span>
+              <span className="cx-badge-tier">TARIF DISTRIBUTEUR &amp; GROS</span>
             </div>
             <h1>{product.name}</h1>
             <div className="cx-pd-sku-bar" style={{ marginTop: 6 }}>
@@ -173,7 +173,7 @@ export default function ProductDetail({ code }: { code: string }) {
           {/* Volume Tiers Table */}
           <div className="cx-pd-tiers-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <h3>Grille de Remises Dégressives B2B</h3>
+              <h3>Grille de Remises Dégressives par Volume</h3>
               <small style={{ color: 'var(--cx-muted)', fontSize: 11 }}>Calcul automatique au panier</small>
             </div>
             <div className="cx-tiers-list">

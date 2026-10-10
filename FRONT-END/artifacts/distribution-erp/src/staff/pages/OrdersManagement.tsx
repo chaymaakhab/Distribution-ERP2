@@ -8,6 +8,7 @@ import { api, formatMoney } from '../api';
 import InvoiceDocumentModal, { type InvoiceData } from '../components/InvoiceDocumentModal';
 import DeliverySlipDocumentModal, { type DeliverySlipData } from '../components/DeliverySlipDocumentModal';
 import NewInvoiceModal from '../components/NewInvoiceModal';
+import { RealOrdersExpeditionMap } from '../components/RealOrdersExpeditionMap';
 
 interface OrderItemRow {
   ref: string;
@@ -60,6 +61,7 @@ export default function OrdersManagement() {
   const [activeBcOrder, setActiveBcOrder] = useState<OrderItemRow | null>(null);
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'map'>('table');
 
   useEffect(() => {
     api.getOrders()
@@ -261,7 +263,24 @@ export default function OrdersManagement() {
           <h1>Gestion des Commandes</h1>
           <p>Supervision des commandes multi-canaux (Portail client, Commercial, Téléphone) et ordonnancement logistique.</p>
         </div>
-        <div className="heading-actions">
+        <div className="heading-actions" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', background: 'rgba(15, 23, 42, 0.6)', padding: 3, borderRadius: 8, border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <button
+              className={viewMode === 'table' ? 'button-primary' : 'button-secondary'}
+              onClick={() => setViewMode('table')}
+              style={{ height: 32, fontSize: 12, padding: '0 10px', gap: 5 }}
+            >
+              <ClipboardList size={13} /> Liste
+            </button>
+            <button
+              className={viewMode === 'map' ? 'button-primary' : 'button-secondary'}
+              onClick={() => setViewMode('map')}
+              style={{ height: 32, fontSize: 12, padding: '0 10px', gap: 5 }}
+            >
+              <Truck size={13} /> Carte Expéditions (GPS)
+            </button>
+          </div>
+
           <button className="button-secondary" onClick={exportCsv}>
             <Download size={15} /> Exporter CSV
           </button>
@@ -293,6 +312,25 @@ export default function OrdersManagement() {
           <strong className="neutral">{formatMoney(orders.reduce((a, b) => a + b.total, 0))} DH</strong>
         </div>
       </div>
+
+      {/* Real Interactive Map for Orders & Expeditions */}
+      {viewMode === 'map' && (
+        <section className="panel" style={{ padding: '16px', borderRadius: '12px', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: 8 }}>
+            <div>
+              <span className="eyebrow">FLUX LOGISTIQUES & LIVRAISONS</span>
+              <h2 style={{ margin: 0, fontSize: 16 }}>Carte des Expéditions vers les Clients</h2>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              {orders.length} commandes en cours d’expédition / livraison
+            </div>
+          </div>
+          <RealOrdersExpeditionMap
+            orders={filtered}
+            onInspectOrder={(o) => setActiveBcOrder(o)}
+          />
+        </section>
+      )}
 
       {/* Main Table Panel */}
       <section className="panel list-panel">

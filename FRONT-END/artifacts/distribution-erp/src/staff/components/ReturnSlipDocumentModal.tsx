@@ -115,7 +115,7 @@ Observations : ${slip.notes || 'Aucune observation particulière'}
           <div className="doc-header">
             <div>
               <div className="doc-brand">GESTION ERP DISTRIBUTION</div>
-              <div className="doc-brand-sub">Distribution Alimentaire & Matériaux de Construction B2B</div>
+              <div className="doc-brand-sub">Distribution Alimentaire &amp; Matériaux de Construction</div>
               <div className="doc-meta-company">
                 Zone Industrielle Ain Sebaâ, Allée des Usines, Casablanca<br />
                 ICE : 001892345000042 · IF : 40291823 · RC : 349120 Casablanca<br />
@@ -285,7 +285,7 @@ Observations : ${slip.notes || 'Aucune observation particulière'}
           {/* Footer */}
           <div className="doc-footer">
             GESTION ERP DISTRIBUTION SARL · Capital 2 000 000 DH · Patente 38472910 · CNSS 9182374<br />
-            Document généré automatiquement le {new Date().toLocaleDateString('fr-FR')} · Système ERP B2B Maroc
+            Document généré automatiquement le {new Date().toLocaleDateString('fr-FR')} · Système ERP Maroc
           </div>
         </div>
       </div>

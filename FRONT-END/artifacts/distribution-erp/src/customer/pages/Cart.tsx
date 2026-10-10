@@ -100,7 +100,7 @@ export default function Cart({ user }: { user: CustomerUser }) {
         <div className="cx-empty">
           <ShoppingBag size={48} style={{ color: 'var(--cx-brand)', margin: '0 auto 12px' }} />
           <h2>Votre panier est vide</h2>
-          <p>Consultez notre catalogue B2B pour ajouter des articles et passer commande.</p>
+          <p>Consultez notre catalogue professionnel pour ajouter des articles et passer commande.</p>
           <button className="cx-btn cx-btn-primary lg" onClick={() => setLocation('/customer/catalog')}>
             Découvrir le catalogue <ArrowRight size={16} />
           </button>
@@ -113,7 +113,7 @@ export default function Cart({ user }: { user: CustomerUser }) {
     <div className="cx-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <span className="cx-eyebrow">FINALISATION B2B</span>
+          <span className="cx-eyebrow">FINALISATION DE LA COMMANDE</span>
           <h1 style={{ fontSize: 26, fontWeight: 800, margin: '4px 0 0' }}>Votre Panier de Commande</h1>
         </div>
         <button className="cx-btn cx-btn-ghost sm" onClick={clear}>
@@ -216,7 +216,7 @@ export default function Cart({ user }: { user: CustomerUser }) {
         {/* Right Column: Order Summary Card */}
         <div className="cx-checkout-summary-card">
           <h2 className="cx-checkout-summary-title">
-            <Receipt size={20} style={{ color: 'var(--cx-brand)' }} /> Récapitulatif B2B
+            <Receipt size={20} style={{ color: 'var(--cx-brand)' }} /> Récapitulatif de Commande
           </h2>
 
           {/* Franco Alert Bar */}

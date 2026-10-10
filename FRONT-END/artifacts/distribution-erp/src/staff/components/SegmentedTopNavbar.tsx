@@ -221,7 +221,7 @@ export default function SegmentedTopNavbar({
             >
               <div style={{ padding: '8px 14px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  🏢 Sélecteur de Société &amp; Filiale
+                  Sélecteur de Société &amp; Filiale
                 </span>
                 <span style={{ fontSize: 10, color: '#0284c7', fontWeight: 600 }}>Multi-Sociétés</span>
               </div>

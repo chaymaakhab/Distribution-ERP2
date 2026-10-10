@@ -238,7 +238,7 @@ function AppShell() {
           <button className="theme-toggle-button icon-button" onClick={toggleTheme} title="Basculer le thème (Clair / Sombre)" style={{ padding: '6px', cursor: 'pointer' }} data-testid="button-theme-toggle">
             {isLight ? <Moon size={16} /> : <Sun size={16} />}
           </button>
-          <div className="top-date"><CalendarDays size={14} /> 28 fév. 2025 <ChevronDown size={13} /></div>
+          <div className="top-date">28 fév. 2025</div>
           <button className="help-button" onClick={() => notify('Besoin d’aide ? Contactez votre administrateur.')} aria-label="Aide"><CircleHelp size={17} /></button>
         </div>
       </header>

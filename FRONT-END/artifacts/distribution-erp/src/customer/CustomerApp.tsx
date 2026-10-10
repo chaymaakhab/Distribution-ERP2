@@ -132,7 +132,7 @@ function CustomerShell({
       <div className="cx-trust-bar">
         <div className="cx-trust-marquee">
           <span className="cx-trust-pill">
-            🇲🇦 <b>ATLAS DISTRIBUTION</b> · Réseau grossiste officiel
+            <b>ATLAS DISTRIBUTION</b> · Réseau grossiste officiel
           </span>
           <span className="cx-trust-pill highlight">
             <Truck size={13} /> Livraison express 24-48h Casablanca, Rabat, Marrakech, Tanger & Fès

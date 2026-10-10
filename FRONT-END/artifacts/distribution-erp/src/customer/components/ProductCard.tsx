@@ -46,7 +46,7 @@ export default function ProductCard({
         {/* Category / Tier tag */}
         <span className="cx-badge-tier">
           <Package size={11} style={{ marginRight: 3, verticalAlign: -1 }} />
-          {product.category || 'PRO B2B'}
+          {product.category || 'PRO'}
         </span>
 
         {/* Stock alerts */}

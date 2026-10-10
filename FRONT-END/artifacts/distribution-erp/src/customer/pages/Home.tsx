@@ -148,7 +148,7 @@ export default function Home({ user }: { user: CustomerUser }) {
             <div className="cx-franco-labels">
               <span>
                 {remainingFranco > 0 ? (
-                  <>Plus que <b>{formatMoney(remainingFranco)}</b> pour la <b>Livraison Offerte</b> 🚚</>
+                  <>Plus que <b>{formatMoney(remainingFranco)}</b> pour la <b>Livraison Offerte</b></>
                 ) : (
                   <span style={{ color: '#34d399', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     <Check size={14} /> <b>Félicitations ! Franco de port atteint. Livraison Gratuite.</b>

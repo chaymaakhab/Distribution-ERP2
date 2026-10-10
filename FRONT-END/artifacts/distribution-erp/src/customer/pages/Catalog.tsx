@@ -68,7 +68,7 @@ export default function Catalog() {
   return (
     <div className="cx-page">
       <PageHeader
-        kicker="CATALOGUE B2B OFFICIEL"
+        kicker="CATALOGUE PROFESSIONNEL"
         title="Catalogue des Articles & Matériel"
         description="Tarifs personnalisés selon votre grille grossiste. Prix affichés en DH Hors Taxes et Toutes Taxes Comprises."
       />
@@ -96,7 +96,7 @@ export default function Catalog() {
             className={`cx-chip-toggle ${onlyStock ? 'active' : ''}`}
             onClick={() => setOnlyStock((s) => !s)}
           >
-            <SlidersHorizontal size={14} /> En stock uniquement {onlyStock && <Check size={13} />}
+            En stock uniquement {onlyStock && <Check size={13} />}
           </button>
 
           {/* Sort By Dropdown */}
@@ -136,7 +136,7 @@ export default function Catalog() {
             <button
               className={`cx-view-btn ${viewMode === 'table' ? 'active' : ''}`}
               onClick={() => setViewMode('table')}
-              title="Affichage Tableau B2B"
+              title="Affichage Tableau"
             >
               <List size={16} />
             </button>

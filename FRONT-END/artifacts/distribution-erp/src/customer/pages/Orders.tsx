@@ -53,7 +53,7 @@ export default function Orders() {
     { id: 'all', label: 'Toutes les commandes' },
     { id: 'pending_validation', label: 'À valider' },
     { id: 'confirmed', label: 'Confirmées' },
-    { id: 'in_delivery', label: 'En livraison 🚚' },
+    { id: 'in_delivery', label: 'En livraison' },
     { id: 'delivered', label: 'Livrées' },
   ];
 

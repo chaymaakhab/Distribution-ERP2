@@ -922,7 +922,7 @@ export default function UsersManagement() {
                       color: '#475569',
                     }}
                   >
-                    💡 <b>Astuce :</b> Vous pouvez cocher plusieurs rôles dans l’onglet suivant (ex: Responsable Dépôt + Préparateur + Livreur), puis personnaliser les droits d’accès à la carte.
+                    <b>Astuce :</b> Vous pouvez cocher plusieurs rôles dans l’onglet suivant (ex: Responsable Dépôt + Préparateur + Livreur), puis personnaliser les droits d’accès à la carte.
                   </div>
                 </div>
               )}

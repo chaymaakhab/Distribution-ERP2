@@ -84,7 +84,7 @@ export default function Profile({ user, onUpdated }: { user: CustomerUser; onUpd
   return (
     <div className="cx-page">
       <PageHeader
-        kicker="ESPACE ENTREPRISE B2B"
+        kicker="ESPACE ENTREPRISE &amp; REVENDEUR"
         title="Profil & Compte Professionnel"
         description="Gérez les coordonnées de votre société, vos identifiants fiscaux marocains et votre commercial dédié."
       />
@@ -104,7 +104,7 @@ export default function Profile({ user, onUpdated }: { user: CustomerUser; onUpd
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span className="cx-badge cx-badge-green">
-            <ShieldCheck size={14} /> Compte B2B Vérifié
+            <ShieldCheck size={14} /> Compte Professionnel Vérifié
           </span>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--cx-text)' }}>
             Code Client : <code>{user.code}</code>
@@ -205,7 +205,7 @@ export default function Profile({ user, onUpdated }: { user: CustomerUser; onUpd
           {/* Financial Encours Card */}
           <div className="cx-panel">
             <div className="cx-panel-head">
-              <h2><CreditCard size={16} /> Conditions & Crédit B2B</h2>
+              <h2><CreditCard size={16} /> Conditions Commerciales &amp; Crédit</h2>
               <span className="cx-badge cx-badge-green" style={{ fontSize: 11 }}>Autorisé</span>
             </div>
 

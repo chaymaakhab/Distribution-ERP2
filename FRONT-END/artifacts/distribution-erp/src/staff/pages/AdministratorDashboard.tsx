@@ -198,13 +198,13 @@ export default function AdministratorDashboard() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button className="button-secondary" onClick={() => setLocation(`/${workspace}/customers`)}>
-            <Award size={14} style={{ color: '#f59e0b' }} /> Portefeuilles Commerciaux
+            Portefeuilles Commerciaux
           </button>
           <button className="button-secondary" onClick={() => setLocation(`/${workspace}/orders`)}>
-            <ClipboardCheck size={14} /> Toutes les commandes
+            Toutes les commandes
           </button>
           <button className="button-primary" onClick={() => setLocation(`/${workspace}/customers`)}>
-            <Users size={14} /> CRM Clients & Encours
+            CRM Clients &amp; Encours
           </button>
         </div>
       </div>

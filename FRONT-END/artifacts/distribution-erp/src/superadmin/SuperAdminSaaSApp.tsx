@@ -955,7 +955,7 @@ export default function SuperAdminSaaSApp() {
           <section className="saas-section-panel">
             <div className="saas-panel-header">
               <div className="saas-panel-header-left">
-                <h3>🏢 Répertoire des Entreprises Clientes Souscrites</h3>
+                <h3>Répertoire des Entreprises Clientes Souscrites</h3>
                 <p>
                   Toutes les informations administratives, coordonnées, statut d’accès et quotas réels par entreprise.
                 </p>
@@ -1043,11 +1043,11 @@ export default function SuperAdminSaaSApp() {
 
                         <td>
                           <div style={{ fontSize: 12 }}>
-                            <div>📍 <b>{c.city}</b> · <span style={{ color: 'var(--saas-text-muted)' }}>{c.address || 'Siège principal'}</span></div>
+                            <div><b>{c.city}</b> · <span style={{ color: 'var(--saas-text-muted)' }}>{c.address || 'Siège principal'}</span></div>
                             <div style={{ fontSize: 11, color: 'var(--saas-text-muted)', marginTop: 2 }}>
                               ICE : <b>{c.ice || 'Non renseigné'}</b> {c.rc && `· RC ${c.rc}`}
                             </div>
-                            {c.phone && <div style={{ fontSize: 11, color: 'var(--saas-text-muted)' }}>📞 {c.phone}</div>}
+                            {c.phone && <div style={{ fontSize: 11, color: 'var(--saas-text-muted)' }}>Tél : {c.phone}</div>}
                           </div>
                         </td>
 
@@ -1057,10 +1057,10 @@ export default function SuperAdminSaaSApp() {
                               Pack {c.subscription_plan}
                             </span>
                             <span className={`badge-status badge-status-${c.subscription_status}`}>
-                              {c.subscription_status === 'active' && '🟢 Actif'}
-                              {c.subscription_status === 'trial' && '⏳ Essai'}
-                              {c.subscription_status === 'expired' && '🔴 Expiré'}
-                              {c.subscription_status === 'suspended' && '⏸️ Suspendu'}
+                              {c.subscription_status === 'active' && 'Actif'}
+                              {c.subscription_status === 'trial' && 'Essai'}
+                              {c.subscription_status === 'expired' && 'Expiré'}
+                              {c.subscription_status === 'suspended' && 'Suspendu'}
                             </span>
                           </div>
                         </td>
@@ -1190,7 +1190,7 @@ export default function SuperAdminSaaSApp() {
           <div>
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                💎 OFFRES COMMERCIALES &amp; FORMULES D’ADHÉSION
+                OFFRES COMMERCIALES &amp; FORMULES D’ADHÉSION
               </span>
               <h2 style={{ fontSize: 24, fontWeight: 900, margin: '4px 0 6px', color: 'var(--saas-text-primary)' }}>
                 Catalogue des Formules d’Abonnement des Entreprises
@@ -1203,7 +1203,7 @@ export default function SuperAdminSaaSApp() {
             <div className="saas-packs-grid">
               {SAAS_PACKS.map((pack) => (
                 <div key={pack.id} className={`saas-pack-card ${pack.popular ? 'popular' : ''}`}>
-                  {pack.popular && <span className="saas-pack-badge">Le Plus Vendu ⭐</span>}
+                  {pack.popular && <span className="saas-pack-badge">Formule Recommandée</span>}
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                     <div
@@ -1237,8 +1237,8 @@ export default function SuperAdminSaaSApp() {
                       Capacités &amp; Quotas Inclus :
                     </div>
                     <div style={{ display: 'flex', gap: 14, fontSize: 12 }}>
-                      <span>📦 <b>{pack.max_warehouses} Dépôt{pack.max_warehouses > 1 ? 's' : ''}</b></span>
-                      <span>👥 <b>{pack.max_users} Utilisateurs</b></span>
+                      <span><b>{pack.max_warehouses} Dépôt{pack.max_warehouses > 1 ? 's' : ''}</b></span>
+                      <span><b>{pack.max_users} Utilisateurs</b></span>
                     </div>
                   </div>
 
@@ -1275,7 +1275,7 @@ export default function SuperAdminSaaSApp() {
           <section className="saas-section-panel">
             <div className="saas-panel-header">
               <div className="saas-panel-header-left">
-                <h3>📊 Performance Financière &amp; Répartition du Chiffre d’Affaires</h3>
+                <h3>Performance Financière &amp; Répartition du Chiffre d’Affaires</h3>
                 <p>Analyse de la valeur souscrite par formule, cycle de facturation et projections annuelles.</p>
               </div>
             </div>
@@ -1306,16 +1306,25 @@ export default function SuperAdminSaaSApp() {
                 <div style={{ background: 'var(--saas-bg-surface)', padding: 20, borderRadius: 12, border: '1px solid var(--saas-border)' }}>
                   <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 800 }}>Santé du Portefeuille d’Abonnements</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ color: '#10b981' }}>🟢 Souscriptions Actives Régulières :</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                      <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                        Souscriptions Actives Régulières :
+                      </span>
                       <b>{metrics.active} sociétés</b>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ color: '#f59e0b' }}>⏳ Périodes d’Essai Provisoires :</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                      <span style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                        Périodes d’Essai Provisoires :
+                      </span>
                       <b>{metrics.trial} sociétés</b>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ color: '#ef4444' }}>🔴 Comptes Expirés / En Attente Règlement :</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+                      <span style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+                        Comptes Expirés / En Attente :
+                      </span>
                       <b>{metrics.expired} sociétés</b>
                     </div>
                     <div style={{ borderTop: '1px solid var(--saas-border)', paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
@@ -1616,10 +1625,10 @@ export default function SuperAdminSaaSApp() {
                     value={renewStatus}
                     onChange={(e) => setRenewStatus(e.target.value as any)}
                   >
-                    <option value="active">🟢 Actif (Accès Débloqué)</option>
-                    <option value="trial">⏳ Période d’Essai</option>
-                    <option value="expired">🔴 Expiré (Accès Restreint)</option>
-                    <option value="suspended">⏸️ Suspendu (Accès Bloqué)</option>
+                    <option value="active">Actif (Accès Débloqué)</option>
+                    <option value="trial">Période d’Essai</option>
+                    <option value="expired">Expiré (Accès Restreint)</option>
+                    <option value="suspended">Suspendu (Accès Bloqué)</option>
                   </select>
                 </div>
               </div>
@@ -1739,7 +1748,7 @@ export default function SuperAdminSaaSApp() {
                   }}
                   onClick={() => handleToggleSuspension(viewCompanyModal)}
                 >
-                  {viewCompanyModal.status === 'suspended' ? '🟢 Réactiver l’Accès ERP' : '⛔ Suspendre l’Accès ERP'}
+                  {viewCompanyModal.status === 'suspended' ? 'Réactiver l’Accès ERP' : 'Suspendre l’Accès ERP'}
                 </button>
                 <button
                   type="button"

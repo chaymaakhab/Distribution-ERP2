@@ -1102,7 +1102,7 @@ export default function ReturnsManagement({ onNavigate }: ReturnsManagementProps
                     />
                     <div>
                       <b style={{ color: '#b91c1c', fontSize: 12.5 }}>
-                        ⛔ Refusé : Rejet du retour client (Délai dépassé ou motif irrecevable)
+                        Refusé : Rejet du retour client (Délai dépassé ou motif irrecevable)
                       </b>
                       <small style={{ display: 'block', color: '#64748b', fontSize: 11, marginTop: 2 }}>
                         Retour rejeté au quai. Aucun avoir accordé au client et réexpédition à sa charge.

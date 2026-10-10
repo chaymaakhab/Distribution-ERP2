@@ -244,12 +244,39 @@ class SaasCompanyController extends Controller
             'max_warehouses' => ['nullable', 'integer', 'min:1'],
         ]);
 
+        if (isset($data['subscription_status'])) {
+            $data['status'] = in_array($data['subscription_status'], ['suspended', 'expired']) ? 'suspended' : 'active';
+        }
+
         $company->update($data);
 
         return response()->json([
             'status' => 'success',
             'message' => 'Abonnement SaaS mis à jour avec succès.',
-            'data' => $company->fresh(),
+            'data' => $company->fresh(['adminUser', 'warehouses']),
+        ]);
+    }
+
+    /**
+     * Toggle company access suspension (Super Admin action).
+     */
+    public function toggleSuspension($id)
+    {
+        $company = Company::findOrFail($id);
+        $isCurrentlySuspended = $company->status === 'suspended' || $company->subscription_status === 'suspended';
+        $newStatus = $isCurrentlySuspended ? 'active' : 'suspended';
+
+        $company->update([
+            'status' => $newStatus,
+            'subscription_status' => $newStatus === 'suspended' ? 'suspended' : ($company->is_expired ? 'expired' : 'active'),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $newStatus === 'suspended' 
+                ? "Accès de l'entreprise {$company->name} suspendu avec succès."
+                : "Accès de l'entreprise {$company->name} réactivé avec succès.",
+            'data' => $company->fresh(['adminUser', 'warehouses']),
         ]);
     }
 

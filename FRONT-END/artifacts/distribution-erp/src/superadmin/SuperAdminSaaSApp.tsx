@@ -508,6 +508,29 @@ export default function SuperAdminSaaSApp() {
     notify(`Période de grâce de 30 jours accordée à "${c.name}" !`);
   }
 
+  // Toggle Company Access Suspension (Instant Block / Unblock by Mol SaaS)
+  function handleToggleSuspension(c: SaasCompany) {
+    const isSuspended = c.status === 'suspended' || c.subscription_status === 'suspended';
+    const newStatus = isSuspended ? 'active' : 'suspended';
+    const updated: SaasCompany = {
+      ...c,
+      status: newStatus,
+      subscription_status: newStatus === 'suspended' ? 'suspended' : (c.days_remaining <= 0 ? 'expired' : 'active'),
+    };
+
+    api.toggleSaasCompanySuspension(c.id).catch(() => {});
+
+    setCompanies((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    if (viewCompanyModal && viewCompanyModal.id === c.id) {
+      setViewCompanyModal(updated);
+    }
+    notify(
+      newStatus === 'suspended'
+        ? `⛔ Accès de l'entreprise "${c.name}" suspendu (ERP bloqué).`
+        : `✅ Accès de l'entreprise "${c.name}" réactivé avec succès.`
+    );
+  }
+
   return (
     <div className="saas-master-app">
       {/* ── Toast Feedback ── */}
@@ -896,6 +919,20 @@ export default function SuperAdminSaaSApp() {
                               >
                                 +30j Grâce
                               </button>
+                              <button
+                                type="button"
+                                className="btn-saas-secondary"
+                                style={{
+                                  padding: '6px 10px',
+                                  fontSize: 11.5,
+                                  color: c.status === 'suspended' ? '#10b981' : '#ef4444',
+                                  borderColor: c.status === 'suspended' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)',
+                                }}
+                                onClick={() => handleToggleSuspension(c)}
+                                title={c.status === 'suspended' ? "Réactiver l'accès ERP" : "Suspendre immédiatement l'accès ERP"}
+                              >
+                                {c.status === 'suspended' ? 'Activer' : 'Suspendre'}
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -1108,6 +1145,20 @@ export default function SuperAdminSaaSApp() {
                               title="Modifier ou renouveler l'abonnement"
                             >
                               Abonnement
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-saas-secondary"
+                              style={{
+                                padding: '6px 10px',
+                                fontSize: 11.5,
+                                color: c.status === 'suspended' ? '#10b981' : '#ef4444',
+                                borderColor: c.status === 'suspended' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)',
+                              }}
+                              onClick={() => handleToggleSuspension(c)}
+                              title={c.status === 'suspended' ? "Réactiver l'accès ERP" : "Suspendre l'accès ERP"}
+                            >
+                              {c.status === 'suspended' ? 'Activer' : 'Suspendre'}
                             </button>
                             <button
                               type="button"
@@ -1562,9 +1613,10 @@ export default function SuperAdminSaaSApp() {
                     value={renewStatus}
                     onChange={(e) => setRenewStatus(e.target.value as any)}
                   >
-                    <option value="active">Actif (Accès Débloqué)</option>
-                    <option value="trial">Période d’Essai</option>
-                    <option value="expired">Expiré (Accès Restreint)</option>
+                    <option value="active">🟢 Actif (Accès Débloqué)</option>
+                    <option value="trial">⏳ Période d’Essai</option>
+                    <option value="expired">🔴 Expiré (Accès Restreint)</option>
+                    <option value="suspended">⏸️ Suspendu (Accès Bloqué)</option>
                   </select>
                 </div>
               </div>
@@ -1673,25 +1725,51 @@ export default function SuperAdminSaaSApp() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
-              <button
-                type="button"
-                className="btn-saas-secondary"
-                onClick={() => setViewCompanyModal(null)}
-              >
-                Fermer
-              </button>
-              <button
-                type="button"
-                className="btn-saas-primary"
-                onClick={() => {
-                  const target = viewCompanyModal;
-                  setViewCompanyModal(null);
-                  handleOpenRenew(target);
-                }}
-              >
-                Renouveler l’Abonnement
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn-saas-secondary"
+                  style={{
+                    color: viewCompanyModal.status === 'suspended' ? '#10b981' : '#ef4444',
+                    borderColor: viewCompanyModal.status === 'suspended' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)',
+                  }}
+                  onClick={() => handleToggleSuspension(viewCompanyModal)}
+                >
+                  {viewCompanyModal.status === 'suspended' ? '🟢 Réactiver l’Accès ERP' : '⛔ Suspendre l’Accès ERP'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-saas-secondary"
+                  onClick={() => {
+                    handleQuickExtend30Days(viewCompanyModal);
+                    setViewCompanyModal(null);
+                  }}
+                >
+                  +30 Jours de Grâce
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  type="button"
+                  className="btn-saas-secondary"
+                  onClick={() => setViewCompanyModal(null)}
+                >
+                  Fermer
+                </button>
+                <button
+                  type="button"
+                  className="btn-saas-primary"
+                  onClick={() => {
+                    const target = viewCompanyModal;
+                    setViewCompanyModal(null);
+                    handleOpenRenew(target);
+                  }}
+                >
+                  Renouveler l’Abonnement
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -15,18 +15,20 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $data = $request->validate([
-            'identifier' => ['required', 'string'],
-            'password' => ['required', 'string'],
-        ]);
+        $identifier = $request->input('identifier') ?? $request->input('email');
+        $password = $request->input('password');
 
-        $identifier = $data['identifier'];
+        if (! $identifier || ! $password) {
+            throw ValidationException::withMessages([
+                'identifier' => ['Identifiant (ou e-mail) et mot de passe sont requis.'],
+            ]);
+        }
 
         $user = User::where('email', $identifier)
             ->orWhere('phone', $identifier)
             ->first();
 
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
+        if (! $user || ! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
                 'identifier' => ['Identifiant ou mot de passe incorrect.'],
             ]);
@@ -38,7 +40,23 @@ class AuthController extends Controller
             ]);
         }
 
-        $user->load('roles');
+        $user->load(['roles', 'company']);
+
+        // Check SaaS subscription validity for company staff (Mol SaaS superadmin is exempt)
+        if (! $user->hasRole('superadmin') && $user->company) {
+            if ($user->company->status === 'suspended' || $user->company->subscription_status === 'suspended') {
+                throw ValidationException::withMessages([
+                    'identifier' => ['L\'accès de votre entreprise est actuellement suspendu. Veuillez contacter l\'administrateur de la plateforme SaaS.'],
+                ]);
+            }
+
+            if ($user->company->is_expired || $user->company->subscription_status === 'expired') {
+                throw ValidationException::withMessages([
+                    'identifier' => ['L\'abonnement SaaS de votre entreprise a expiré le ' . ($user->company->subscription_end_date ? $user->company->subscription_end_date->format('d/m/Y') : 'terme prévu') . '. Veuillez renouveler votre formule.'],
+                ]);
+            }
+        }
+
         $token = $user->createToken('staff')->plainTextToken;
 
         return response()->json([

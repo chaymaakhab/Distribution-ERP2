@@ -22,6 +22,10 @@ class Driver extends Model
         'capacity',
         'status', // disponible, en_tournee, en_transit, en_repos
         'current_mission',
+        'lat',
+        'lng',
+        'speed_kmh',
+        'last_location_at',
     ];
 
     public function warehouse()

@@ -233,6 +233,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/saas/companies/{id}', [SaasCompanyController::class, 'show']);
         Route::put('/saas/companies/{id}', [SaasCompanyController::class, 'update']);
         Route::patch('/saas/companies/{id}/subscription', [SaasCompanyController::class, 'updateSubscription']);
+        Route::patch('/saas/companies/{id}/toggle-suspension', [SaasCompanyController::class, 'toggleSuspension']);
         Route::get('/saas/my-company', [SaasCompanyController::class, 'myCompany']);
 
         // Hierarchical Validation Tasks & Arbitrations (Super Admin & Enterprise Admin)

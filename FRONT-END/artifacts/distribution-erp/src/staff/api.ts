@@ -545,6 +545,10 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
+  toggleSaasCompanySuspension: (id: number) =>
+    request<{ status: string; message: string; data: SaasCompany }>(`/saas/companies/${id}/toggle-suspension`, {
+      method: 'PATCH',
+    }),
   getSaasOverview: () =>
     request<{ status: string; data: SaasOverview }>('/saas/overview'),
   getMyCompany: () =>

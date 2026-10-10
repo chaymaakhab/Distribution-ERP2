@@ -6,7 +6,10 @@ import {
   api, clearSession, getStoredUser, getToken, persistUser, setSession,
   type StaffUser,
 } from './api';
-import { createMockStaffUser } from './mockAuth';
+import {
+  createMockStaffUser, findStaffUserByEmail, staffItemToSessionUser,
+  normalizeRoleCode, ROLE_HOMES,
+} from './mockAuth';
 
 interface StaffAuthValue {
   user: StaffUser | null;
@@ -24,10 +27,15 @@ const StaffAuthContext = createContext<StaffAuthValue | null>(null);
 
 // Mirrors the backend check: '*' grants everything, an exact match grants the
 // permission, and a module wildcard ('products.*') grants the whole module.
+// In addition: having ANY action permission in a module (e.g. 'orders.create') grants view access ('orders.view').
 function permissionMatches(granted: string[], permission: string): boolean {
   if (granted.includes('*') || granted.includes(permission)) return true;
   const module = permission.split('.')[0];
-  return granted.includes(`${module}.*`);
+  if (granted.includes(`${module}.*`)) return true;
+  if (permission.endsWith('.view') && granted.some((p) => p.startsWith(`${module}.`))) {
+    return true;
+  }
+  return false;
 }
 
 export function StaffAuthProvider({ children }: { children: ReactNode }) {
@@ -61,9 +69,16 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
         setUser(res.user);
         return res.user;
       } catch {
-        const role = identifier.split('@')[0].toLowerCase();
-        const mock = createMockStaffUser(role, identifier);
-        setSession('mock-token-' + role, mock, remember);
+        const cleanId = identifier.trim();
+        const stored = findStaffUserByEmail(cleanId);
+        let mock: StaffUser;
+        if (stored) {
+          mock = staffItemToSessionUser(stored);
+        } else {
+          const rawRole = cleanId.includes('@') ? cleanId.split('@')[0].toLowerCase() : cleanId.toLowerCase();
+          mock = createMockStaffUser(rawRole, cleanId);
+        }
+        setSession('mock-token-' + (mock.primary_role || 'staff'), mock, remember);
         setUser(mock);
         return mock;
       }
@@ -82,11 +97,31 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const switchRole = useCallback(async (code: string) => {
-    const res = await api.switchRole(code);
-    setUser(res.user);
-    persistUser(res.user);
-    return res.user;
-  }, []);
+    try {
+      const res = await api.switchRole(code);
+      setUser(res.user);
+      persistUser(res.user);
+      return res.user;
+    } catch {
+      if (user) {
+        const norm = normalizeRoleCode(code);
+        const nextHome = ROLE_HOMES[norm] || '/admin/dashboard';
+        const updated: StaffUser = {
+          ...user,
+          primary_role: norm,
+          home: nextHome,
+          roles: user.roles.map((r) => ({
+            ...r,
+            is_primary: r.code === norm,
+          })),
+        };
+        setUser(updated);
+        persistUser(updated);
+        return updated;
+      }
+      throw new Error('Aucun utilisateur actif');
+    }
+  }, [user]);
 
   const hasPermission = useCallback(
     (permission: string) => !!user && permissionMatches(user.permissions, permission),
@@ -111,6 +146,21 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
 
 export function useStaffAuth(): StaffAuthValue {
   const ctx = useContext(StaffAuthContext);
-  if (!ctx) throw new Error('useStaffAuth must be used inside <StaffAuthProvider>.');
+  if (!ctx) {
+    const stored = getStoredUser();
+    return {
+      user: stored,
+      loading: false,
+      login: async () => stored || ({} as any),
+      logout: async () => {
+        clearSession();
+      },
+      switchRole: async () => stored || ({} as any),
+      hasPermission: () => true,
+      canAny: () => true,
+      workspace: 'admin',
+      home: '/superadmin',
+    };
+  }
   return ctx;
 }

@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, Route, Switch, useLocation } from 'wouter';
 import {
   Menu, X, ChevronDown, ChevronRight, Bell, LogOut, Search, Sun, Moon, Lock,
-  ArrowRight, ShieldCheck, Warehouse as WarehouseIcon, LayoutDashboard, LogIn,
+  ArrowRight, ArrowLeft, ShieldCheck, Warehouse as WarehouseIcon, LayoutDashboard, LogIn,
 } from 'lucide-react';
 import { useTheme } from '@/lib/theme';
 import { StaffAuthProvider, useStaffAuth } from './auth';
 import { MODULES, NAV_GROUPS, findModule, type NavModule } from './nav';
-import type { StaffUser } from './api';
+import { api, type StaffUser, type StaffCompany } from './api';
+import SegmentedTopNavbar from './components/SegmentedTopNavbar';
+import { normalizeRoleCode } from './mockAuth';
 import StaffLogin from './StaffLogin';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import AdministratorDashboard from './pages/AdministratorDashboard';
@@ -29,8 +31,16 @@ import SuppliersManagement from './pages/SuppliersManagement';
 import ReturnsManagement from './pages/ReturnsManagement';
 import ReportsPage from './pages/ReportsPage';
 import SystemMaintenance from './pages/SystemMaintenance';
-import GlobalSearchModal from './components/GlobalSearchModal';
-import NotificationsDrawer from './components/NotificationsDrawer';
+import QuotesManagement from './pages/QuotesManagement';
+import CommercialVisits from './pages/CommercialVisits';
+import ValidationRequests from './pages/ValidationRequests';
+import PromotionsManagement from './pages/PromotionsManagement';
+import DeliverySlips from './pages/DeliverySlips';
+import PurchaseReceipts from './pages/PurchaseReceipts';
+import InventoryAudits from './pages/InventoryAudits';
+import SaasCompaniesManagement from './components/SaasCompaniesManagement';
+import GlobalSearchModal, { getErpSearchItems } from './components/GlobalSearchModal';
+import NotificationsDrawer, { ALL_SYSTEM_NOTIFICATIONS, filterNotificationsByPermissions } from './components/NotificationsDrawer';
 import LogoutConfirmModal from './components/LogoutConfirmModal';
 import './components/global-search.css';
 import './components/notifications.css';
@@ -83,10 +93,46 @@ function StaffShell({ user }: { user: StaffUser }) {
   const [mobileNav, setMobileNav] = useState(false);
   const [roleMenu, setRoleMenu] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [topbarSearch, setTopbarSearch] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
-  const [unreadNotifCount, setUnreadNotifCount] = useState(4);
-  const { theme, toggleTheme, isLight } = useTheme();
+  const [unreadNotifCount, setUnreadNotifCount] = useState(() => {
+    return filterNotificationsByPermissions(ALL_SYSTEM_NOTIFICATIONS, hasPermission, user.primary_role ?? undefined, user.permissions).filter((n) => !n.read).length;
+  });
+  const [staffLang, setStaffLang] = useState<'fr' | 'ar'>(() => {
+    try {
+      return (localStorage.getItem('hercules_staff_lang') as 'fr' | 'ar') || 'fr';
+    } catch {
+      return 'fr';
+    }
+  });
+
+  function handleToggleLang(l: 'fr' | 'ar') {
+    setStaffLang(l);
+    try {
+      localStorage.setItem('hercules_staff_lang', l);
+    } catch {
+      /* ignore */
+    }
+    document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = l;
+  }
+
+  const [activeCompany, setActiveCompany] = useState<StaffCompany | null>(user.company ?? null);
+  const [allCompanies, setAllCompanies] = useState<StaffCompany[]>([]);
+
+  useEffect(() => {
+    if (user.roles.some((r) => r.code === 'superadmin')) {
+      api.getSaasCompanies()
+        .then((res) => {
+          if (res?.data && res.data.length > 0) {
+            setAllCompanies(res.data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user]);
+
   const roleRef = useRef<HTMLDivElement>(null);
 
   const primary = user.roles.find((r) => r.is_primary) ?? user.roles[0];
@@ -137,6 +183,7 @@ function StaffShell({ user }: { user: StaffUser }) {
         <button className="icon-button sx-nav-close" onClick={() => setMobileNav(false)} aria-label="Fermer le menu">
           <X size={18} />
         </button>
+
         <Link href={home} className="brand" onClick={() => setMobileNav(false)}>
           <span className="brand-mark"><span>G</span></span>
           <span className="brand-copy"><b>GESTION ERP</b><small>ERP · DISTRIBUTION</small></span>
@@ -144,8 +191,8 @@ function StaffShell({ user }: { user: StaffUser }) {
 
         <div className="workspace-chip">
           <span className="workspace-dot" />
-          <span>{user.warehouse ? `${user.warehouse.name} · ${user.warehouse.city ?? ''}`.trim() : 'Tous dépôts'}</span>
-          {user.warehouse && <WarehouseIcon size={13} />}
+          <span>{activeCompany ? `${activeCompany.brand_name || activeCompany.name} · ${activeCompany.city}` : (user.warehouse ? `${user.warehouse.name} · ${user.warehouse.city ?? ''}`.trim() : 'Tous dépôts')}</span>
+          <WarehouseIcon size={13} />
         </div>
 
         <nav className="side-nav sx-side-nav">
@@ -194,78 +241,23 @@ function StaffShell({ user }: { user: StaffUser }) {
       {mobileNav && <div className="sx-backdrop" onClick={() => setMobileNav(false)} />}
 
       <div className="app-main">
-        <header className="topbar">
-          <button className="mobile-trigger icon-button" onClick={() => setMobileNav(true)} aria-label="Ouvrir le menu">
-            <Menu size={19} />
-          </button>
-
-          <div className="crumb">
-            <span>Gestion ERP</span>
-            <ChevronRight size={14} />
-            <strong>{findModule(activeSegment)?.label ?? 'Tableau de bord'}</strong>
-          </div>
-
-          <div className="topbar-right">
-            <button
-              className="icon-button"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Recherche globale (Ctrl + K)"
-              title="Recherche globale (Ctrl + K)"
-            >
-              <Search size={16} />
-            </button>
-            <button
-              className="icon-button sx-bell"
-              onClick={() => setNotifOpen(true)}
-              aria-label="Notifications & alertes"
-              title="Notifications & alertes"
-            >
-              <Bell size={16} />
-              {unreadNotifCount > 0 && <span className="sx-bell-badge">{unreadNotifCount}</span>}
-            </button>
-
-            {user.roles.length > 1 && (
-              <div className="sx-role" ref={roleRef}>
-                <button className="sx-role-btn" onClick={() => setRoleMenu((v) => !v)} data-testid="button-role-switcher">
-                  <ShieldCheck size={14} />
-                  <span>{primary?.name}</span>
-                  <ChevronDown size={13} />
-                </button>
-                {roleMenu && (
-                  <div className="sx-role-menu">
-                    <p className="sx-role-caption">Changer d’espace</p>
-                    {user.roles.map((r) => (
-                      <button
-                        key={r.code}
-                        className={`sx-role-item ${r.code === primary?.code ? 'active' : ''}`}
-                        onClick={() => handleSwitch(r.code)}
-                      >
-                        <span>{r.name}</span>
-                        {r.code === primary?.code && <ShieldCheck size={13} />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <Link href="/login" className="icon-button" title="Changer de rôle / Portail Connexion" aria-label="Portail Connexion">
-              <LogIn size={16} />
-            </Link>
-            <button className="icon-button" onClick={toggleTheme} title="Basculer le thème" data-testid="button-theme-toggle">
-              {isLight ? <Moon size={16} /> : <Sun size={16} />}
-            </button>
-            <button
-              className="icon-button"
-              onClick={() => setLogoutModalOpen(true)}
-              title="Se déconnecter"
-              aria-label="Se déconnecter"
-              style={{ color: '#ef4444' }}
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
-        </header>
+        <SegmentedTopNavbar
+          user={user}
+          activeSegment={activeSegment}
+          onNavigate={go}
+          onOpenMobileNav={() => setMobileNav(true)}
+          onOpenSearchModal={() => setSearchOpen(true)}
+          topbarSearch={topbarSearch}
+          onTopbarSearchChange={setTopbarSearch}
+          onOpenNotifications={() => setNotifOpen(true)}
+          onOpenLogoutModal={() => setLogoutModalOpen(true)}
+          unreadCount={unreadNotifCount}
+          staffLang={staffLang}
+          onToggleLang={handleToggleLang}
+          activeCompany={activeCompany}
+          allCompanies={allCompanies}
+          onSelectCompany={(c) => setActiveCompany(c)}
+        />
 
         <main className="page-wrap">
           <Switch>
@@ -282,6 +274,7 @@ function StaffShell({ user }: { user: StaffUser }) {
         isOpen={searchOpen}
         onClose={() => setSearchOpen(false)}
         onNavigate={go}
+        initialQuery={topbarSearch}
       />
 
       <NotificationsDrawer
@@ -289,6 +282,9 @@ function StaffShell({ user }: { user: StaffUser }) {
         onClose={() => setNotifOpen(false)}
         onNavigate={go}
         onUnreadCountChange={setUnreadNotifCount}
+        hasPermission={hasPermission}
+        userRole={user.primary_role ?? undefined}
+        userPermissions={user.permissions}
       />
 
       <LogoutConfirmModal
@@ -311,12 +307,13 @@ function NavButton({ module, active, onClick }: { module: NavModule; active: boo
     >
       <Icon size={17} strokeWidth={1.8} />
       <span>{module.label}</span>
+      {active && <span className="nav-active-pip" />}
     </button>
   );
 }
 
 function GuardedModule({ segment, onNavigate }: { segment: string; onNavigate?: (s: string) => void }) {
-  const { hasPermission } = useStaffAuth();
+  const { hasPermission, user } = useStaffAuth();
   const module = findModule(segment);
 
   if (!module) return <NotFoundInline />;
@@ -324,9 +321,15 @@ function GuardedModule({ segment, onNavigate }: { segment: string; onNavigate?: 
   if (!hasPermission(module.permission)) return <Denied permission={module.permission} />;
   if (segment === 'warehouses') return <Warehouses />;
   if (segment === 'customers') return <ClientsCrm />;
-  if (segment === 'inventory') return <WarehouseDashboard />;
+  if (segment === 'inventory') return <WarehouseDashboard initialTab="stocks" onNavigate={onNavigate} />;
+  if (segment === 'fleet') return <WarehouseDashboard initialTab="drivers" onNavigate={onNavigate} />;
   if (segment === 'preparation') return <PreparationDashboard />;
-  if (segment === 'deliveries') return <DeliveryDashboard onNavigate={onNavigate} />;
+  if (segment === 'deliveries') {
+    if (user && normalizeRoleCode(user.primary_role) === 'warehouse') {
+      return <WarehouseDashboard initialTab="drivers" onNavigate={onNavigate} />;
+    }
+    return <DeliveryDashboard onNavigate={onNavigate} />;
+  }
   if (segment === 'finance' || segment === 'payments') return <AccountingDashboard />;
   if (segment === 'users') return <UsersManagement />;
   if (segment === 'roles') return <RolesPermissions />;
@@ -334,17 +337,25 @@ function GuardedModule({ segment, onNavigate }: { segment: string; onNavigate?: 
   if (segment === 'settings') return <SystemSettings />;
   if (segment === 'maintenance') return <SystemMaintenance />;
   if (segment === 'orders') return <OrdersManagement />;
+  if (segment === 'quotes') return <QuotesManagement onNavigate={onNavigate} />;
+  if (segment === 'visits') return <CommercialVisits onNavigate={onNavigate} />;
+  if (segment === 'promotions') return <PromotionsManagement onNavigate={onNavigate} />;
+  if (segment === 'validations') return <ValidationRequests onNavigate={onNavigate} />;
+  if (segment === 'delivery-slips') return <DeliverySlips onNavigate={onNavigate} />;
+  if (segment === 'purchase-receipts') return <PurchaseReceipts onNavigate={onNavigate} />;
+  if (segment === 'inventory-audits') return <InventoryAudits onNavigate={onNavigate} />;
+  if (segment === 'companies') return <SaasCompaniesManagement />;
   if (segment === 'products') return <ProductsManagement />;
   if (segment === 'purchasing') return <PurchasingManagement />;
   if (segment === 'suppliers') return <SuppliersManagement />;
-  if (segment === 'returns') return <ReturnsManagement />;
+  if (segment === 'returns') return <ReturnsManagement onNavigate={onNavigate} />;
   if (segment === 'reports') return <ReportsPage />;
   return <ModulePlaceholder module={module} />;
 }
 
 // Each role gets its dedicated workspace matching Cahier des Charges.
 function RoleDashboard({ user, onNavigate }: { user: StaffUser; onNavigate: (segment: string) => void }) {
-  const role = user.primary_role;
+  const role = normalizeRoleCode(user.primary_role);
   if (role === 'superadmin') {
     return <SuperAdminDashboard />;
   }
@@ -355,12 +366,12 @@ function RoleDashboard({ user, onNavigate }: { user: StaffUser; onNavigate: (seg
     return <SalesDashboard onNavigate={onNavigate} />;
   }
   if (role === 'warehouse') {
-    return <WarehouseDashboard />;
+    return <WarehouseDashboard onNavigate={onNavigate} />;
   }
   if (role === 'preparation') {
     return <PreparationDashboard />;
   }
-  if (role === 'delivery') {
+  if (role === 'delivery' || role === 'pre_seller') {
     return <DeliveryDashboard onNavigate={onNavigate} />;
   }
   if (role === 'accounting') {
@@ -384,8 +395,8 @@ function ModulePlaceholder({ module }: { module: NavModule }) {
         <div className="sx-empty-icon"><Icon size={22} /></div>
         <b>Module « {module.label} » en cours d’intégration</b>
         <span>
-          Les données métier, tableaux et actions de ce module seront branchés sur l’API dans une
-          prochaine itération. Votre permission <code>{module.permission}</code> est déjà active.
+          Les données, tableaux et actions de ce module seront disponibles très prochainement.
+          Votre accès à ce module est déjà activé.
         </span>
       </div>
     </div>

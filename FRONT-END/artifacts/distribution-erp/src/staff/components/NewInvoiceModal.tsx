@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Trash2, FileText, CheckCircle2 } from 'lucide-react';
+import { X, Plus, Trash2, FileText, CheckCircle2, ShieldCheck, Building2 } from 'lucide-react';
 import { formatMoney } from '../api';
 import type { InvoiceData, InvoiceLineItem } from './InvoiceDocumentModal';
 
@@ -108,102 +108,220 @@ export default function NewInvoiceModal({
     <div className="doc-modal-backdrop" onClick={onClose}>
       <form
         className="doc-modal-container"
-        style={{ maxWidth: '680px' }}
+        style={{
+          maxWidth: '780px',
+          background: '#ffffff',
+          color: '#0f172a',
+          boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
+          borderRadius: '10px',
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: '92vh',
+        }}
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="doc-modal-toolbar">
-          <div className="doc-modal-toolbar-title">
-            <FileText size={17} style={{ color: '#38bdf8' }} />
-            <span>Nouvelle Facture Client (Maroc)</span>
+        {/* Top Header */}
+        <div
+          className="doc-modal-toolbar"
+          style={{
+            background: '#0f172a',
+            color: '#f8fafc',
+            padding: '14px 22px',
+            borderBottom: '1px solid #1e293b',
+          }}
+        >
+          <div className="doc-modal-toolbar-title" style={{ color: '#fff' }}>
+            <FileText size={18} style={{ color: '#38bdf8' }} />
+            <div>
+              <span style={{ fontWeight: 800, fontSize: '14px', letterSpacing: '-0.01em' }}>
+                Création d'une Facture Client (Norme Fiscale Marocaine)
+              </span>
+              <small style={{ display: 'block', fontSize: '10.5px', color: '#94a3b8', fontWeight: 500 }}>
+                Conformité ICE, IF, RC & TVA 20%
+              </small>
+            </div>
           </div>
-          <button type="button" className="doc-btn-close" onClick={onClose}>
+          <button type="button" className="doc-btn-close" onClick={onClose} aria-label="Fermer">
             <X size={18} />
           </button>
         </div>
 
-        <div style={{ padding: '20px 24px', overflowY: 'auto', maxHeight: '80vh', display: 'flex', flexDirection: 'column', gap: '14px', background: 'var(--navy-1, #131c28)', color: 'var(--text, #e2e8f0)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
-            <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                CLIENT FACTURÉ
-              </label>
-              <select
-                value={selectedClientName}
-                onChange={(e) => setSelectedClientName(e.target.value)}
-                style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
-              >
-                {DEMO_CLIENTS.map((c) => (
-                  <option key={c.name} value={c.name}>
-                    {c.name} ({c.city} · ICE: {c.ice})
-                  </option>
-                ))}
-              </select>
+        {/* Scrollable Form Body with Clean Paper White Styling */}
+        <div
+          style={{
+            padding: '24px 28px',
+            overflowY: 'auto',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '18px',
+            background: '#ffffff',
+            color: '#0f172a',
+          }}
+        >
+          {/* Client & Order details block */}
+          <div
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '16px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+              <Building2 size={15} style={{ color: '#0284c7' }} />
+              <b style={{ fontSize: '12px', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Destinataire & Identifiants Fiscaux
+              </b>
             </div>
 
-            <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                COMMANDE LIÉE (OPTIONNEL)
-              </label>
-              <input
-                value={orderRef}
-                onChange={(e) => setOrderRef(e.target.value)}
-                placeholder="Ex. CMD-2406"
-                style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '5px' }}>
+                  CLIENT DESTINATAIRE (RAISON SOCIALE) *
+                </label>
+                <select
+                  value={selectedClientName}
+                  onChange={(e) => setSelectedClientName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '0 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                  }}
+                >
+                  {DEMO_CLIENTS.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name} ({c.city} · ICE: {c.ice})
+                    </option>
+                  ))}
+                </select>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+                  <b>ICE Client :</b> {clientObj.ice} · <b>Ville :</b> {clientObj.city}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '5px' }}>
+                  COMMANDE LIÉE (FACULTATIF)
+                </label>
+                <input
+                  value={orderRef}
+                  onChange={(e) => setOrderRef(e.target.value)}
+                  placeholder="Ex. CMD-2406"
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    padding: '0 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: '12.5px',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Dates & Payment */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '12px' }}>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '5px' }}>
+                  DATE D'ÉMISSION
+                </label>
+                <input
+                  value={dateIssued}
+                  onChange={(e) => setDateIssued(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '36px',
+                    padding: '0 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: '12px',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '5px' }}>
+                  DATE D'ÉCHÉANCE
+                </label>
+                <input
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '36px',
+                    padding: '0 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: '12px',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '5px' }}>
+                  MODE DE PAIEMENT PRÉVU
+                </label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '36px',
+                    padding: '0 8px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: '12px',
+                  }}
+                >
+                  <option value="Virement bancaire (Net 30j)">Virement bancaire (30j)</option>
+                  <option value="Chèque à l'ordre (Comptant)">Chèque à l'ordre</option>
+                  <option value="Traite bancaire 60j">Traite bancaire 60j</option>
+                  <option value="Espèces à la livraison">Espèces à la livraison</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-            <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                DATE D'ÉMISSION
-              </label>
-              <input
-                value={dateIssued}
-                onChange={(e) => setDateIssued(e.target.value)}
-                style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                DATE D'ÉCHÉANCE
-              </label>
-              <input
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                MODE DE RÈGLEMENT
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                style={{ width: '100%', height: '36px', padding: '0 10px', borderRadius: '6px', border: '1px solid #334155', background: '#0f172a', color: '#fff', fontSize: '12px' }}
-              >
-                <option value="Virement bancaire (Net 30j)">Virement bancaire (30j)</option>
-                <option value="Chèque à l'ordre (Comptant)">Chèque à l'ordre</option>
-                <option value="Traite bancaire 60j">Traite bancaire 60j</option>
-                <option value="Espèces à la livraison">Espèces à la livraison</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Line items */}
-          <div style={{ marginTop: '8px' }}>
+          {/* Line items section */}
+          <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase' }}>
-                ARTICLES FACTURÉS ({lines.length})
+              <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Lignes d'articles facturés ({lines.length})
               </span>
               <button
                 type="button"
                 onClick={addLine}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#0284c7', color: '#fff', border: 0, padding: '4px 10px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 0,
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '11.5px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                }}
               >
-                <Plus size={12} /> Ajouter une ligne
+                <Plus size={13} /> Ajouter une ligne d'article
               </button>
             </div>
 
@@ -213,19 +331,27 @@ export default function NewInvoiceModal({
                   key={idx}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '1.4fr 60px 90px 70px auto',
-                    gap: '8px',
+                    gridTemplateColumns: '1.5fr 70px 100px 75px auto',
+                    gap: '10px',
                     alignItems: 'center',
-                    background: '#0f172a',
-                    padding: '8px 10px',
+                    background: '#f8fafc',
+                    padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #334155',
+                    border: '1px solid #e2e8f0',
                   }}
                 >
                   <select
                     value={l.sku}
                     onChange={(e) => updateLine(idx, 'sku', e.target.value)}
-                    style={{ height: '32px', background: '#1e293b', border: '1px solid #475569', color: '#fff', fontSize: '11.5px', borderRadius: '4px', padding: '0 6px' }}
+                    style={{
+                      height: '34px',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
+                      fontSize: '12px',
+                      borderRadius: '5px',
+                      padding: '0 8px',
+                    }}
                   >
                     {CATALOG_ITEMS.map((ci) => (
                       <option key={ci.sku} value={ci.sku}>
@@ -240,7 +366,17 @@ export default function NewInvoiceModal({
                     value={l.qty}
                     onChange={(e) => updateLine(idx, 'qty', Number(e.target.value))}
                     title="Quantité"
-                    style={{ height: '32px', width: '100%', textAlign: 'center', background: '#1e293b', border: '1px solid #475569', color: '#fff', fontSize: '11.5px', borderRadius: '4px' }}
+                    style={{
+                      height: '34px',
+                      width: '100%',
+                      textAlign: 'center',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      borderRadius: '5px',
+                    }}
                   />
 
                   <input
@@ -249,10 +385,20 @@ export default function NewInvoiceModal({
                     value={l.unit_price_ht}
                     onChange={(e) => updateLine(idx, 'unit_price_ht', Number(e.target.value))}
                     title="Prix unitaire HT"
-                    style={{ height: '32px', width: '100%', textAlign: 'right', background: '#1e293b', border: '1px solid #475569', color: '#fff', fontSize: '11.5px', borderRadius: '4px', paddingRight: '4px' }}
+                    style={{
+                      height: '34px',
+                      width: '100%',
+                      textAlign: 'right',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0f172a',
+                      fontSize: '12px',
+                      borderRadius: '5px',
+                      paddingRight: '6px',
+                    }}
                   />
 
-                  <span style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}>
+                  <span style={{ fontSize: '11.5px', color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
                     TVA 20%
                   </span>
 
@@ -260,51 +406,105 @@ export default function NewInvoiceModal({
                     type="button"
                     onClick={() => removeLine(idx)}
                     disabled={lines.length <= 1}
-                    style={{ background: 'transparent', border: 0, color: lines.length <= 1 ? '#475569' : '#ef4444', cursor: lines.length <= 1 ? 'not-allowed' : 'pointer', padding: '4px' }}
+                    style={{
+                      background: 'transparent',
+                      border: 0,
+                      color: lines.length <= 1 ? '#cbd5e1' : '#ef4444',
+                      cursor: lines.length <= 1 ? 'not-allowed' : 'pointer',
+                      padding: '4px',
+                    }}
+                    title="Supprimer la ligne"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={16} />
                   </button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Calculations Summary */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', background: '#0f172a', padding: '12px 16px', borderRadius: '8px', border: '1px solid #334155', marginTop: '6px' }}>
-            <div style={{ width: '240px', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
-                <span>Total HT :</span>
+          {/* Calculations Summary Box */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              background: '#f8fafc',
+              padding: '14px 18px',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              marginTop: '4px',
+            }}
+          >
+            <div style={{ width: '260px', fontSize: '12.5px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                <span>Total Hors Taxe (HT) :</span>
                 <b>{formatMoney(totalHt)} DH</b>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}>
-                <span>TVA 20% :</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                <span>TVA Légale (20%) :</span>
                 <b>{formatMoney(totalTva)} DH</b>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #334155', paddingTop: '4px', fontSize: '14px', color: '#38bdf8', fontWeight: 800 }}>
-                <span>Total TTC :</span>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  borderTop: '2px solid #cbd5e1',
+                  paddingTop: '6px',
+                  fontSize: '15px',
+                  color: '#0284c7',
+                  fontWeight: 900,
+                }}
+              >
+                <span>Total Facturé TTC :</span>
                 <span>{formatMoney(totalTtc)} DH</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Modal Actions */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-            <button
-              type="button"
-              className="button-secondary"
-              onClick={onClose}
-              style={{ height: '36px', padding: '0 14px' }}
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="button-primary"
-              style={{ height: '36px', padding: '0 16px' }}
-            >
-              <CheckCircle2 size={14} /> Émettre la Facture
-            </button>
-          </div>
+        {/* Sticky Modal Actions Footer */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '12px',
+            padding: '14px 24px',
+            borderTop: '1px solid #e2e8f0',
+            background: '#f8fafc',
+          }}
+        >
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={onClose}
+            style={{
+              height: '38px',
+              padding: '0 16px',
+              background: '#ffffff',
+              color: '#475569',
+              border: '1px solid #cbd5e1',
+              fontWeight: 600,
+            }}
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            className="button-primary"
+            style={{
+              height: '38px',
+              padding: '0 20px',
+              background: '#0284c7',
+              borderColor: '#0369a1',
+              color: '#ffffff',
+              fontWeight: 700,
+              fontSize: '13px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '7px',
+            }}
+          >
+            <CheckCircle2 size={16} /> Enregistrer & Émettre la Facture
+          </button>
         </div>
       </form>
     </div>

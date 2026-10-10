@@ -7,7 +7,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import CustomerApp from '@/customer/CustomerApp';
 import StaffApp from '@/staff/StaffApp';
+import SuperAdminSaaSApp from '@/superadmin/SuperAdminSaaSApp';
 import UnifiedLogin from '@/components/UnifiedLogin';
+import { StaffAuthProvider } from '@/staff/auth';
 import { useTheme } from '@/lib/theme';
 import { Route, Switch, useLocation, Router as WouterRouter, Link } from 'wouter';
 import {
@@ -15,7 +17,7 @@ import {
   Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
   ClipboardList, Clock3, CreditCard, Download, FileCheck2, FileText, Filter, Gauge, LayoutDashboard,
   MapPin, Menu, Package, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Truck,
-  Users, Warehouse, X, Sun, Moon, UserCheck, LogIn, Store,
+  Users, Warehouse, X, Sun, Moon, UserCheck, LogIn, Store, Crown,
 } from 'lucide-react';
 import './erp.css';
 
@@ -95,17 +97,25 @@ const initialRows: Record<string, Row[]> = {
 const modules = [
   { id: '/', label: 'Vue d’ensemble', icon: LayoutDashboard },
   { id: '/orders', label: 'Commandes', icon: ClipboardList, count: '12' },
+  { id: '/quotes', label: 'Devis & Proformas', icon: FileText, count: '6' },
   { id: '/products', label: 'Catalogue', icon: Package },
   { id: '/inventory', label: 'Stocks', icon: Warehouse, count: '4' },
-  { id: '/customers', label: 'Clients', icon: Users },
+  { id: '/customers', label: 'Clients & CRM', icon: Users },
+  { id: '/visits', label: 'Visites Terrain', icon: MapPin, count: '6' },
+  { id: '/promotions', label: 'Promotions', icon: ShoppingBag, count: '3' },
   { id: '/purchasing', label: 'Achats', icon: ShoppingCart },
   { id: '/deliveries', label: 'Livraisons', icon: Truck },
   { id: '/finance', label: 'Finance', icon: BadgeDollarSign },
   { id: '/reports', label: 'Rapports', icon: BarChart3 },
   { id: '/settings', label: 'Paramètres', icon: Settings },
+  { id: '/superadmin', label: 'Super Administrateur', icon: Crown },
+  { id: '/customer/home', label: 'Espace Client', icon: Store },
 ];
 const titles: Record<string, { title: string; kicker: string; description: string; action: string }> = {
   '/orders': { title: 'Commandes', kicker: 'VENTES / OPÉRATIONS', description: 'Suivez chaque commande, de la validation à la livraison.', action: 'Nouvelle commande' },
+  '/quotes': { title: 'Devis & Proformas', kicker: 'VENTES / PROPOSITIONS', description: 'Propositions commerciales, offres chantiers et conversion en commandes.', action: 'Nouveau devis' },
+  '/visits': { title: 'Visites Commerciales', kicker: 'RELATION COMMERCIALE / CRM', description: 'Comptes-rendus des visites terrain et tournées de prospection.', action: 'Planifier une visite' },
+  '/promotions': { title: 'Promotions & Remises', kicker: 'VENTES / CAMPAGNES', description: 'Campagnes promotionnelles et grilles de remises.', action: 'Créer une offre' },
   '/products': { title: 'Catalogue produits', kicker: 'RÉFÉRENTIEL', description: 'Articles, tarifs, conditionnements et visibilité client.', action: 'Ajouter un produit' },
   '/inventory': { title: 'Stocks & mouvements', kicker: 'ENTREPÔT', description: 'Quantités physiques, réservées et réellement disponibles.', action: 'Nouveau mouvement' },
   '/customers': { title: 'Clients', kicker: 'RELATION COMMERCIALE', description: 'Comptes clients, conditions tarifaires et encours.', action: 'Ajouter un client' },
@@ -212,14 +222,14 @@ function AppShell() {
               data-testid="select-role-switcher"
             >
               <option value="/" style={{ color: '#0f172a' }}>Vue d’ensemble</option>
-              <option value="/admin/dashboard" style={{ color: '#0f172a' }}>Super Admin</option>
-              <option value="/administrator/dashboard" style={{ color: '#0f172a' }}>Administrateur</option>
+              <option value="/superadmin" style={{ color: '#0f172a' }}>Super Administrateur (Gestion Plateforme)</option>
+              <option value="/administrator/dashboard" style={{ color: '#0f172a' }}>Administrateur Entreprise</option>
               <option value="/sales/dashboard" style={{ color: '#0f172a' }}>Commercial</option>
               <option value="/warehouse/dashboard" style={{ color: '#0f172a' }}>Responsable Dépôt</option>
               <option value="/preparation/dashboard" style={{ color: '#0f172a' }}>Préparateur</option>
               <option value="/delivery/dashboard" style={{ color: '#0f172a' }}>Livreur</option>
               <option value="/accounting/dashboard" style={{ color: '#0f172a' }}>Comptable</option>
-              <option value="/customer/home" style={{ color: '#0f172a' }}>Client</option>
+              <option value="/customer/home" style={{ color: '#0f172a' }}>Portail Client</option>
             </select>
           </label>
           <Link href="/login" className="icon-button" title="Portail Connexion (8 Rôles)" aria-label="Portail Connexion">
@@ -228,8 +238,8 @@ function AppShell() {
           <button className="theme-toggle-button icon-button" onClick={toggleTheme} title="Basculer le thème (Clair / Sombre)" style={{ padding: '6px', cursor: 'pointer' }} data-testid="button-theme-toggle">
             {isLight ? <Moon size={16} /> : <Sun size={16} />}
           </button>
-          <div className="top-date"><CalendarDays size={14} /> 28 fév. 2025 <ChevronDown size={13} /></div>
-          <button className="help-button" onClick={() => notify('Aide produit : connectée au serveur API backend.')} aria-label="Aide"><CircleHelp size={17} /></button>
+          <div className="top-date">28 fév. 2025</div>
+          <button className="help-button" onClick={() => notify('Besoin d’aide ? Contactez votre administrateur.')} aria-label="Aide"><CircleHelp size={17} /></button>
         </div>
       </header>
       <main className="page-wrap">
@@ -377,24 +387,28 @@ function ModulePage({ page, rows, allRows, query, setQuery, filter, setFilter, s
 }
 
 function Router() {
-  return <RoutedErrorBoundary><AppShellRouter /></RoutedErrorBoundary>;
+  return (
+    <StaffAuthProvider>
+      <RoutedErrorBoundary>
+        <AppShellRouter />
+      </RoutedErrorBoundary>
+    </StaffAuthProvider>
+  );
 }
 function AppShellRouter() {
   return <Switch>
-    <Route path="/customer/login" component={CustomerApp} />
-    <Route path="/customer/home" component={CustomerApp} />
-    <Route path="/customer/catalog" component={CustomerApp} />
-    <Route path="/customer/product/:code" component={CustomerApp} />
-    <Route path="/customer/cart" component={CustomerApp} />
-    <Route path="/customer/orders" component={CustomerApp} />
-    <Route path="/customer/order/:ref" component={CustomerApp} />
-    <Route path="/customer/invoices" component={CustomerApp} />
-    <Route path="/customer/profile" component={CustomerApp} />
+    <Route path="/superadmin" component={SuperAdminSaaSApp} />
+    <Route path="/superadmin/:rest*" component={SuperAdminSaaSApp} />
+    <Route path="/customer" component={CustomerApp} />
+    <Route path="/customer/:rest*" component={CustomerApp} />
     <Route path="/login" component={StaffApp} />
     <Route path="/:ws/dashboard" component={StaffApp} />
     <Route path="/:ws/:module" component={StaffApp} />
     <Route path="/" component={AppShell} />
     <Route path="/orders" component={AppShell} />
+    <Route path="/quotes" component={AppShell} />
+    <Route path="/visits" component={AppShell} />
+    <Route path="/promotions" component={AppShell} />
     <Route path="/products" component={AppShell} />
     <Route path="/inventory" component={AppShell} />
     <Route path="/customers" component={AppShell} />

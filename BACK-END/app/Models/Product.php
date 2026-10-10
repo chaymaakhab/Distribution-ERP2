@@ -10,13 +10,14 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'code', 'name', 'description', 'image', 'category_id', 'sku',
-        'price', 'vat_rate', 'packaging', 'unit', 'status',
+        'code', 'name', 'description', 'image', 'category_id', 'sku', 'barcode',
+        'price', 'purchase_price_ht', 'vat_rate', 'packaging', 'unit', 'status',
         'visible_portal', 'min_order_qty',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'purchase_price_ht' => 'decimal:2',
         'vat_rate' => 'integer',
         'visible_portal' => 'boolean',
         'min_order_qty' => 'integer',
@@ -35,6 +36,11 @@ class Product extends Model
     public function stocks()
     {
         return $this->hasMany(Stock::class);
+    }
+
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
     }
 
     /**

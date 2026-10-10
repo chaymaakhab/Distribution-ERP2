@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Building2, Search, Plus, Phone, Mail, MapPin, X, Eye,
   Package, TrendingUp, CheckCircle2, RefreshCw, FileText, ShoppingCart,
+  Edit2, Trash2, Check,
 } from 'lucide-react';
-import { formatMoney } from '../api';
+import { api, formatMoney } from '../api';
 import NewPurchaseOrderModal from '../components/NewPurchaseOrderModal';
 import PurchaseOrderDocumentModal, { type PurchaseOrderData } from '../components/PurchaseOrderDocumentModal';
 
@@ -145,6 +146,7 @@ const SUPPLIERS: Supplier[] = [
 ];
 
 export default function SuppliersManagement() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>(SUPPLIERS);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tous');
   const [selected, setSelected] = useState<Supplier | null>(null);
@@ -152,6 +154,117 @@ export default function SuppliersManagement() {
   const [showNewPo, setShowNewPo] = useState<boolean>(false);
   const [targetSupplierForPo, setTargetSupplierForPo] = useState<Supplier | null>(null);
   const [viewPoData, setViewPoData] = useState<PurchaseOrderData | null>(null);
+
+  useEffect(() => {
+    api.getSuppliers()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSuppliers(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend suppliers indisponibles, utilisation liste locale:', err);
+      });
+  }, []);
+
+  // Edit Supplier Modal State
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [editSuppName, setEditSuppName] = useState('');
+  const [editSuppContact, setEditSuppContact] = useState('');
+  const [editSuppPhone, setEditSuppPhone] = useState('');
+  const [editSuppEmail, setEditSuppEmail] = useState('');
+  const [editSuppCity, setEditSuppCity] = useState('');
+  const [editSuppAddress, setEditSuppAddress] = useState('');
+  const [editSuppIce, setEditSuppIce] = useState('');
+  const [editSuppRc, setEditSuppRc] = useState('');
+  const [editSuppStatus, setEditSuppStatus] = useState<Supplier['status']>('Actif');
+  const [editSuppCategories, setEditSuppCategories] = useState('');
+  const [editSuppPaymentTerms, setEditSuppPaymentTerms] = useState('');
+
+  // Delete Confirm State
+  const [deleteConfirmSupplier, setDeleteConfirmSupplier] = useState<Supplier | null>(null);
+
+  function openEditSupplier(s: Supplier) {
+    setEditingSupplier(s);
+    setEditSuppName(s.name);
+    setEditSuppContact(s.contact);
+    setEditSuppPhone(s.phone);
+    setEditSuppEmail(s.email);
+    setEditSuppCity(s.city);
+    setEditSuppAddress(s.address);
+    setEditSuppIce(s.ice);
+    setEditSuppRc(s.rc);
+    setEditSuppStatus(s.status);
+    setEditSuppCategories(s.categories.join(', '));
+    setEditSuppPaymentTerms(s.payment_terms);
+  }
+
+  function handleSaveEditSupplier(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingSupplier) return;
+
+    setSuppliers(prev =>
+      prev.map(s => {
+        if (s.id === editingSupplier.id) {
+          return {
+            ...s,
+            name: editSuppName.trim(),
+            contact: editSuppContact.trim(),
+            phone: editSuppPhone.trim(),
+            email: editSuppEmail.trim(),
+            city: editSuppCity.trim(),
+            address: editSuppAddress.trim(),
+            ice: editSuppIce.trim(),
+            rc: editSuppRc.trim(),
+            status: editSuppStatus,
+            categories: editSuppCategories.split(',').map(c => c.trim()).filter(Boolean),
+            payment_terms: editSuppPaymentTerms.trim() || s.payment_terms,
+          };
+        }
+        return s;
+      })
+    );
+
+    api.updateSupplier(editingSupplier.id, {
+      name: editSuppName.trim(),
+      contact: editSuppContact.trim(),
+      phone: editSuppPhone.trim(),
+      email: editSuppEmail.trim(),
+      city: editSuppCity.trim(),
+      address: editSuppAddress.trim(),
+      ice: editSuppIce.trim(),
+      rc: editSuppRc.trim(),
+      status: editSuppStatus,
+      categories: editSuppCategories.split(',').map(c => c.trim()).filter(Boolean),
+      payment_terms: editSuppPaymentTerms.trim(),
+    }).catch(err => console.warn('Failed to update supplier on backend:', err));
+
+    notify(`Fiche fournisseur « ${editSuppName} » mise à jour avec succès !`);
+    setEditingSupplier(null);
+  }
+
+  function handleDeleteSupplier(id: number) {
+    api.deleteSupplier(id).catch(err => console.warn('Failed to delete supplier on backend:', err));
+    setSuppliers(prev => prev.filter(s => s.id !== id));
+    setDeleteConfirmSupplier(null);
+    notify('Fournisseur supprimé du référentiel.');
+  }
+
+  // New Supplier Form Modal State
+  const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
+  const [formName, setFormName] = useState('');
+  const [formContact, setFormContact] = useState('');
+  const [formPhone, setFormPhone] = useState('+212 5');
+  const [formEmail, setFormEmail] = useState('');
+  const [formCity, setFormCity] = useState('Casablanca');
+  const [formAddress, setFormAddress] = useState('');
+  const [formIce, setFormIce] = useState('');
+  const [formRc, setFormRc] = useState('');
+  const [formIf, setFormIf] = useState('');
+  const [formCategories, setFormCategories] = useState('Agroalimentaire');
+  const [formPaymentTerms, setFormPaymentTerms] = useState('30 jours date facture');
+  const [formLeadTime, setFormLeadTime] = useState(5);
+  const [formRib, setFormRib] = useState('');
 
   function notify(msg: string) {
     setToast(msg);
@@ -165,15 +278,80 @@ export default function SuppliersManagement() {
     notify(`Bon d'Achat ${po.ref} émis avec succès pour ${po.supplier} !`);
   }
 
-  const filtered = SUPPLIERS.filter(s => {
+  function handleCreateSupplier(e: React.FormEvent) {
+    e.preventDefault();
+    if (!formName.trim()) {
+      notify('Veuillez renseigner la raison sociale du fournisseur.');
+      return;
+    }
+
+    const nextCode = `FRN-${String(suppliers.length + 1).padStart(3, '0')}`;
+    const newSupplier: Supplier = {
+      id: Date.now(),
+      code: nextCode,
+      name: formName.trim(),
+      contact: formContact.trim() || 'Interlocuteur Commercial',
+      phone: formPhone.trim() || '+212 5 22 00 00 00',
+      email: formEmail.trim() || `contact@${formName.toLowerCase().replace(/[^a-z0-9]/g, '')}.ma`,
+      city: formCity.trim() || 'Casablanca',
+      address: formAddress.trim() || 'Zone Industrielle',
+      ice: formIce.trim() || '00' + Math.floor(1000000000000 + Math.random() * 9000000000000),
+      rc: formRc.trim() || String(Math.floor(10000 + Math.random() * 90000)),
+      products_count: 0,
+      last_order: 'Nouveau',
+      total_purchases: 0,
+      status: 'Actif',
+      categories: formCategories.split(',').map((c) => c.trim()).filter(Boolean),
+      payment_terms: formPaymentTerms,
+      lead_time_days: Number(formLeadTime) || 5,
+    };
+
+    setSuppliers([newSupplier, ...suppliers]);
+    setShowAddSupplierModal(false);
+
+    api.createSupplier({
+      name: newSupplier.name,
+      contact: newSupplier.contact,
+      phone: newSupplier.phone,
+      email: newSupplier.email,
+      city: newSupplier.city,
+      address: newSupplier.address,
+      ice: newSupplier.ice,
+      rc: newSupplier.rc,
+      categories: newSupplier.categories,
+      payment_terms: newSupplier.payment_terms,
+      lead_time_days: newSupplier.lead_time_days,
+      status: newSupplier.status,
+    }).then((created) => {
+      if (created?.id) {
+        setSuppliers(prev => [created, ...prev.filter(x => x.id !== newSupplier.id)]);
+      }
+    }).catch(err => console.warn('Failed to save supplier to backend:', err));
+
+    // Reset Form
+    setFormName('');
+    setFormContact('');
+    setFormPhone('+212 5');
+    setFormEmail('');
+    setFormAddress('');
+    setFormIce('');
+    setFormRc('');
+    setFormIf('');
+    setFormCategories('Agroalimentaire');
+    setFormRib('');
+
+    notify(`Fournisseur « ${newSupplier.name} » (${newSupplier.code}) enregistré avec succès !`);
+  }
+
+  const filtered = suppliers.filter(s => {
     const q = search.toLowerCase();
     const matchQ = !q || s.name.toLowerCase().includes(q) || s.city.toLowerCase().includes(q) || s.code.toLowerCase().includes(q) || s.contact.toLowerCase().includes(q);
     const matchStatus = statusFilter === 'Tous' || s.status === statusFilter;
     return matchQ && matchStatus;
   });
 
-  const totalPurchases = SUPPLIERS.reduce((a, b) => a + b.total_purchases, 0);
-  const activeCount = SUPPLIERS.filter(s => s.status === 'Actif').length;
+  const totalPurchases = suppliers.reduce((a, b) => a + b.total_purchases, 0);
+  const activeCount = suppliers.filter(s => s.status === 'Actif').length;
 
   return (
     <div className="module-page">
@@ -188,7 +366,7 @@ export default function SuppliersManagement() {
           <button className="button-secondary" onClick={() => setShowNewPo(true)}>
             <ShoppingCart size={14} /> Nouveau Bon d'Achat
           </button>
-          <button className="button-primary" onClick={() => notify('Formulaire nouveau fournisseur — à implémenter')}>
+          <button className="button-primary" onClick={() => setShowAddSupplierModal(true)}>
             <Plus size={14} /> Nouveau fournisseur
           </button>
         </div>
@@ -198,7 +376,7 @@ export default function SuppliersManagement() {
       <div className="summary-strip">
         <div className="summary-box">
           <span>Total fournisseurs</span>
-          <strong>{SUPPLIERS.length}</strong>
+          <strong>{suppliers.length}</strong>
         </div>
         <div className="summary-box">
           <span>Fournisseurs actifs</span>
@@ -293,6 +471,22 @@ export default function SuppliersManagement() {
                     >
                       <ShoppingCart size={14} />
                     </button>
+                    <button
+                      className="row-action"
+                      title="Modifier la fiche fournisseur"
+                      style={{ color: '#0284c7' }}
+                      onClick={() => openEditSupplier(s)}
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      className="row-action"
+                      title="Supprimer ce fournisseur"
+                      style={{ color: '#ef4444' }}
+                      onClick={() => setDeleteConfirmSupplier(s)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -304,65 +498,156 @@ export default function SuppliersManagement() {
       {/* ── Detail modal ── */}
       {selected && (
         <div className="modal-backdrop" onClick={() => setSelected(null)}>
-          <div className="record-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 560 }}>
-            <div className="modal-top">
+          <div
+            className="record-modal"
+            onClick={e => e.stopPropagation()}
+            style={{
+              maxWidth: 580,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <span className="eyebrow">FICHE FOURNISSEUR · {selected.code}</span>
-                <h2>{selected.name}</h2>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  FICHE FOURNISSEUR · {selected.code}
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  {selected.name}
+                </h2>
               </div>
-              <button className="icon-button" onClick={() => setSelected(null)}><X size={16} /></button>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setSelected(null)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, margin: '16px 0' }}>
-              <div className="frn-field">
-                <span className="field-label">ICE</span>
-                <code>{selected.ice}</code>
+            <div
+              style={{
+                padding: '20px 24px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 12,
+                background: '#ffffff',
+              }}
+            >
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block' }}>ICE</span>
+                <code style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{selected.ice}</code>
               </div>
-              <div className="frn-field">
-                <span className="field-label">RC</span>
-                <code>{selected.rc}</code>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block' }}>RC</span>
+                <code style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{selected.rc}</code>
               </div>
-              <div className="frn-field">
-                <span className="field-label"><Phone size={11} /> Téléphone</span>
-                <span>{selected.phone}</span>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Phone size={11} /> Téléphone direct
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{selected.phone}</span>
               </div>
-              <div className="frn-field">
-                <span className="field-label"><Mail size={11} /> Email</span>
-                <span style={{ fontSize: 12 }}>{selected.email}</span>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Mail size={11} /> Email
+                </span>
+                <span style={{ fontSize: 12, color: '#0f172a' }}>{selected.email}</span>
               </div>
-              <div className="frn-field" style={{ gridColumn: '1/-1' }}>
-                <span className="field-label"><MapPin size={11} /> Adresse</span>
-                <span>{selected.address}, {selected.city}</span>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', gridColumn: '1/-1' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <MapPin size={11} /> Adresse & Ville
+                </span>
+                <span style={{ fontSize: 13, color: '#0f172a' }}>{selected.address}, {selected.city}</span>
               </div>
-              <div className="frn-field">
-                <span className="field-label">Conditions paiement</span>
-                <span>{selected.payment_terms}</span>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block' }}>Conditions paiement</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{selected.payment_terms}</span>
               </div>
-              <div className="frn-field">
-                <span className="field-label">Délai livraison</span>
-                <span>{selected.lead_time_days} jours</span>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block' }}>Délai d'approvisionnement</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{selected.lead_time_days} jours</span>
               </div>
-              <div className="frn-field">
-                <span className="field-label"><Package size={11} /> Produits référencés</span>
-                <strong>{selected.products_count}</strong>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Package size={11} /> Produits référencés
+                </span>
+                <strong style={{ fontSize: 14, color: '#0f172a' }}>{selected.products_count} articles</strong>
               </div>
-              <div className="frn-field">
-                <span className="field-label"><TrendingUp size={11} /> Achats cumulés</span>
-                <strong>{formatMoney(selected.total_purchases)} DH</strong>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <TrendingUp size={11} /> Achats cumulés
+                </span>
+                <strong style={{ fontSize: 14, color: '#0284c7' }}>{formatMoney(selected.total_purchases)} DH</strong>
               </div>
-              <div className="frn-field" style={{ gridColumn: '1/-1' }}>
-                <span className="field-label">Catégories fournies</span>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', gridColumn: '1/-1' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', display: 'block' }}>Catégories fournies</span>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
                   {selected.categories.map(c => (
-                    <span key={c} className="status-pill status-blue">{c}</span>
+                    <span key={c} style={{ background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 }}>
+                      {c}
+                    </span>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="modal-actions">
-              <button className="button-secondary" onClick={() => setSelected(null)}>Fermer</button>
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 24px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
               <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setSelected(null)}
+                style={{
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Fermer
+              </button>
+              <button
+                type="button"
                 className="button-primary"
                 onClick={() => {
                   const s = selected;
@@ -370,11 +655,451 @@ export default function SuppliersManagement() {
                   setTargetSupplierForPo(s);
                   setShowNewPo(true);
                 }}
+                style={{
+                  height: 38,
+                  padding: '0 18px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                }}
               >
                 <ShoppingCart size={14} /> Créer Bon d'Achat
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── New Supplier Modal (Fiche Ajout Fournisseur) ── */}
+      {showAddSupplierModal && (
+        <div className="modal-backdrop" onClick={() => setShowAddSupplierModal(false)}>
+          <form
+            className="record-modal"
+            onSubmit={handleCreateSupplier}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 680,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            {/* Header */}
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  RÉFÉRENTIEL ACHATS · FOURNISSEURS AGRÉÉS
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Enregistrer un nouveau fournisseur
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setShowAddSupplierModal(false)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Scrollable Form Body */}
+            <div
+              style={{
+                padding: '18px 24px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 13,
+                background: '#ffffff',
+              }}
+            >
+              <div
+                style={{
+                  background: '#f0fdf4',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: 6,
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  color: '#166534',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
+                <span>Normes fiscales marocaines : Assurez-vous de renseigner l'ICE valide à 15 chiffres pour les déclarations d'achats déductibles.</span>
+              </div>
+
+              {/* Identity & Company Name */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 12 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Raison Sociale / Société *
+                  <input
+                    required
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    placeholder="Ex. Moulins Modernes du Maroc S.A."
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Contact / Interlocuteur principal
+                  <input
+                    value={formContact}
+                    onChange={(e) => setFormContact(e.target.value)}
+                    placeholder="Ex. Omar Berrada"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Fiscal Data (ICE, IF, RC) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  ICE (15 chiffres) *
+                  <input
+                    required
+                    value={formIce}
+                    onChange={(e) => setFormIce(e.target.value)}
+                    placeholder="Ex. 001594832000045"
+                    maxLength={15}
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Registre Commerce (RC)
+                  <input
+                    value={formRc}
+                    onChange={(e) => setFormRc(e.target.value)}
+                    placeholder="Ex. 48920 Casablanca"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Identifiant Fiscal (IF)
+                  <input
+                    value={formIf}
+                    onChange={(e) => setFormIf(e.target.value)}
+                    placeholder="Ex. 33412098"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Contact (Phone, Email, City) */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Téléphone direct *
+                  <input
+                    required
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                    placeholder="+212 5 22 XX XX XX"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Email professionnel
+                  <input
+                    type="email"
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    placeholder="commandes@fournisseur.ma"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Ville
+                  <select
+                    value={formCity}
+                    onChange={(e) => setFormCity(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  >
+                    <option value="Casablanca">Casablanca</option>
+                    <option value="Mohammedia">Mohammedia</option>
+                    <option value="Rabat">Rabat</option>
+                    <option value="Kénitra">Kénitra</option>
+                    <option value="Tanger">Tanger</option>
+                    <option value="Fès">Fès</option>
+                    <option value="Marrakech">Marrakech</option>
+                    <option value="Agadir">Agadir</option>
+                    <option value="Berrechid">Berrechid</option>
+                    <option value="Meknès">Meknès</option>
+                  </select>
+                </label>
+              </div>
+
+              {/* Address */}
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                Adresse complète du siège ou de l'entrepôt
+                <input
+                  value={formAddress}
+                  onChange={(e) => setFormAddress(e.target.value)}
+                  placeholder="Ex. Bd Chefchaouni, Zone Industrielle Ain Sebaâ, Lot 14"
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 13,
+                  }}
+                />
+              </label>
+
+              {/* Commercial & Contract Terms */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 100px', gap: 12 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Catégories de produits fournies
+                  <input
+                    value={formCategories}
+                    onChange={(e) => setFormCategories(e.target.value)}
+                    placeholder="Ex. Sucre, Farines, Huiles végétales"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  />
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Modalités de paiement convenues
+                  <select
+                    value={formPaymentTerms}
+                    onChange={(e) => setFormPaymentTerms(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  >
+                    <option value="Comptant livraison">Comptant à la livraison (Chèque/Espèces)</option>
+                    <option value="30 jours date facture">30 jours date facture</option>
+                    <option value="45 jours date facture">45 jours date facture</option>
+                    <option value="60 jours fin de mois">60 jours fin de mois (LCR / Virement)</option>
+                    <option value="90 jours traite">90 jours par traite bancaire</option>
+                  </select>
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Délai (j.)
+                  <input
+                    type="number"
+                    min={1}
+                    value={formLeadTime}
+                    onChange={(e) => setFormLeadTime(Number(e.target.value))}
+                    title="Délai moyen d'approvisionnement en jours"
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 6px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                      textAlign: 'center',
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* Bank RIB */}
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                Relevé d'Identité Bancaire (RIB - 24 chiffres) & Banque
+                <input
+                  value={formRib}
+                  onChange={(e) => setFormRib(e.target.value)}
+                  placeholder="Ex. 011 780 0000 123456789012 34 (Attijariwafa Bank)"
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 13,
+                  }}
+                />
+              </label>
+            </div>
+
+            {/* Sticky Actions Footer */}
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 24px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                zIndex: 10,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setShowAddSupplierModal(false)}
+                style={{
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)',
+                }}
+              >
+                <Plus size={16} /> Enregistrer le fournisseur
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -400,6 +1125,237 @@ export default function SuppliersManagement() {
             notify(`Statut du Bon d'Achat mis à jour: ${status}`);
           }}
         />
+      )}
+
+      {/* ── Modal Modifier Fournisseur ── */}
+      {editingSupplier && (
+        <div className="modal-backdrop" onClick={() => setEditingSupplier(null)}>
+          <form
+            className="record-modal"
+            onSubmit={handleSaveEditSupplier}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 640,
+              width: '95%',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  MODIFICATION FOURNISSEUR · {editingSupplier.code}
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Modifier {editingSupplier.name}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setEditingSupplier(null)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Raison sociale *
+                  <input
+                    required
+                    value={editSuppName}
+                    onChange={(e) => setEditSuppName(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Contact commercial *
+                  <input
+                    required
+                    value={editSuppContact}
+                    onChange={(e) => setEditSuppContact(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Ville *
+                  <input
+                    required
+                    value={editSuppCity}
+                    onChange={(e) => setEditSuppCity(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Téléphone direct *
+                  <input
+                    required
+                    value={editSuppPhone}
+                    onChange={(e) => setEditSuppPhone(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Email
+                  <input
+                    value={editSuppEmail}
+                    onChange={(e) => setEditSuppEmail(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  N° ICE Maroc
+                  <input
+                    value={editSuppIce}
+                    onChange={(e) => setEditSuppIce(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  N° RC (Registre de commerce)
+                  <input
+                    value={editSuppRc}
+                    onChange={(e) => setEditSuppRc(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Statut
+                  <select
+                    value={editSuppStatus}
+                    onChange={(e) => setEditSuppStatus(e.target.value as any)}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  >
+                    <option value="Actif">Actif</option>
+                    <option value="Inactif">Inactif</option>
+                    <option value="Suspendu">Suspendu</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Catégories d'articles (séparées par des virgules)
+                  <input
+                    value={editSuppCategories}
+                    onChange={(e) => setEditSuppCategories(e.target.value)}
+                    placeholder="Sucre, Farine, Huile"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Conditions de paiement
+                  <input
+                    value={editSuppPaymentTerms}
+                    onChange={(e) => setEditSuppPaymentTerms(e.target.value)}
+                    placeholder="30 jours date facture"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: '12px 24px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setEditingSupplier(null)}
+                style={{ height: 38, padding: '0 16px', background: '#ffffff', border: '1px solid #cbd5e1' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{ height: 38, padding: '0 20px', background: '#0284c7', borderColor: '#0369a1' }}
+              >
+                <Check size={14} /> Mettre à jour le fournisseur
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ── Modal Confirmation Suppression Fournisseur ── */}
+      {deleteConfirmSupplier && (
+        <div className="modal-backdrop" onClick={() => setDeleteConfirmSupplier(null)}>
+          <div
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 440,
+              width: '90%',
+              padding: '24px',
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#fee2e2', color: '#ef4444', display: 'grid', placeItems: 'center', margin: '0 auto 14px' }}>
+              <Trash2 size={24} />
+            </div>
+            <h3 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 8px', color: '#0f172a' }}>
+              Supprimer le fournisseur {deleteConfirmSupplier.code} ?
+            </h3>
+            <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 20px' }}>
+              Êtes-vous certain de vouloir supprimer le fournisseur <b>« {deleteConfirmSupplier.name} »</b> ? Les bons d'achat historiques associés resteront archivés.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setDeleteConfirmSupplier(null)}
+                style={{ padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1' }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="button-primary"
+                onClick={() => handleDeleteSupplier(deleteConfirmSupplier.id)}
+                style={{ padding: '8px 16px', background: '#ef4444', borderColor: '#dc2626', color: '#ffffff' }}
+              >
+                Confirmer la suppression
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {toast && <div className="toast-note"><CheckCircle2 size={16} />{toast}</div>}

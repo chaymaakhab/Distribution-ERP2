@@ -35,6 +35,11 @@ class Order extends Model
         return $this->belongsTo(User::class, 'commercial_id');
     }
 
+    public function commission()
+    {
+        return $this->hasOne(CommercialCommission::class);
+    }
+
     public function items()
     {
         return $this->hasMany(OrderItem::class);
@@ -44,4 +49,20 @@ class Order extends Model
     {
         return $this->hasOne(Invoice::class);
     }
+
+    public function pickingLists()
+    {
+        return $this->hasMany(PickingList::class);
+    }
+
+    public function deliverySlip()
+    {
+        return $this->hasOne(DeliverySlip::class);
+    }
+
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class);
+    }
 }
+

@@ -44,20 +44,20 @@ class CustomerPortalSeeder extends Seeder
             Category::updateOrCreate(['code' => $code], ['name' => $name]);
         }
 
-        // code, name, category, sku, base price, vat, packaging, unit, description
+        // code, name, category, sku, base price, vat, packaging, unit, description, image
         $catalog = [
-            ['PRD-0018', 'Perceuse à percussion 850W', 'OUT', 'HRC-0850', 1249.00, 20, 'Carton · 4 unités', 'Pièce', 'Perceuse à percussion 850W, mandrin 13 mm, coffret inclus.'],
-            ['PRD-0017', 'Disque diamant 230 mm', 'OUT', 'CUT-230D', 189.50, 20, 'Pièce', 'Pièce', 'Disque diamant segmenté 230 mm pour béton et pierre.'],
-            ['PRD-0016', 'Pompe immergée 1.5 HP', 'PLO', 'PMP-15HP', 3840.00, 14, 'Pièce', 'Pièce', 'Pompe immergée inox 1.5 HP, débit 6 m³/h.'],
-            ['PRD-0015', 'Câble électrique 3G2.5', 'ELE', 'CAB-3G25', 12.80, 20, 'Mètre', 'Mètre', 'Câble souple 3G2.5 mm², gaine PVC, vendu au mètre.'],
-            ['PRD-0014', 'Groupe électrogène 5 kVA', 'ENE', 'GEN-5000', 8950.00, 20, 'Pièce', 'Pièce', 'Groupe électrogène diesel 5 kVA, démarrage électrique.'],
-            ['PRD-0013', 'Tableau électrique 12 modules', 'ELE', 'TAB-12M', 320.00, 20, 'Pièce', 'Pièce', 'Tableau de répartition 12 modules avec porte.'],
-            ['PRD-0012', 'Tuyau PVC pression DN50', 'PLO', 'TUY-DN50', 78.00, 14, 'Barre 4 m', 'Barre', 'Tuyau PVC pression DN50, PN10, barre de 4 mètres.'],
-            ['PRD-0011', 'Charnière inox 100 mm', 'QUI', 'CHA-100I', 15.50, 20, 'Sachet · 6', 'Sachet', 'Charnière inox 100 mm, lot de 6 pièces.'],
-            ['PRD-0010', 'Vis à béton 7.5 x 92', 'QUI', 'VIS-7592', 42.00, 20, 'Boîte · 100', 'Boîte', 'Vis à béton 7.5 x 92 mm, boîte de 100, fixation directe.'],
-            ['PRD-0009', 'Disjoncteur différentiel 40A', 'ELE', 'DIS-40A', 285.00, 20, 'Pièce', 'Pièce', 'Disjoncteur différentiel 40A 30mA type AC.'],
-            ['PRD-0008', 'Raccord laiton 20/27', 'PLO', 'RAC-2027', 24.00, 14, 'Pièce', 'Pièce', 'Raccord laiton mâle 20/27 pour plomberie.'],
-            ['PRD-0007', 'Projecteur LED 100W', 'ELE', 'PRJ-100W', 610.00, 20, 'Pièce', 'Pièce', 'Projecteur LED 100W IP66, 10 000 lumens.'],
+            ['PRD-0018', 'Perceuse à percussion 850W', 'OUT', 'HRC-0850', 1249.00, 20, 'Carton · 4 unités', 'Pièce', 'Perceuse à percussion 850W, mandrin 13 mm, coffret inclus.', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0017', 'Disque diamant 230 mm', 'OUT', 'CUT-230D', 189.50, 20, 'Pièce', 'Pièce', 'Disque diamant segmenté 230 mm pour béton et pierre.', 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0016', 'Pompe immergée 1.5 HP', 'PLO', 'PMP-15HP', 3840.00, 14, 'Pièce', 'Pièce', 'Pompe immergée inox 1.5 HP, débit 6 m³/h.', 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0015', 'Câble électrique 3G2.5', 'ELE', 'CAB-3G25', 12.80, 20, 'Mètre', 'Mètre', 'Câble souple 3G2.5 mm², gaine PVC, vendu au mètre.', 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0014', 'Groupe électrogène 5 kVA', 'ENE', 'GEN-5000', 8950.00, 20, 'Pièce', 'Pièce', 'Groupe électrogène diesel 5 kVA, démarrage électrique.', 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0013', 'Tableau électrique 12 modules', 'ELE', 'TAB-12M', 320.00, 20, 'Pièce', 'Pièce', 'Tableau de répartition 12 modules avec porte.', 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0012', 'Tuyau PVC pression DN50', 'PLO', 'TUY-DN50', 78.00, 14, 'Barre 4 m', 'Barre', 'Tuyau PVC pression DN50, PN10, barre de 4 mètres.', 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0011', 'Charnière inox 100 mm', 'QUI', 'CHA-100I', 15.50, 20, 'Sachet · 6', 'Sachet', 'Charnière inox 100 mm, lot de 6 pièces.', 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0010', 'Vis à béton 7.5 x 92', 'QUI', 'VIS-7592', 42.00, 20, 'Boîte · 100', 'Boîte', 'Vis à béton 7.5 x 92 mm, boîte de 100, fixation directe.', 'https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0009', 'Disjoncteur différentiel 40A', 'ELE', 'DIS-40A', 285.00, 20, 'Pièce', 'Pièce', 'Disjoncteur différentiel 40A 30mA type AC.', 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0008', 'Raccord laiton 20/27', 'PLO', 'RAC-2027', 24.00, 14, 'Pièce', 'Pièce', 'Raccord laiton mâle 20/27 pour plomberie.', 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=600&q=80'],
+            ['PRD-0007', 'Projecteur LED 100W', 'ELE', 'PRJ-100W', 610.00, 20, 'Pièce', 'Pièce', 'Projecteur LED 100W IP66, 10 000 lumens.', 'https://images.unsplash.com/photo-1565814636199-ae8133055c1c?auto=format&fit=crop&w=600&q=80'],
         ];
 
         $tierMultiplier = [
@@ -68,13 +68,14 @@ class CustomerPortalSeeder extends Seeder
         ];
 
         $products = [];
-        foreach ($catalog as [$code, $name, $catCode, $sku, $price, $vat, $packaging, $unit, $desc]) {
+        foreach ($catalog as [$code, $name, $catCode, $sku, $price, $vat, $packaging, $unit, $desc, $img]) {
             $category = Category::where('code', $catCode)->first();
             $product = Product::updateOrCreate(
                 ['code' => $code],
                 [
                     'name' => $name,
                     'description' => $desc,
+                    'image' => $img,
                     'category_id' => $category->id,
                     'sku' => $sku,
                     'price' => $price,
@@ -112,7 +113,7 @@ class CustomerPortalSeeder extends Seeder
         // Force one product into rupture for a realistic "rupture de stock" case.
         Stock::where('product_id', $products[4]->id)->update(['on_hand' => 0, 'reserved' => 0]);
 
-        // --- Demo customer ------------------------------------------------
+        // --- Demo customer: Revendeur principal ----------------------------
         $customer = Customer::updateOrCreate(
             ['code' => 'CLI-0084'],
             [
@@ -133,12 +134,57 @@ class CustomerPortalSeeder extends Seeder
             ]
         );
 
+        // --- Demo retail customers: Hwanet & Drogueries de proximité (Van Sales) ---
+        $hanout1 = Customer::updateOrCreate(
+            ['code' => 'CLI-0085'],
+            [
+                'name' => 'Hamid Chraibi',
+                'company' => 'Épicerie & Droguerie Al Baraka',
+                'city' => 'Casablanca',
+                'address' => '24 Rue Moulay Ismail, Derb Ghallef, Casablanca',
+                'lat' => 33.5790,
+                'lng' => -7.6180,
+                'phone' => '+212661889922',
+                'email' => 'albaraka@hanout.ma',
+                'password' => Hash::make('client1234'),
+                'price_tier' => 'revendeur',
+                'credit_limit' => 15000,
+                'status' => 'Actif',
+                'locale' => 'ar',
+                'commercial_id' => $commercial->id,
+            ]
+        );
+
+        $hanout2 = Customer::updateOrCreate(
+            ['code' => 'CLI-0086'],
+            [
+                'name' => 'Mostafa Tazi',
+                'company' => 'Superette & Quincaillerie Oulfa',
+                'city' => 'Casablanca',
+                'address' => '18 Bd Oued Oum Errabia, Oulfa, Casablanca',
+                'lat' => 33.5510,
+                'lng' => -7.6710,
+                'phone' => '+212662445566',
+                'email' => 'oulfa@hanout.ma',
+                'password' => Hash::make('client1234'),
+                'price_tier' => 'revendeur',
+                'credit_limit' => 20000,
+                'status' => 'Actif',
+                'locale' => 'ar',
+                'commercial_id' => $commercial->id,
+            ]
+        );
+
         // --- Sample orders + invoices -------------------------------------
         $this->createSampleOrder($customer, $products, 'CMD-DEMO01', now()->subDays(12)->toDateString(), 'delivered', true, 24860.00);
         $this->createSampleOrder($customer, $products, 'CMD-DEMO02', now()->subDays(6)->toDateString(), 'in_delivery', false, 9735.00);
         $this->createSampleOrder($customer, $products, 'CMD-DEMO03', now()->subDays(1)->toDateString(), 'pending_validation', false, 4210.50);
 
-        $this->command?->info('Customer portal seeded. Login: contact@atlas-equipements.ma / client1234');
+        // Hanout orders
+        $this->createSampleOrder($hanout1, $products, 'CMD-VAN-0101', now()->subDays(2)->toDateString(), 'delivered', true, 3450.00);
+        $this->createSampleOrder($hanout2, $products, 'CMD-VAN-0102', now()->toDateString(), 'in_delivery', false, 1850.00);
+
+        $this->command?->info('Customer portal & Hanout clients seeded. Login: contact@atlas-equipements.ma / client1234');
     }
 
     private function createSampleOrder(Customer $customer, array $products, string $ref, string $date, string $status, bool $invoiced, float $total): void

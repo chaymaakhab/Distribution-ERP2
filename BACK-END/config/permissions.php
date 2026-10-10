@@ -29,6 +29,8 @@ return [
         'suppliers' => ['suppliers.view', 'suppliers.create', 'suppliers.update', 'suppliers.delete'],
 
         'orders' => ['orders.view', 'orders.create', 'orders.update', 'orders.validate', 'orders.confirm', 'orders.cancel', 'orders.assign'],
+        'quotes' => ['quotes.view', 'quotes.create', 'quotes.update', 'quotes.convert'],
+        'visits' => ['visits.view', 'visits.create', 'visits.update'],
 
         'stock' => ['stock.view', 'stock.transfer', 'stock.adjust', 'stock.inventory'],
         'warehouses' => ['warehouses.view', 'warehouses.manage'],
@@ -38,6 +40,7 @@ return [
         'deliveries' => ['deliveries.view', 'deliveries.assign', 'deliveries.start', 'deliveries.complete'],
 
         'invoices' => ['invoices.view', 'invoices.create', 'invoices.cancel'],
+        'credit_notes' => ['credit_notes.view', 'credit_notes.create'],
         'payments' => ['payments.view', 'payments.create'],
         'cheques' => ['cheques.view', 'cheques.manage'],
         'cash_closings' => ['cash_closings.view', 'cash_closings.create', 'cash_closings.validate'],
@@ -55,7 +58,7 @@ return [
     'roles' => [
         'superadmin' => [
             'name' => 'SuperAdmin',
-            'home' => '/admin/dashboard',
+            'home' => '/superadmin',
             'permissions' => ['*'],
         ],
 
@@ -88,6 +91,7 @@ return [
             'permissions' => [
                 'dashboard.view',
                 'products.view', 'categories.view',
+                'customers.view', 'customers.create', 'customers.update', 'customer_accounts.manage',
                 'orders.view', 'orders.assign',
                 'stock.view', 'stock.transfer', 'stock.adjust', 'stock.inventory',
                 'warehouses.view',
@@ -108,6 +112,8 @@ return [
                 'products.view', 'categories.view',
                 'customers.view', 'customers.create', 'customers.update', 'customer_accounts.manage',
                 'orders.view', 'orders.create', 'orders.update', 'orders.validate', 'orders.confirm', 'orders.cancel',
+                'visits.view', 'visits.create', 'visits.update',
+                'quotes.view', 'quotes.create',
                 'invoices.view', 'payments.view', 'payments.create',
                 'returns.view', 'returns.create',
                 'reports.view',
@@ -140,6 +146,20 @@ return [
             ],
         ],
 
+        'pre_seller' => [
+            'name' => 'Livreur-pré-vendeur',
+            'home' => '/delivery/dashboard',
+            'permissions' => [
+                'dashboard.view',
+                'customers.view', 'customers.create',
+                'orders.view', 'orders.create',
+                'deliveries.view', 'deliveries.start', 'deliveries.complete',
+                'payments.view', 'payments.create',
+                'returns.view', 'returns.create',
+                'cash_closings.view', 'cash_closings.create',
+            ],
+        ],
+
         'accounting' => [
             'name' => 'Comptable',
             'home' => '/accounting/dashboard',
@@ -147,8 +167,10 @@ return [
                 'dashboard.view',
                 'customers.view', 'customer_accounts.manage',
                 'suppliers.view',
-                'orders.view',
+                'orders.view', 'orders.create',
+                'quotes.view', 'quotes.create', 'quotes.update', 'quotes.convert',
                 'invoices.view', 'invoices.create', 'invoices.cancel',
+                'credit_notes.view', 'credit_notes.create',
                 'payments.view', 'payments.create',
                 'cheques.view', 'cheques.manage',
                 'cash_closings.view', 'cash_closings.create', 'cash_closings.validate',

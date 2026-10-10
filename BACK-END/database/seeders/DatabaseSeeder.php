@@ -18,6 +18,11 @@ class DatabaseSeeder extends Seeder
             CustomerPortalSeeder::class,
             StaffSeeder::class,
             AdminDemoSeeder::class,
+            ErpCompleteSeeder::class,
+            SupplierSeeder::class,
+            ExtendedModulesSeeder::class,
+            NewModulesSeeder::class,
         ]);
     }
 }
+

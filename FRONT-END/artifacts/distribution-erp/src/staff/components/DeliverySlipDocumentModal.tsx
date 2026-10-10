@@ -33,7 +33,7 @@ export interface DeliverySlipData {
   status: 'En attente' | 'En cours' | 'Livré' | 'Partiel' | 'Refusé' | 'Client absent';
   amount_to_collect?: number;
   paid_amount?: number;
-  payment_method?: 'especes' | 'cheque';
+  payment_method?: 'especes' | 'cheque' | 'carte_bancaire';
   cheque_number?: string;
   receiver_name?: string;
   signature?: string; // e.g. base64 or confirmation note

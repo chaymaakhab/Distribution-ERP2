@@ -12,9 +12,11 @@ class Customer extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'code', 'name', 'company', 'city', 'address', 'lat', 'lng',
-        'phone', 'email', 'password', 'price_tier', 'credit_limit',
+        'code', 'name', 'company', 'ice', 'city', 'address', 'lat', 'lng',
+        'phone', 'whatsapp', 'email', 'password', 'price_tier', 'credit_limit',
+        'current_balance', 'overdue_amount',
         'status', 'locale', 'commercial_id',
+        'commercial_reference', 'commission_percentage', 'created_by_user_id',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -26,6 +28,9 @@ class Customer extends Authenticatable
             'lat' => 'decimal:7',
             'lng' => 'decimal:7',
             'credit_limit' => 'decimal:2',
+            'current_balance' => 'decimal:2',
+            'overdue_amount' => 'decimal:2',
+            'commission_percentage' => 'decimal:2',
         ];
     }
 
@@ -48,4 +53,45 @@ class Customer extends Authenticatable
     {
         return $this->belongsTo(User::class, 'commercial_id');
     }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    public function commissions()
+    {
+        return $this->hasMany(CommercialCommission::class);
+    }
+
+    public function creditNotes()
+    {
+        return $this->hasMany(CreditNote::class);
+    }
+
+    public function returns()
+    {
+        return $this->hasMany(ProductReturn::class);
+    }
+
+    public function cheques()
+    {
+        return $this->hasMany(ChequeInHand::class);
+    }
+
+    public function commercialVisits()
+    {
+        return $this->hasMany(CommercialVisit::class);
+    }
+
+    public function quotes()
+    {
+        return $this->hasMany(Quote::class);
+    }
+
+    public function deliverySlips()
+    {
+        return $this->hasMany(DeliverySlip::class);
+    }
 }
+

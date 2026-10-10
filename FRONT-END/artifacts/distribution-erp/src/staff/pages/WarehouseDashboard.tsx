@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Boxes, Warehouse, ArrowDownRight, ArrowUpRight, ArrowLeftRight,
   AlertTriangle, CheckCircle2, Clock, Plus, Download, ShieldCheck,
-  Calendar, Layers, X,
+  Calendar, Layers, X, Truck, User, Phone, MapPin, Building2,
+  Navigation, Search, Filter, MessageSquare, ChevronRight, Check,
+  Upload, Image as ImageIcon, Users,
 } from 'lucide-react';
-import { formatMoney } from '../api';
+import { api, formatMoney } from '../api';
+import { DonutChart, MultiSegmentProgress, AnimatedCounter, LivePulse } from '../components/Charts';
+import { RealLogisticsFleetMap } from '../components/RealLogisticsFleetMap';
+import { RealInterDepotTransfersMap } from '../components/RealInterDepotTransfersMap';
+import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
+
+// ── Types ───────────────────────────────────────────────────────────────────
 
 interface StockItem {
   id: number;
@@ -20,7 +28,28 @@ interface StockItem {
   unit_price: number;
   lot_number?: string;
   expiry_date?: string;
+  image?: string;
 }
+
+export type DriverType = 'depot_to_client' | 'depot_to_depot' | 'pre_seller';
+
+export interface WarehouseDriver {
+  id: number;
+  name: string;
+  phone: string;
+  cin: string;
+  license_number: string;
+  driver_type: DriverType;
+  base_depot: string;
+  assigned_city_or_route: string;
+  vehicle_model: string;
+  vehicle_plate: string;
+  capacity: string;
+  status: 'disponible' | 'en_tournee' | 'en_transit' | 'en_repos';
+  current_mission?: string;
+}
+
+// ── Données initiales ───────────────────────────────────────────────────────
 
 const INITIAL_STOCKS: StockItem[] = [
   {
@@ -37,6 +66,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 1249,
     lot_number: 'LOT-2025-019',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 2,
@@ -52,6 +82,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 3840,
     lot_number: 'LOT-2025-004',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 3,
@@ -67,6 +98,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 189.5,
     lot_number: 'LOT-2024-890',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 4,
@@ -82,6 +114,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 12.8,
     lot_number: 'LOT-CAB-2025',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 5,
@@ -97,6 +130,7 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 8950,
     lot_number: 'LOT-GEN-99',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 6,
@@ -112,355 +146,2320 @@ const INITIAL_STOCKS: StockItem[] = [
     unit_price: 15.5,
     lot_number: 'LOT-QUI-2025',
     expiry_date: 'N/A',
+    image: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=300&q=80',
+  },
+];
+
+const INITIAL_DRIVERS: WarehouseDriver[] = [
+  {
+    id: 1,
+    name: 'Mehdi Lahlou',
+    phone: '+212 661 23 45 67',
+    cin: 'BK458921',
+    license_number: 'PERM-45129',
+    driver_type: 'depot_to_client',
+    base_depot: 'DEP-01 Casablanca Central',
+    assigned_city_or_route: 'Grand Casablanca & Ain Sebaâ',
+    vehicle_model: 'Renault Master 3.5T',
+    vehicle_plate: '23-A-54321',
+    capacity: '3.5 T / 4 Palettes',
+    status: 'en_tournee',
+    current_mission: 'Tournée TRN-2026-08 (3 clients)',
+  },
+  {
+    id: 2,
+    name: 'Rachid Tazi',
+    phone: '+212 663 88 99 00',
+    cin: 'BE321908',
+    license_number: 'PERM-18273',
+    driver_type: 'depot_to_client',
+    base_depot: 'DEP-01 Casablanca Central',
+    assigned_city_or_route: 'Casablanca Sud & Sidi Maarouf',
+    vehicle_model: 'Peugeot Boxer 3.5T',
+    vehicle_plate: '18-B-12984',
+    capacity: '3.5 T / 4 Palettes',
+    status: 'disponible',
+  },
+  {
+    id: 3,
+    name: 'Youssef Berrada',
+    phone: '+212 661 55 44 33',
+    cin: 'BA871234',
+    license_number: 'PERM-99214',
+    driver_type: 'depot_to_depot',
+    base_depot: 'DEP-01 Casablanca Central',
+    assigned_city_or_route: 'Casablanca ↔ Mohammedia (Ligne 1)',
+    vehicle_model: 'Isuzu Forward 8T',
+    vehicle_plate: '14-A-87654',
+    capacity: '8.0 T / 12 Palettes',
+    status: 'en_transit',
+    current_mission: 'Transfert TRF-0012 en cours',
+  },
+  {
+    id: 4,
+    name: 'Hassan Benmoussa',
+    phone: '+212 662 44 11 22',
+    cin: 'BJ129034',
+    license_number: 'PERM-66381',
+    driver_type: 'depot_to_depot',
+    base_depot: 'DEP-01 Casablanca Central',
+    assigned_city_or_route: 'Casablanca ↔ Berrechid ↔ Settat (Ligne 2)',
+    vehicle_model: 'Volvo FL 12T',
+    vehicle_plate: '06-D-45210',
+    capacity: '12.0 T / 16 Palettes',
+    status: 'disponible',
+  },
+  {
+    id: 5,
+    name: 'Karim Mansour',
+    phone: '+212 665 77 66 55',
+    cin: 'BM543219',
+    license_number: 'PERM-77219',
+    driver_type: 'depot_to_client',
+    base_depot: 'DEP-02 Mohammedia',
+    assigned_city_or_route: 'Mohammedia & Mansouria',
+    vehicle_model: 'Citroën Jumper 3.5T',
+    vehicle_plate: '33-C-76512',
+    capacity: '3.5 T / 4 Palettes',
+    status: 'disponible',
+  },
+  {
+    id: 6,
+    name: 'Tariq El Ouazzani',
+    phone: '+212 664 12 34 56',
+    cin: 'BL908712',
+    license_number: 'PERM-33290',
+    driver_type: 'depot_to_depot',
+    base_depot: 'DEP-03 Berrechid',
+    assigned_city_or_route: 'Berrechid ↔ Casablanca (Ligne 3)',
+    vehicle_model: 'Mitsubishi Fuso 7.5T',
+    vehicle_plate: '28-A-99123',
+    capacity: '7.5 T / 10 Palettes',
+    status: 'en_repos',
+  },
+  {
+    id: 7,
+    name: 'Hamid El Meskini',
+    phone: '+212 661 88 77 66',
+    cin: 'BK671243',
+    license_number: 'PERM-55214',
+    driver_type: 'pre_seller',
+    base_depot: 'DEP-01 Casablanca Central',
+    assigned_city_or_route: 'Tournée Proximité : Derb Sultan, Garage Allal & Sbata',
+    vehicle_model: 'Hyundai H350 Fourgonnette 2.5T',
+    vehicle_plate: '45-B-11982',
+    capacity: '2.5 T / Vente directe embarquée',
+    status: 'en_tournee',
+    current_mission: 'Tournée TRN-HW-04 (18 points de vente - prises de commandes & vente directe)',
+  },
+  {
+    id: 8,
+    name: 'Hassan Bouazza',
+    phone: '+212 662 99 11 00',
+    cin: 'BL339012',
+    license_number: 'PERM-77190',
+    driver_type: 'pre_seller',
+    base_depot: 'DEP-01 Casablanca Central',
+    assigned_city_or_route: 'Tournée Proximité : Sidi Moumen, Bernoussi & Tit Mellil',
+    vehicle_model: 'Ford Transit Custom 2.2T',
+    vehicle_plate: '12-E-90812',
+    capacity: '2.2 T / Stock mobile & réassort',
+    status: 'disponible',
   },
 ];
 
 const MOVEMENTS = [
   { type: 'Réception Achat', ref: 'ACH-0097', prod: 'Perceuse 850W', qty: '+24', depot: 'Casablanca', time: '10:45' },
   { type: 'Réservation Vente', ref: 'CMD-2406', prod: 'Pompe 1.5 HP', qty: '-3', depot: 'Casablanca', time: '10:15' },
-  { type: 'Transfert Déposé', ref: 'TRF-0012', prod: 'Disque diamant', qty: '-16 (Sortie)', depot: 'Casa → Rabat', time: '09:20' },
+  { type: 'Transfert Inter-Dépôts', ref: 'TRF-0012', prod: 'Disque diamant', qty: '-16 (Sortie)', depot: 'Casa → Rabat', time: '09:20' },
   { type: 'Ajustement Inventaire', ref: 'INV-0225', prod: 'Câble 3G2.5', qty: '+5 (Écart)', depot: 'Rabat', time: 'Hier' },
 ];
 
-export default function WarehouseDashboard() {
+interface WarehouseDashboardProps {
+  initialTab?: 'stocks' | 'drivers' | 'movements' | 'fleet_map';
+  onNavigate?: (segment: string) => void;
+}
+
+export default function WarehouseDashboard({
+  initialTab = 'stocks',
+  onNavigate,
+}: WarehouseDashboardProps = {}) {
+  const [activeTab, setActiveTab] = useState<'stocks' | 'drivers' | 'movements' | 'fleet_map'>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [stocks, setStocks] = useState<StockItem[]>(INITIAL_STOCKS);
+  const [drivers, setDrivers] = useState<WarehouseDriver[]>(INITIAL_DRIVERS);
   const [selectedDepot, setSelectedDepot] = useState<'all' | 'Casablanca (DEP-01)' | 'Rabat (DEP-02)'>('all');
+
+  useEffect(() => {
+    api.getStocks()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setStocks(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend stocks indisponibles, utilisation liste locale:', err);
+      });
+
+    api.getDrivers()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mappedDrivers: WarehouseDriver[] = data.map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            phone: d.phone,
+            cin: d.cin || 'BK' + Math.floor(100000 + Math.random() * 900000),
+            license_number: d.license_number || 'PERM-' + Math.floor(10000 + Math.random() * 90000),
+            driver_type: d.driver_type,
+            base_depot: d.warehouse ? `${d.warehouse.code} ${d.warehouse.name}` : 'DEP-01 Casablanca Central',
+            assigned_city_or_route: d.assigned_route || 'Grand Casablanca',
+            vehicle_model: d.vehicle_model || 'Renault Master 3.5T',
+            vehicle_plate: d.vehicle_plate || '23-A-54321',
+            capacity: d.capacity || '3.5 T / 4 Palettes',
+            status: d.status || 'disponible',
+            current_mission: d.current_mission,
+          }));
+          setDrivers(mappedDrivers);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend drivers indisponibles, utilisation liste locale:', err);
+      });
+  }, []);
+
+  // Drivers filtering
+  const [driverTypeFilter, setDriverTypeFilter] = useState<'all' | DriverType>('all');
+  const [driverCityFilter, setDriverCityFilter] = useState<string>('all');
+  const [driverSearch, setDriverSearch] = useState('');
+
+  // Modals
   const [transferModal, setTransferModal] = useState(false);
   const [closingModal, setClosingModal] = useState(false);
+  const [newDriverModal, setNewDriverModal] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const filtered = stocks.filter((s) => selectedDepot === 'all' || s.warehouse === selectedDepot);
+  // New Driver Form State
+  const [formName, setFormName] = useState('');
+  const [formPhone, setFormPhone] = useState('+212 6');
+  const [formCin, setFormCin] = useState('');
+  const [formLicense, setFormLicense] = useState('');
+  const [formType, setFormType] = useState<DriverType>('depot_to_client');
+  const [formBaseDepot, setFormBaseDepot] = useState('DEP-01 Casablanca Central');
+  const [formRoute, setFormRoute] = useState('');
+  const [formVehicle, setFormVehicle] = useState('Renault Master 3.5T');
+  const [formPlate, setFormPlate] = useState('');
+  const [formCapacity, setFormCapacity] = useState('3.5 T / 4 Palettes');
 
-  const totalValue = filtered.reduce((acc, s) => acc + s.physical * s.unit_price, 0);
-  const lowStockCount = filtered.filter((s) => s.available <= s.min_threshold).length;
-  const totalPhysical = filtered.reduce((acc, s) => acc + s.physical, 0);
-  const totalReserved = filtered.reduce((acc, s) => acc + s.reserved, 0);
-  const totalAvailable = filtered.reduce((acc, s) => acc + s.available, 0);
+  // New Stock Item Modal State
+  const [showAddStockModal, setShowAddStockModal] = useState(false);
+  const [stockSku, setStockSku] = useState('');
+  const [stockName, setStockName] = useState('');
+  const [stockCategory, setStockCategory] = useState('Outillage');
+  const [stockWarehouse, setStockWarehouse] = useState<'Casablanca (DEP-01)' | 'Rabat (DEP-02)'>('Casablanca (DEP-01)');
+  const [stockPhysical, setStockPhysical] = useState<number>(50);
+  const [stockMinThreshold, setStockMinThreshold] = useState<number>(10);
+  const [stockUnit, setStockUnit] = useState('Pièce');
+  const [stockUnitPrice, setStockUnitPrice] = useState<number>(250);
+  const [stockLot, setStockLot] = useState('LOT-2026-001');
+  const [stockExpiry, setStockExpiry] = useState('N/A');
+  const [stockImage, setStockImage] = useState('');
+
+  const PRESET_STOCK_IMAGES = [
+    { label: 'Outillage', url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Pompe/Plomberie', url: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Disque/Matériel', url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Câble électrique', url: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Énergie', url: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=300&q=80' },
+    { label: 'Quincaillerie', url: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=300&q=80' },
+  ];
+
+  function handleStockImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        notify('La photo ne doit pas dépasser 5 Mo.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setStockImage(reader.result);
+          notify('Photo chargée avec succès !');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function handleCreateStockItem(e: React.FormEvent) {
+    e.preventDefault();
+    if (!stockSku.trim() || !stockName.trim()) {
+      notify('Veuillez renseigner le SKU et le nom de l\'article.');
+      return;
+    }
+    const newItem: StockItem = {
+      id: Date.now(),
+      sku: stockSku.trim().toUpperCase(),
+      name: stockName.trim(),
+      category: stockCategory,
+      warehouse: stockWarehouse,
+      physical: Number(stockPhysical) || 0,
+      reserved: 0,
+      available: Number(stockPhysical) || 0,
+      min_threshold: Number(stockMinThreshold) || 5,
+      unit: stockUnit.trim() || 'Pièce',
+      unit_price: Number(stockUnitPrice) || 0,
+      lot_number: stockLot.trim() || 'LOT-2026-N',
+      expiry_date: stockExpiry.trim() || 'N/A',
+      image: stockImage.trim() || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80',
+    };
+
+    setStocks((prev) => [newItem, ...prev]);
+    setShowAddStockModal(false);
+
+    api.createStock({
+      sku: newItem.sku,
+      name: newItem.name,
+      category: newItem.category,
+      warehouse: newItem.warehouse,
+      physical: newItem.physical,
+      min_threshold: newItem.min_threshold,
+      unit: newItem.unit,
+      unit_price: newItem.unit_price,
+      lot_number: newItem.lot_number,
+      expiry_date: newItem.expiry_date,
+      image: newItem.image,
+    }).then(created => {
+      if (created?.id) {
+        setStocks(prev => [created, ...prev.filter(x => x.id !== newItem.id)]);
+      }
+    }).catch(err => console.warn('Failed to save stock item on backend:', err));
+    notify(`Article « ${newItem.name} » (${newItem.sku}) ajouté au stock avec photo !`);
+
+    // Reset
+    setStockSku('');
+    setStockName('');
+    setStockCategory('Outillage');
+    setStockPhysical(50);
+    setStockMinThreshold(10);
+    setStockUnit('Pièce');
+    setStockUnitPrice(250);
+    setStockImage('');
+  }
 
   function notify(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   }
 
+  // Stock calculations
+  const filteredStocks = stocks.filter((s) => selectedDepot === 'all' || s.warehouse === selectedDepot);
+  const totalValue = filteredStocks.reduce((acc, s) => acc + s.physical * s.unit_price, 0);
+  const lowStockCount = filteredStocks.filter((s) => s.available <= s.min_threshold).length;
+  const totalPhysical = filteredStocks.reduce((acc, s) => acc + s.physical, 0);
+  const totalReserved = filteredStocks.reduce((acc, s) => acc + s.reserved, 0);
+  const totalAvailable = filteredStocks.reduce((acc, s) => acc + s.available, 0);
+
+  // Drivers calculations & filtering
+  const filteredDrivers = drivers.filter((d) => {
+    const matchType = driverTypeFilter === 'all' || d.driver_type === driverTypeFilter;
+    const matchCity =
+      driverCityFilter === 'all' ||
+      d.assigned_city_or_route.toLowerCase().includes(driverCityFilter.toLowerCase()) ||
+      d.base_depot.toLowerCase().includes(driverCityFilter.toLowerCase());
+    const q = driverSearch.toLowerCase().trim();
+    const matchSearch =
+      !q ||
+      d.name.toLowerCase().includes(q) ||
+      d.phone.includes(q) ||
+      d.vehicle_plate.toLowerCase().includes(q) ||
+      d.assigned_city_or_route.toLowerCase().includes(q);
+    return matchType && matchCity && matchSearch;
+  });
+
+  const clientDriversCount = drivers.filter((d) => d.driver_type === 'depot_to_client').length;
+  const interDepotDriversCount = drivers.filter((d) => d.driver_type === 'depot_to_depot').length;
+  const preSellerDriversCount = drivers.filter((d) => d.driver_type === 'pre_seller').length;
+  const onMissionCount = drivers.filter((d) => d.status === 'en_tournee' || d.status === 'en_transit').length;
+
+  function handleCreateDriver(e: React.FormEvent) {
+    e.preventDefault();
+    if (!formName.trim() || !formPlate.trim()) return;
+
+    const defaultRoute =
+      formType === 'pre_seller'
+        ? 'Tournée Proximité Grand Casablanca'
+        : formType === 'depot_to_client'
+        ? 'Grand Casablanca & Ain Sebaâ'
+        : 'Casablanca ↔ Mohammedia (Ligne 1)';
+
+    const newDriver: WarehouseDriver = {
+      id: Date.now(),
+      name: formName.trim(),
+      phone: formPhone.trim(),
+      cin: formCin.trim().toUpperCase() || 'BK000000',
+      license_number: formLicense.trim() || 'PERM-0000',
+      driver_type: formType,
+      base_depot: formBaseDepot,
+      assigned_city_or_route: formRoute.trim() || defaultRoute,
+      vehicle_model: formVehicle.trim(),
+      vehicle_plate: formPlate.trim(),
+      capacity: formCapacity.trim(),
+      status: 'disponible',
+    };
+
+    setDrivers((prev) => [newDriver, ...prev]);
+
+    api.createDriver({
+      name: newDriver.name,
+      phone: newDriver.phone,
+      cin: newDriver.cin,
+      license_number: newDriver.license_number,
+      driver_type: newDriver.driver_type,
+      assigned_route: newDriver.assigned_city_or_route,
+      vehicle_model: newDriver.vehicle_model,
+      vehicle_plate: newDriver.vehicle_plate,
+      capacity: newDriver.capacity,
+    }).catch(err => console.warn('Failed to save driver on backend:', err));
+
+    const typeLabel =
+      newDriver.driver_type === 'pre_seller'
+        ? 'Type 3 : Livreur-pré-vendeur (Van Sales)'
+        : newDriver.driver_type === 'depot_to_client'
+        ? 'Type 1 : Dépôt → Client'
+        : 'Type 2 : Navette Dépôt → Dépôt';
+    notify(`Livreur « ${newDriver.name} » ajouté avec succès (${typeLabel}) !`);
+    setNewDriverModal(false);
+    setActiveTab('drivers');
+
+    // Reset form
+    setFormName('');
+    setFormPhone('+212 6');
+    setFormCin('');
+    setFormLicense('');
+    setFormRoute('');
+    setFormPlate('');
+  }
+
+  function toggleDriverStatus(driverId: number) {
+    setDrivers((prev) =>
+      prev.map((d) => {
+        if (d.id === driverId) {
+          const nextStatus = d.status === 'disponible' ? 'en_repos' : 'disponible';
+          return { ...d, status: nextStatus };
+        }
+        return d;
+      })
+    );
+    notify('Statut du livreur mis à jour.');
+  }
+
   return (
     <div className="dashboard-page warehouse-workspace">
-      {/* Header */}
+      {/* ── Page Header ── */}
       <div className="page-heading dash-heading">
         <div>
-          <span className="eyebrow">RESPONSABLE DÉPÔT <span className="eyebrow-sep">/</span> GESTION DES STOCKS & ENTREPÔTS</span>
-          <h1>Espace Entrepôt & Dépôts<span className="title-period">.</span></h1>
-          <p>Disponibilité = Physique − Réservé. Suivez les mouvements, réapprovisionnements et transferts.</p>
+          <span className="eyebrow">RESPONSABLE DÉPÔT <span className="eyebrow-sep">/</span> GESTION DES STOCKS & FLOTTE</span>
+          <h1>Espace Entrepôt & Flotte Logistique<span className="title-period">.</span></h1>
+          <p>Supervision des stocks disponibles, réapprovisionnements et gestion des 2 types de livreurs (Clients & Navettes Inter-Dépôts).</p>
         </div>
-        <div className="heading-actions">
-          <button className="button-secondary" onClick={() => setClosingModal(true)}>
+        <div className="heading-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            className="button-primary"
+            style={{ background: '#10b981', borderColor: '#059669', fontWeight: 600 }}
+            onClick={() => setShowAddStockModal(true)}
+            title="Ajouter un nouvel article au stock avec sa photo"
+          >
+            <Plus size={15} /> + Ajouter article en stock
+          </button>
+          <button
+            className="button-primary"
+            style={{ background: '#0284c7', borderColor: '#0369a1', fontWeight: 600 }}
+            onClick={() => setNewDriverModal(true)}
+            title="Ajouter un livreur au dépôt (Type 1 : Dépôt → Client OU Type 2 : Navette Dépôt → Dépôt)"
+            data-testid="btn-add-driver-main"
+          >
+            <Plus size={15} /> + Ajouter un livreur (2 Types)
+          </button>
+          <button
+            className="button-secondary"
+            onClick={() => setTransferModal(true)}
+          >
+            <ArrowLeftRight size={15} /> Transfert inter-dépôts
+          </button>
+          <button
+            className="button-secondary"
+            onClick={() => setClosingModal(true)}
+          >
             <ShieldCheck size={15} /> Clôture caisse dépôt
           </button>
-          <button className="button-primary" onClick={() => setTransferModal(true)}>
-            <ArrowLeftRight size={16} /> Transfert inter-dépôts
-          </button>
         </div>
       </div>
 
-      {/* KPI Strip */}
-      <div className="metric-grid">
-        <div className="metric-card metric-blue">
-          <div className="metric-top">
-            <span>Stock Réel Disponible</span>
-            <div className="metric-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6' }}>
-              <Boxes size={16} />
-            </div>
-          </div>
-          <div className="metric-number">{totalAvailable} <small>unités</small></div>
-          <div className="metric-foot">
-            <span>Physique: {totalPhysical} · Réservé: {totalReserved}</span>
-          </div>
-        </div>
+      {/* ── Role Quick Actions Bar (Responsable Dépôt) ── */}
+      <RoleQuickActionsBar
+        roleTitle="Responsable Dépôt & Magasinier"
+        actions={[
+          {
+            id: 'qa-art',
+            label: '+ Nouvel Article Stock',
+            description: 'Ajouter une référence au stock physique du dépôt avec sa photo',
+            icon: Boxes,
+            primary: true,
+            onClick: () => setShowAddStockModal(true),
+          },
+          {
+            id: 'qa-drv',
+            label: '+ Ajouter Livreur (2 Types)',
+            description: 'Affecter un livreur client ou chauffeur de navette inter-dépôts',
+            icon: Truck,
+            onClick: () => setNewDriverModal(true),
+          },
+          {
+            id: 'qa-trf',
+            label: '+ Transfert Inter-Dépôts',
+            description: 'Émettre une demande de navette vers un autre dépôt',
+            icon: ArrowLeftRight,
+            onClick: () => setTransferModal(true),
+          },
+          {
+            id: 'qa-ret',
+            label: '+ Déclarer Avarie / Retour',
+            description: 'Enregistrer une marchandise retournée ou avariée',
+            icon: AlertTriangle,
+            onClick: () => {
+              if (onNavigate) onNavigate('returns');
+            },
+          },
+          {
+            id: 'qa-clo',
+            label: '+ Clôture Caisse Dépôt',
+            description: 'Arrêter la caisse et réconcilier les encaissements',
+            icon: ShieldCheck,
+            onClick: () => setClosingModal(true),
+          },
+          {
+            id: 'qa-clt',
+            label: '+ Nouveau Client Dépôt',
+            description: 'Créer un compte client pro avec ses identifiants portail',
+            icon: Users,
+            onClick: () => {
+              if (onNavigate) onNavigate('customers');
+            },
+          },
+        ]}
+      />
 
-        <div className="metric-card metric-green">
-          <div className="metric-top">
-            <span>Valorisation du stock</span>
-            <div className="metric-icon" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e' }}>
-              <Warehouse size={16} />
-            </div>
-          </div>
-          <div className="metric-number">{formatMoney(totalValue)} <small>DH</small></div>
-          <div className="metric-foot">
-            <span>Périmètre : {selectedDepot === 'all' ? 'Tous dépôts' : selectedDepot}</span>
-          </div>
-        </div>
-
-        <div className="metric-card metric-amber">
-          <div className="metric-top">
-            <span>Sous seuil minimum</span>
-            <div className="metric-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
-              <AlertTriangle size={16} />
-            </div>
-          </div>
-          <div className="metric-number">{lowStockCount} <small>articles</small></div>
-          <div className="metric-foot">
-            <span className="metric-change change-down">Alerte réassort</span>
-          </div>
-        </div>
-
-        <div className="metric-card metric-cyan">
-          <div className="metric-top">
-            <span>Dépôts Opérationnels</span>
-            <div className="metric-icon" style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4' }}>
-              <Layers size={16} />
-            </div>
-          </div>
-          <div className="metric-number">2 <small>dépôts</small></div>
-          <div className="metric-foot">
-            <span>Casablanca (Principal) & Rabat</span>
-          </div>
-        </div>
+      {/* ── Main Tab Navigation ── */}
+      <div className="table-tabs" style={{ marginBottom: 16 }}>
+        <button
+          className={`table-tab ${activeTab === 'stocks' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('stocks')}
+        >
+          <Boxes size={14} style={{ display: 'inline', marginRight: 6 }} />
+          Stocks & Disponibilités
+        </button>
+        <button
+          className={`table-tab ${activeTab === 'drivers' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('drivers')}
+        >
+          <Truck size={14} style={{ display: 'inline', marginRight: 6, color: '#38bdf8' }} />
+          Flotte & 2 Types de Livreurs ({drivers.length})
+        </button>
+        <button
+          className={`table-tab ${activeTab === 'movements' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('movements')}
+        >
+          <ArrowLeftRight size={14} style={{ display: 'inline', marginRight: 6 }} />
+          Mouvements & Transferts
+        </button>
+        <button
+          className={`table-tab ${activeTab === 'fleet_map' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('fleet_map')}
+        >
+          <Navigation size={14} style={{ display: 'inline', marginRight: 6, color: '#10b981' }} />
+          Carte Live Dépôts & Flotte (GPS)
+        </button>
       </div>
 
-      {/* CDC Equation Banner */}
-      <div className="inventory-note" style={{ margin: '14px 0' }}>
-        <div className="note-symbol"><Boxes size={18} /></div>
-        <div>
-          <b>Règle critique CDC : Stock Disponible = Stock Physique − Stock Réservé</b>
-          <span>Tout mouvement (réception, réservation commande, transfert ou casse) est validé sous transaction verrouillée.</span>
-        </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-          <button
-            className={`button-secondary ${selectedDepot === 'all' ? 'active-tab' : ''}`}
-            onClick={() => setSelectedDepot('all')}
+      {/* ════════════════════ TAB 1: STOCKS ════════════════════ */}
+      {activeTab === 'stocks' && (
+        <>
+          {/* Highlight Banner: 2 Types de Livreurs */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'linear-gradient(135deg, rgba(2,132,199,0.12), rgba(168,85,247,0.08))',
+              border: '1px solid rgba(56,189,248,0.25)',
+              borderRadius: 10,
+              padding: '14px 18px',
+              marginBottom: 16,
+              flexWrap: 'wrap',
+              gap: 12,
+            }}
           >
-            Tous dépôts
-          </button>
-          <button
-            className={`button-secondary ${selectedDepot === 'Casablanca (DEP-01)' ? 'active-tab' : ''}`}
-            onClick={() => setSelectedDepot('Casablanca (DEP-01)')}
-          >
-            Casablanca
-          </button>
-          <button
-            className={`button-secondary ${selectedDepot === 'Rabat (DEP-02)' ? 'active-tab' : ''}`}
-            onClick={() => setSelectedDepot('Rabat (DEP-02)')}
-          >
-            Rabat
-          </button>
-        </div>
-      </div>
-
-      {/* Main Stock Table */}
-      <div className="dashboard-grid" style={{ gridTemplateColumns: 'minmax(0, 2fr) minmax(320px, 1fr)', gap: '16px' }}>
-        <section className="panel list-panel">
-          <div className="list-panel-heading">
-            <div>
-              <span className="eyebrow">REGISTRE D'ENTREPÔT</span>
-              <h2>Niveaux de stock par référence</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 10,
+                  background: 'rgba(56,189,248,0.15)',
+                  color: '#38bdf8',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Truck size={22} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>
+                    Flotte & Affectation des 2 Types de Livreurs
+                  </h3>
+                  <span className="status-pill status-blue" style={{ fontSize: 10 }}>
+                    {drivers.length} Chauffeurs actifs
+                  </span>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>
+                  <strong style={{ color: '#38bdf8' }}>Type 1 (Dépôt → Client) : {clientDriversCount}</strong> (Distribution magasins & chantiers) &nbsp;·&nbsp;&nbsp;
+                  <strong style={{ color: '#c084fc' }}>Type 2 (Navette Dépôt → Dépôt) : {interDepotDriversCount}</strong> (Liaisons inter-villes)
+                </p>
+              </div>
             </div>
-            <div className="table-count">
-              <span className="count-pulse" />
-              {filtered.length} références
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button
+                className="button-secondary"
+                onClick={() => setActiveTab('drivers')}
+                style={{ height: 34, fontSize: 12, gap: 6 }}
+              >
+                <Truck size={14} /> Voir la flotte ({drivers.length})
+              </button>
+              <button
+                className="button-primary"
+                onClick={() => setNewDriverModal(true)}
+                style={{ height: 34, fontSize: 12, gap: 6, background: '#0284c7', borderColor: '#0369a1' }}
+              >
+                <Plus size={14} /> + Ajouter un livreur
+              </button>
+            </div>
+          </div>
+          {/* KPI Strip */}
+          <div className="metric-grid">
+            <div className="metric-card metric-blue">
+              <div className="metric-top">
+                <span>Stock Réel Disponible</span>
+                <div className="metric-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6' }}>
+                  <Boxes size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{totalAvailable} <small>unités</small></div>
+              <div className="metric-foot">
+                <span>Physique: {totalPhysical} · Réservé: {totalReserved}</span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-green">
+              <div className="metric-top">
+                <span>Valorisation du stock</span>
+                <div className="metric-icon" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e' }}>
+                  <Warehouse size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{formatMoney(totalValue)} <small>DH</small></div>
+              <div className="metric-foot">
+                <span>Périmètre : {selectedDepot === 'all' ? 'Tous dépôts' : selectedDepot}</span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-amber">
+              <div className="metric-top">
+                <span>Sous seuil minimum</span>
+                <div className="metric-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
+                  <AlertTriangle size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{lowStockCount} <small>articles</small></div>
+              <div className="metric-foot">
+                <span className="metric-change change-down">Alerte réassort</span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-cyan">
+              <div className="metric-top">
+                <span>Dépôts Opérationnels</span>
+                <div className="metric-icon" style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4' }}>
+                  <Layers size={16} />
+                </div>
+              </div>
+              <div className="metric-number">2 <small>dépôts</small></div>
+              <div className="metric-foot">
+                <span>Casablanca (Principal) & Rabat</span>
+              </div>
             </div>
           </div>
 
-          <div className="table-container">
-            <table className="data-table module-table">
-              <thead>
-                <tr>
-                  <th>RÉF / SKU</th>
-                  <th>DÉSIGNATION & CATÉGORIE</th>
-                  <th>DÉPÔT</th>
-                  <th>PHYSIQUE / RÉSERVÉ / DISPO</th>
-                  <th>VALORISATION</th>
-                  <th>ÉTAT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((item) => {
-                  const isLow = item.available <= item.min_threshold;
-                  return (
-                    <tr key={item.id}>
+          {/* CDC Equation Banner */}
+          <div className="inventory-note" style={{ margin: '14px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={16} style={{ color: '#22c55e' }} />
+              <b>Règle de gestion CDC Maroc :</b>
+              <code>Stock Disponible = Stock Physique − Stock Réservé (Commandes validées)</code>
+            </div>
+          </div>
+
+          {/* Visualisation graphique des stocks et disponibilités */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+            <div style={{ background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase' }}>RÉPARTITION PAR CATÉGORIE</span>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '2px 0 0', color: 'var(--text)' }}>Valorisation des Stocks</h3>
+                </div>
+                <span className="sx-chip" style={{ fontSize: '11px' }}>{selectedDepot === 'all' ? 'Consolidé' : selectedDepot}</span>
+              </div>
+              <DonutChart
+                size={160}
+                strokeWidth={20}
+                centerLabel="VALEUR STOCK"
+                centerValue={`${formatMoney(totalValue)} DH`}
+                slices={[
+                  { label: 'Outillage électroportatif', value: Math.round(totalValue * 0.45), color: '#3b82f6', formatted: `${formatMoney(Math.round(totalValue * 0.45))} DH` },
+                  { label: 'Plomberie & Pompage', value: Math.round(totalValue * 0.30), color: '#10b981', formatted: `${formatMoney(Math.round(totalValue * 0.30))} DH` },
+                  { label: 'Électricité & Câblage', value: Math.round(totalValue * 0.15), color: '#06b6d4', formatted: `${formatMoney(Math.round(totalValue * 0.15))} DH` },
+                  { label: 'Quincaillerie & Fixations', value: Math.round(totalValue * 0.10), color: '#f59e0b', formatted: `${formatMoney(Math.round(totalValue * 0.10))} DH` },
+                ]}
+              />
+            </div>
+
+            <div style={{ background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase' }}>RATIO DISPONIBILITÉ vs RÉSERVATION</span>
+                <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '2px 0 10px', color: 'var(--text)' }}>Taux de Service & Disponibilité</h3>
+                <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '0 0 14px' }}>
+                  Sur un total physique de <strong>{totalPhysical} unités</strong>, <strong>{totalAvailable} unités ({Math.round((totalAvailable / (totalPhysical || 1)) * 100)}%)</strong> sont immédiatement livrables aux clients.
+                </p>
+                <MultiSegmentProgress
+                  height={12}
+                  segments={[
+                    { label: 'Stock Disponible', value: totalAvailable, color: '#10b981' },
+                    { label: 'Stock Réservé (Cde)', value: totalReserved, color: '#38bdf8' },
+                    { label: 'Articles en Alerte (Sous seuil)', value: lowStockCount * 10, color: '#ef4444' },
+                  ]}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', fontSize: '11.5px' }}>
+                <span style={{ color: 'var(--muted)' }}>Taux d'alerte : {lowStockCount} articles</span>
+                <span style={{ color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <CheckCircle2 size={13} /> Synchronisation dépôts OK
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stocks Table */}
+          <section className="panel list-panel" style={{ marginTop: '14px' }}>
+            <div className="list-panel-heading">
+              <div>
+                <span className="eyebrow">INVENTAIRE TEMPS RÉEL</span>
+                <h2>Articles en stock ({filteredStocks.length})</h2>
+              </div>
+              <div className="table-tools" style={{ padding: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div className="table-tabs">
+                  {(['all', 'Casablanca (DEP-01)', 'Rabat (DEP-02)'] as const).map((dp) => (
+                    <button
+                      key={dp}
+                      className={`table-tab ${selectedDepot === dp ? 'active-tab' : ''}`}
+                      onClick={() => setSelectedDepot(dp)}
+                    >
+                      {dp === 'all' ? 'Tous dépôts' : dp}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="button-primary"
+                  onClick={() => setShowAddStockModal(true)}
+                  style={{ height: 32, fontSize: 12, padding: '0 12px', background: '#10b981', borderColor: '#059669', gap: 5 }}
+                >
+                  <Plus size={13} /> + Ajouter article
+                </button>
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="data-table module-table">
+                <thead>
+                  <tr>
+                    <th>RÉFÉRENCE / SKU</th>
+                    <th>ARTICLE & PHOTO</th>
+                    <th>DÉPÔT</th>
+                    <th>PHYSIQUE</th>
+                    <th>RÉSERVÉ</th>
+                    <th>DISPONIBLE</th>
+                    <th>SEUIL MIN.</th>
+                    <th>VALEUR TOTALE</th>
+                    <th>STATUT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStocks.map((s) => (
+                    <tr key={s.id}>
+                      <td><code className="table-ref">{s.sku}</code></td>
                       <td>
-                        <span className="table-ref">{item.sku}</span>
-                        <small style={{ display: 'block', color: 'var(--muted)', fontSize: '10.5px' }}>
-                          Lot: {item.lot_number}
-                        </small>
-                      </td>
-                      <td>
-                        <b className="table-main">{item.name}</b>
-                        <small style={{ display: 'block', color: 'var(--muted)' }}>
-                          {item.category} · {item.unit}
-                        </small>
-                      </td>
-                      <td>
-                        <span className="table-secondary">{item.warehouse.split(' ')[0]}</span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontFamily: 'var(--app-font-mono)' }}>
-                          <span>{item.physical}</span>
-                          <span style={{ color: 'var(--muted)' }}>/</span>
-                          <span style={{ color: '#f59e0b' }}>{item.reserved}</span>
-                          <span style={{ color: 'var(--muted)' }}>/</span>
-                          <b style={{ color: isLow ? '#ef4444' : '#22c55e', fontWeight: 700 }}>{item.available}</b>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <img
+                            src={s.image || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=300&q=80'}
+                            alt={s.name}
+                            style={{
+                              width: 38,
+                              height: 38,
+                              borderRadius: 6,
+                              objectFit: 'cover',
+                              border: '1px solid #cbd5e1',
+                              flexShrink: 0,
+                            }}
+                          />
+                          <div>
+                            <b className="table-main">{s.name}</b>
+                            <small style={{ display: 'block', color: 'var(--muted)', fontSize: 11 }}>{s.category} · Lot: {s.lot_number}</small>
+                          </div>
                         </div>
-                        <small style={{ color: 'var(--muted)', fontSize: '10px' }}>
-                          Seuil min: {item.min_threshold}
-                        </small>
                       </td>
+                      <td><span className="table-secondary">{s.warehouse}</span></td>
+                      <td><b>{s.physical}</b> <small>{s.unit}</small></td>
+                      <td><span style={{ color: '#f59e0b', fontWeight: 600 }}>{s.reserved}</span></td>
                       <td>
-                        <b>{formatMoney(item.physical * item.unit_price)} DH</b>
-                        <small style={{ display: 'block', color: 'var(--muted)', fontSize: '10px' }}>
-                          {formatMoney(item.unit_price)} DH / un.
-                        </small>
+                        <strong style={{ color: s.available <= s.min_threshold ? '#ef4444' : '#22c55e', fontSize: '13px' }}>
+                          {s.available}
+                        </strong>
                       </td>
+                      <td><span style={{ color: 'var(--muted)' }}>{s.min_threshold}</span></td>
+                      <td className="table-amount">{formatMoney(s.physical * s.unit_price)} DH</td>
                       <td>
-                        <span className={`status-pill ${isLow ? 'status-red' : 'status-green'}`}>
-                          <i /> {isLow ? 'Stock Faible' : 'Disponible'}
+                        <span className={`status-pill ${s.available <= s.min_threshold ? 'status-red' : 'status-green'}`}>
+                          {s.available <= s.min_threshold ? 'Seuil critique' : 'Normal'}
                         </span>
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      )}
 
-        {/* Recent movements */}
-        <section className="panel" style={{ padding: '16px' }}>
-          <div className="panel-heading">
-            <div>
-              <span className="eyebrow">TRAÇABILITÉ COMPLÈTE</span>
-              <h2>Derniers mouvements de stock</h2>
+      {/* ════════════════════ TAB 2: FLOTTE & LIVREURS ════════════════════ */}
+      {activeTab === 'drivers' && (
+        <>
+          {/* Driver KPIs */}
+          <div className="metric-grid">
+            <div className="metric-card metric-blue">
+              <div className="metric-top">
+                <span>Total Chauffeurs</span>
+                <div className="metric-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6' }}>
+                  <User size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{drivers.length} <small>chauffeurs</small></div>
+              <div className="metric-foot">
+                <span>Affectés aux dépôts régionaux</span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-cyan">
+              <div className="metric-top">
+                <span>Livreurs Dépôt → Client</span>
+                <div className="metric-icon" style={{ background: 'rgba(6,182,212,0.15)', color: '#06b6d4' }}>
+                  <Truck size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{clientDriversCount} <small>livreurs</small></div>
+              <div className="metric-foot">
+                <span>Distribution locale & dernier km</span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-violet">
+              <div className="metric-top">
+                <span>Navettes Dépôt → Dépôt</span>
+                <div className="metric-icon" style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>
+                  <Building2 size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{interDepotDriversCount} <small>navettes</small></div>
+              <div className="metric-foot">
+                <span>Transferts inter-villes & lignes</span>
+              </div>
+            </div>
+
+            <div className="metric-card metric-green">
+              <div className="metric-top">
+                <span>Actuellement en Mission</span>
+                <div className="metric-icon" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e' }}>
+                  <Navigation size={16} />
+                </div>
+              </div>
+              <div className="metric-number">{onMissionCount} <small>en route</small></div>
+              <div className="metric-foot">
+                <span className="metric-change change-up">Tournées ou transferts actifs</span>
+              </div>
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
-            {MOVEMENTS.map((m, idx) => (
-              <div
-                key={idx}
-                style={{
-                  padding: '11px',
-                  borderRadius: '7px',
-                  border: '1px solid var(--line)',
-                  background: 'var(--navy-2)',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <b>{m.type}</b>
-                  <span style={{ fontSize: '11px', color: m.qty.startsWith('+') ? '#22c55e' : '#38bdf8', fontWeight: 700 }}>
-                    {m.qty}
-                  </span>
+
+          {/* 3 Types de Livreurs - Cartes explicatives interactives */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12, marginTop: 14 }}>
+            <div
+              onClick={() => setDriverTypeFilter(driverTypeFilter === 'depot_to_client' ? 'all' : 'depot_to_client')}
+              style={{
+                padding: '14px 16px',
+                borderRadius: 8,
+                background: driverTypeFilter === 'depot_to_client' ? 'rgba(56,189,248,0.12)' : 'var(--navy-2)',
+                border: driverTypeFilter === 'depot_to_client' ? '2px solid #38bdf8' : '1px solid var(--line)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#38bdf8', fontWeight: 700, fontSize: 13 }}>
+                  <Truck size={16} />
+                  <span>Type 1 : Dépôt → Client</span>
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text)', marginTop: '2px' }}>
-                  {m.prod} <small style={{ color: 'var(--muted)' }}>({m.ref})</small>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--muted)', marginTop: '4px' }}>
-                  <span>{m.depot}</span>
-                  <span>{m.time}</span>
-                </div>
+                <span className="status-pill status-blue" style={{ fontSize: 11 }}>{clientDriversCount} livreurs</span>
               </div>
-            ))}
+              <p style={{ margin: '6px 0 0', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.4 }}>
+                Distribution locale auprès des commerces, revendeurs professionnels et chantiers urbains. Véhicules légers (fourgons 3.5T).
+              </p>
+            </div>
+
+            <div
+              onClick={() => setDriverTypeFilter(driverTypeFilter === 'depot_to_depot' ? 'all' : 'depot_to_depot')}
+              style={{
+                padding: '14px 16px',
+                borderRadius: 8,
+                background: driverTypeFilter === 'depot_to_depot' ? 'rgba(168,85,247,0.12)' : 'var(--navy-2)',
+                border: driverTypeFilter === 'depot_to_depot' ? '2px solid #a855f7' : '1px solid var(--line)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#c084fc', fontWeight: 700, fontSize: 13 }}>
+                  <Building2 size={16} />
+                  <span>Type 2 : Navette Dépôt → Dépôt</span>
+                </div>
+                <span className="status-pill status-violet" style={{ fontSize: 11 }}>{interDepotDriversCount} navettes</span>
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.4 }}>
+                Liaisons régulières et acheminement de palettes entre dépôts régionaux (Casa, Mohammedia, Berrechid). Poids lourds (8T - 12T).
+              </p>
+            </div>
+
+            <div
+              onClick={() => setDriverTypeFilter(driverTypeFilter === 'pre_seller' ? 'all' : 'pre_seller')}
+              style={{
+                padding: '14px 16px',
+                borderRadius: 8,
+                background: driverTypeFilter === 'pre_seller' ? 'rgba(16,185,129,0.12)' : 'var(--navy-2)',
+                border: driverTypeFilter === 'pre_seller' ? '2px solid #10b981' : '1px solid var(--line)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#10b981', fontWeight: 700, fontSize: 13 }}>
+                  <Truck size={16} />
+                  <span>Type 3 : Livreur-pré-vendeur (Van Sales)</span>
+                </div>
+                <span className="status-pill status-green" style={{ fontSize: 11 }}>{preSellerDriversCount} pré-vendeurs</span>
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.4 }}>
+                Van Sales / Commerces de proximité : prise de commande sur place, réassort direct, vente embarquée et encaissement immédiat.
+              </p>
+            </div>
           </div>
 
-          <div style={{ marginTop: '14px', padding: '12px', background: 'rgba(234,179,8,0.08)', borderRadius: '8px', border: '1px solid rgba(234,179,8,0.2)', fontSize: '11px', color: 'var(--text)' }}>
-            <b>Règle de transfert :</b> Un transfert inter-dépôts s'effectue en deux étapes : sortie enregistrée au dépôt source puis validation avec contrôle d'écarts à la réception.
+          {/* ── CARTE LIVE FLOTTE & DÉPÔTS EN DIRECT ── */}
+          <div style={{ marginTop: '16px', marginBottom: '16px', background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '10px', padding: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <LivePulse color="#0284c7" label="TÉLÉMÉTRIE LIVE GPS" />
+                <h3 style={{ fontSize: '15px', fontWeight: 800, margin: 0, color: 'var(--text)' }}>
+                  Supervision Géographique de la Flotte & Dépôts au Maroc
+                </h3>
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                {drivers.length} chauffeurs déployés · Liaisons inter-dépôts Casa - Rabat - Tanger - Fès
+              </span>
+            </div>
+            <RealLogisticsFleetMap drivers={drivers} />
+          </div>
+
+          {/* Drivers Filter & Search Panel */}
+          <section className="panel list-panel" style={{ marginTop: '14px' }}>
+            <div className="list-panel-heading">
+              <div>
+                <span className="eyebrow">GESTION FLOTTE & DISPATCH</span>
+                <h2>Registre des Chauffeurs & Affectation ({filteredDrivers.length})</h2>
+              </div>
+              <div className="heading-actions">
+                <button
+                  className="button-primary"
+                  style={{ background: '#0284c7', borderColor: '#0369a1' }}
+                  onClick={() => setNewDriverModal(true)}
+                >
+                  <Plus size={14} /> + Ajouter un livreur (3 Types)
+                </button>
+              </div>
+            </div>
+
+            {/* Filter toolbars */}
+            <div className="table-tools" style={{ flexWrap: 'wrap', gap: 10 }}>
+              <div className="table-tabs">
+                <button
+                  className={`table-tab ${driverTypeFilter === 'all' ? 'active-tab' : ''}`}
+                  onClick={() => setDriverTypeFilter('all')}
+                >
+                  Tous types ({drivers.length})
+                </button>
+                <button
+                  className={`table-tab ${driverTypeFilter === 'depot_to_client' ? 'active-tab' : ''}`}
+                  onClick={() => setDriverTypeFilter('depot_to_client')}
+                  style={{ color: '#38bdf8' }}
+                >
+                  <Truck size={12} style={{ display: 'inline', marginRight: 4 }} />
+                  Dépôt → Client ({clientDriversCount})
+                </button>
+                <button
+                  className={`table-tab ${driverTypeFilter === 'depot_to_depot' ? 'active-tab' : ''}`}
+                  onClick={() => setDriverTypeFilter('depot_to_depot')}
+                  style={{ color: '#a855f7' }}
+                >
+                  <Building2 size={12} style={{ display: 'inline', marginRight: 4 }} />
+                  Navette Inter-Dépôts ({interDepotDriversCount})
+                </button>
+                <button
+                  className={`table-tab ${driverTypeFilter === 'pre_seller' ? 'active-tab' : ''}`}
+                  onClick={() => setDriverTypeFilter('pre_seller')}
+                  style={{ color: '#10b981' }}
+                >
+                  <Truck size={12} style={{ display: 'inline', marginRight: 4 }} />
+                  Livreur-pré-vendeur Van Sales ({preSellerDriversCount})
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
+                <select
+                  className="select-compact"
+                  value={driverCityFilter}
+                  onChange={(e) => setDriverCityFilter(e.target.value)}
+                  style={{ height: 32 }}
+                >
+                  <option value="all">Toutes les villes & lignes</option>
+                  <option value="Casablanca">Casablanca</option>
+                  <option value="Mohammedia">Mohammedia</option>
+                  <option value="Berrechid">Berrechid</option>
+                  <option value="Settat">Settat</option>
+                </select>
+
+                <div className="search-field" style={{ minWidth: 200 }}>
+                  <Search size={13} />
+                  <input
+                    value={driverSearch}
+                    onChange={(e) => setDriverSearch(e.target.value)}
+                    placeholder="Chauffeur, matricule, trajet…"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="data-table module-table">
+                <thead>
+                  <tr>
+                    <th>CHAUFFEUR & CONTACT</th>
+                    <th>TYPE DE LIVREUR</th>
+                    <th>DÉPÔT D'ATTACHE</th>
+                    <th>VILLE / LIGNE ASSIGNÉE</th>
+                    <th>VÉHICULE & IMMATRICULATION</th>
+                    <th>CAPACITÉ</th>
+                    <th>STATUT</th>
+                    <th className="row-actions">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredDrivers.map((driver) => {
+                    const isClientType = driver.driver_type === 'depot_to_client';
+                    return (
+                      <tr key={driver.id}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                background:
+                                  driver.driver_type === 'pre_seller'
+                                    ? 'rgba(16,185,129,0.15)'
+                                    : isClientType
+                                    ? 'rgba(56,189,248,0.15)'
+                                    : 'rgba(168,85,247,0.15)',
+                                color:
+                                  driver.driver_type === 'pre_seller'
+                                    ? '#10b981'
+                                    : isClientType
+                                    ? '#38bdf8'
+                                    : '#a855f7',
+                                display: 'grid',
+                                placeItems: 'center',
+                                fontWeight: 700,
+                                fontSize: 11,
+                              }}
+                            >
+                              {driver.name.split(' ').map((n) => n[0]).join('')}
+                            </div>
+                            <div>
+                              <b className="table-main">{driver.name}</b>
+                              <small style={{ display: 'block', color: 'var(--muted)' }}>
+                                CIN: {driver.cin} · {driver.phone}
+                              </small>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            className={`status-pill ${
+                              driver.driver_type === 'pre_seller'
+                                ? 'status-green'
+                                : isClientType
+                                ? 'status-blue'
+                                : 'status-violet'
+                            }`}
+                            style={{
+                              background:
+                                driver.driver_type === 'pre_seller'
+                                  ? 'rgba(16,185,129,0.12)'
+                                  : isClientType
+                                  ? 'rgba(56,189,248,0.12)'
+                                  : 'rgba(168,85,247,0.12)',
+                              color:
+                                driver.driver_type === 'pre_seller'
+                                  ? '#10b981'
+                                  : isClientType
+                                  ? '#38bdf8'
+                                  : '#c084fc',
+                              borderColor:
+                                driver.driver_type === 'pre_seller'
+                                  ? 'rgba(16,185,129,0.3)'
+                                  : isClientType
+                                  ? 'rgba(56,189,248,0.3)'
+                                  : 'rgba(168,85,247,0.3)',
+                              fontWeight: 700,
+                              fontSize: 11,
+                            }}
+                          >
+                            {driver.driver_type === 'pre_seller' ? (
+                              <Truck size={12} />
+                            ) : isClientType ? (
+                              <Truck size={12} />
+                            ) : (
+                              <Building2 size={12} />
+                            )}
+                            {driver.driver_type === 'pre_seller'
+                              ? 'Livreur-pré-vendeur (Van Sales)'
+                              : isClientType
+                              ? 'Dépôt → Client'
+                              : 'Navette Inter-Dépôts'}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="table-secondary">{driver.base_depot}</span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <MapPin
+                              size={13}
+                              style={{
+                                color:
+                                  driver.driver_type === 'pre_seller'
+                                    ? '#10b981'
+                                    : isClientType
+                                    ? '#38bdf8'
+                                    : '#a855f7',
+                                flex: 'none',
+                              }}
+                            />
+                            <b style={{ fontSize: 12 }}>{driver.assigned_city_or_route}</b>
+                          </div>
+                          {driver.current_mission && (
+                            <small style={{ display: 'block', color: '#f59e0b', marginTop: 2 }}>
+                              {driver.current_mission}
+                            </small>
+                          )}
+                        </td>
+                        <td>
+                          <div>{driver.vehicle_model}</div>
+                          <code className="table-ref">{driver.vehicle_plate}</code>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>{driver.capacity}</span>
+                        </td>
+                        <td>
+                          <span
+                            className={`status-pill ${
+                              driver.status === 'en_tournee' || driver.status === 'en_transit'
+                                ? 'status-green'
+                                : driver.status === 'disponible'
+                                ? 'status-blue'
+                                : 'status-muted'
+                            }`}
+                          >
+                            <i />
+                            {driver.status === 'en_tournee'
+                              ? 'En tournée'
+                              : driver.status === 'en_transit'
+                              ? 'En transit navette'
+                              : driver.status === 'disponible'
+                              ? 'Disponible'
+                              : 'En repos'}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <a
+                              href={`https://wa.me/${driver.phone.replace(/[^0-9]/g, '')}?text=Bonjour%20${encodeURIComponent(driver.name)},%20message%20du%20responsable%20dépôt.`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="row-action"
+                              style={{ color: '#22c55e' }}
+                              title="Contacter sur WhatsApp"
+                            >
+                              <MessageSquare size={13} />
+                            </a>
+                            <button
+                              className="button-secondary"
+                              style={{ height: 26, fontSize: 11, padding: '0 8px' }}
+                              onClick={() => toggleDriverStatus(driver.id)}
+                            >
+                              {driver.status === 'disponible' ? 'Mettre en repos' : 'Rendre disponible'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      )}
+
+      {/* ════════════════════ TAB 3: MOUVEMENTS ════════════════════ */}
+      {activeTab === 'movements' && (
+        <>
+          <RealInterDepotTransfersMap onOpenTransferModal={() => setTransferModal(true)} />
+
+          <section className="panel list-panel">
+            <div className="list-panel-heading">
+              <div>
+                <span className="eyebrow">JOURNAL DES STOCKS</span>
+                <h2>Derniers mouvements & transferts inter-dépôts</h2>
+              </div>
+            </div>
+          <table className="data-table module-table">
+            <thead>
+              <tr>
+                <th>TYPE MOUVEMENT</th>
+                <th>RÉFÉRENCE</th>
+                <th>PRODUIT</th>
+                <th>QUANTITÉ</th>
+                <th>DÉPÔT / TRAJET</th>
+                <th>HORODATAGE</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOVEMENTS.map((m, idx) => (
+                <tr key={idx}>
+                  <td><b>{m.type}</b></td>
+                  <td><code className="table-ref">{m.ref}</code></td>
+                  <td className="table-main">{m.prod}</td>
+                  <td style={{ fontWeight: 700, color: m.qty.includes('+') ? '#22c55e' : '#f59e0b' }}>{m.qty}</td>
+                  <td>{m.depot}</td>
+                  <td className="table-secondary">{m.time}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      </>
+    )}
+
+      {/* ════════════════════ TAB 4: CARTE LIVE FLOTTE & DÉPÔTS ════════════════════ */}
+      {activeTab === 'fleet_map' && (
+        <section className="panel" style={{ padding: '16px', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <LivePulse color="#10b981" label="GPS ACTIF" />
+              <div>
+                <span className="eyebrow">CARTOGRAPHIE OPÉRATIONNELLE</span>
+                <h2 style={{ fontSize: '17px', fontWeight: 800, margin: '2px 0 0' }}>
+                  Supervision Géographique en Temps Réel — Réseau des Dépôts & Flotte
+                </h2>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="button-primary"
+                style={{ fontSize: 12, height: 32, background: '#0284c7' }}
+                onClick={() => setNewDriverModal(true)}
+              >
+                <Plus size={14} /> + Affecter un Livreur
+              </button>
+            </div>
+          </div>
+
+          <RealLogisticsFleetMap drivers={drivers} />
+
+          {/* Quick Stats Strip under Map */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginTop: '16px' }}>
+            <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>DÉPÔTS OPÉRATIONNELS</small>
+              <b style={{ color: '#10b981', fontSize: '18px' }}>7 Sites Logistiques</b>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>Couverture nationale (Casa, Rabat, Tanger, Fès, Marrakech, Agadir, Oujda)</span>
+            </div>
+            <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>VÉHICULES EN MISSION</small>
+              <b style={{ color: '#38bdf8', fontSize: '18px' }}><AnimatedCounter value={onMissionCount} /> Camions & Fourgons</b>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>En tournée ou transfert inter-dépôts</span>
+            </div>
+            <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>CHAUFFEURS DISPONIBLES</small>
+              <b style={{ color: '#f59e0b', fontSize: '18px' }}><AnimatedCounter value={drivers.filter(d => d.status === 'disponible').length} /> En réserve</b>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>Prêts pour nouvelles missions</span>
+            </div>
           </div>
         </section>
-      </div>
+      )}
 
-      {/* Transfer Modal */}
-      {transferModal && (
-        <div className="modal-backdrop" onClick={() => setTransferModal(false)}>
-          <div className="record-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-top">
+      {/* ════════════════════ MODAL : NOUVEAU LIVREUR ════════════════════ */}
+      {newDriverModal && (
+        <div className="modal-backdrop" onClick={() => setNewDriverModal(false)}>
+          <form
+            className="record-modal"
+            onSubmit={handleCreateDriver}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 580,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid var(--line)',
+                margin: 0,
+              }}
+            >
               <div>
-                <span className="eyebrow">MOUVEMENT INTER-DÉPÔTS</span>
-                <h2>Nouveau transfert de stock</h2>
+                <span className="eyebrow">AFFECTATION DU PERSONNEL · FLOTTE</span>
+                <h2 style={{ margin: '4px 0 0', fontSize: 16 }}>Ajouter un livreur au dépôt</h2>
               </div>
-              <button className="icon-button" onClick={() => setTransferModal(false)}>
+              <button type="button" className="icon-button" onClick={() => setNewDriverModal(false)}>
                 <X size={16} />
               </button>
             </div>
-            <p className="modal-note">Sortie immédiate du dépôt source et mise en transit vers le dépôt destinataire.</p>
-            <label className="field-label">
-              Article à transférer
-              <select className="select-compact" style={{ width: '100%', height: '36px' }}>
-                <option>HRC-0850 · Perceuse à percussion 850W</option>
-                <option>PMP-15HP · Pompe immergée 1.5 HP</option>
-                <option>CAB-3G25 · Câble électrique 3G2.5</option>
-              </select>
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', margin: '10px 0' }}>
-              <label className="field-label">
-                Dépôt source
-                <select className="select-compact" style={{ width: '100%', height: '36px' }}>
-                  <option>Casablanca (DEP-01)</option>
-                </select>
-              </label>
-              <label className="field-label">
-                Dépôt destinataire
-                <select className="select-compact" style={{ width: '100%', height: '36px' }}>
-                  <option>Rabat (DEP-02)</option>
-                </select>
-              </label>
+
+            {/* Scrollable Form Body */}
+            <div
+              style={{
+                padding: '18px 20px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <p className="modal-note" style={{ margin: 0 }}>
+                Sélectionnez le type de livreur selon sa mission opérationnelle : livraison client final ou navette inter-dépôts par ville.
+              </p>
+
+              {/* Selector: Driver Type (3 Types: Dépôt→Client, Navette, Livreur-pré-vendeur) */}
+              <div>
+                <span className="field-label" style={{ marginBottom: 6, display: 'block' }}>
+                  Type de chauffeur (Requis) :
+                </span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+                  <div
+                    onClick={() => {
+                      setFormType('depot_to_client');
+                      if (!formRoute || formRoute.includes('↔') || formRoute.includes('Proximité')) setFormRoute('Grand Casablanca & Ain Sebaâ');
+                      if (!formVehicle || formVehicle.includes('Volvo') || formVehicle.includes('Transit')) setFormVehicle('Renault Master 3.5T');
+                      if (!formCapacity || formCapacity.includes('12.0') || formCapacity.includes('2.5')) setFormCapacity('3.5 T / 4 Palettes');
+                    }}
+                    style={{
+                      padding: 12,
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      border: formType === 'depot_to_client' ? '2px solid #38bdf8' : '1px solid var(--line)',
+                      background: formType === 'depot_to_client' ? 'rgba(56,189,248,0.12)' : 'var(--navy-2)',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700, fontSize: 12 }}>
+                        <Truck size={15} />
+                        <span>Type 1 : Dépôt → Client</span>
+                      </div>
+                      {formType === 'depot_to_client' && <Check size={15} style={{ color: '#38bdf8' }} />}
+                    </div>
+                    <small style={{ display: 'block', color: 'var(--muted)', marginTop: 5, fontSize: 10.5, lineHeight: 1.35 }}>
+                      Distribution directe aux magasins, revendeurs &amp; chantiers.
+                    </small>
+                  </div>
+
+                  <div
+                    onClick={() => {
+                      setFormType('depot_to_depot');
+                      if (!formRoute || !formRoute.includes('↔')) setFormRoute('Casablanca ↔ Berrechid ↔ Settat (Ligne 2)');
+                      if (!formVehicle || formVehicle.includes('Renault') || formVehicle.includes('Transit')) setFormVehicle('Volvo FL 12T');
+                      if (!formCapacity || formCapacity.includes('3.5') || formCapacity.includes('2.5')) setFormCapacity('12.0 T / 16 Palettes');
+                    }}
+                    style={{
+                      padding: 12,
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      border: formType === 'depot_to_depot' ? '2px solid #a855f7' : '1px solid var(--line)',
+                      background: formType === 'depot_to_depot' ? 'rgba(168,85,247,0.12)' : 'var(--navy-2)',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#c084fc', fontWeight: 700, fontSize: 12 }}>
+                        <Building2 size={15} />
+                        <span>Type 2 : Navette Dépôt</span>
+                      </div>
+                      {formType === 'depot_to_depot' && <Check size={15} style={{ color: '#c084fc' }} />}
+                    </div>
+                    <small style={{ display: 'block', color: 'var(--muted)', marginTop: 5, fontSize: 10.5, lineHeight: 1.35 }}>
+                      Transferts palettes entre dépôts régionaux (Lignes).
+                    </small>
+                  </div>
+
+                  <div
+                    onClick={() => {
+                      setFormType('pre_seller');
+                      if (!formRoute || formRoute.includes('↔') || formRoute.includes('Hwanet')) setFormRoute('Tournée Proximité Derb Sultan & Garage Allal');
+                      if (!formVehicle || formVehicle.includes('Volvo') || formVehicle.includes('Master')) setFormVehicle('Hyundai H350 Fourgonnette 2.5T');
+                      if (!formCapacity || formCapacity.includes('12.0') || formCapacity.includes('3.5')) setFormCapacity('2.5 T / Vente directe');
+                    }}
+                    style={{
+                      padding: 12,
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      border: formType === 'pre_seller' ? '2px solid #10b981' : '1px solid var(--line)',
+                      background: formType === 'pre_seller' ? 'rgba(16,185,129,0.12)' : 'var(--navy-2)',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#10b981', fontWeight: 700, fontSize: 12 }}>
+                        <Truck size={15} />
+                        <span>Type 3 : Pré-vendeur (Van Sales)</span>
+                      </div>
+                      {formType === 'pre_seller' && <Check size={15} style={{ color: '#10b981' }} />}
+                    </div>
+                    <small style={{ display: 'block', color: 'var(--muted)', marginTop: 5, fontSize: 10.5, lineHeight: 1.35 }}>
+                      Tournées commerces de proximité, commande sur place & vente directe.
+                    </small>
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 10 }}>
+                <label className="field-label">
+                  Nom complet du livreur *
+                  <input
+                    required
+                    placeholder="Ex. Youssef Berrada"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                  />
+                </label>
+
+                <label className="field-label">
+                  N° Téléphone *
+                  <input
+                    required
+                    placeholder="+212 6..."
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label">
+                  N° CIN
+                  <input
+                    placeholder="Ex. BK451290"
+                    value={formCin}
+                    onChange={(e) => setFormCin(e.target.value)}
+                  />
+                </label>
+
+                <label className="field-label">
+                  N° Permis de conduire
+                  <input
+                    placeholder="Ex. PERM-88214"
+                    value={formLicense}
+                    onChange={(e) => setFormLicense(e.target.value)}
+                  />
+                </label>
+              </div>
+
+              {/* Depot & Route */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label">
+                  Dépôt d'attache
+                  <select
+                    className="select-compact"
+                    style={{ width: '100%', height: 38 }}
+                    value={formBaseDepot}
+                    onChange={(e) => setFormBaseDepot(e.target.value)}
+                  >
+                    <option>DEP-01 Casablanca Central</option>
+                    <option>DEP-02 Mohammedia</option>
+                    <option>DEP-03 Berrechid</option>
+                    <option>DEP-04 Settat</option>
+                  </select>
+                </label>
+
+                <label className="field-label">
+                  {formType === 'depot_to_client' ? 'Zone / Ville de livraison client *' : 'Ligne / Villes reliées *'}
+                  <input
+                    required
+                    placeholder={
+                      formType === 'depot_to_client'
+                        ? 'Ex. Grand Casablanca & Ain Sebaâ'
+                        : 'Ex. Casablanca ↔ Berrechid (Ligne 2)'
+                    }
+                    value={formRoute}
+                    onChange={(e) => setFormRoute(e.target.value)}
+                  />
+                </label>
+              </div>
+
+              {/* Vehicle Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 10 }}>
+                <label className="field-label">
+                  Modèle du véhicule
+                  <input
+                    placeholder="Ex. Renault Master 3.5T"
+                    value={formVehicle}
+                    onChange={(e) => setFormVehicle(e.target.value)}
+                  />
+                </label>
+
+                <label className="field-label">
+                  Immatriculation *
+                  <input
+                    required
+                    placeholder="Ex. 23-A-54321"
+                    value={formPlate}
+                    onChange={(e) => setFormPlate(e.target.value)}
+                  />
+                </label>
+
+                <label className="field-label">
+                  Capacité utile
+                  <input
+                    placeholder="Ex. 3.5 T / 4 Pal."
+                    value={formCapacity}
+                    onChange={(e) => setFormCapacity(e.target.value)}
+                  />
+                </label>
+              </div>
             </div>
-            <label className="field-label">
-              Quantité à transférer
-              <input type="number" defaultValue="10" />
-            </label>
-            <div className="modal-actions">
-              <button className="button-secondary" onClick={() => setTransferModal(false)}>Annuler</button>
+
+            {/* STICKY Actions Footer */}
+            <div
+              className="modal-actions"
+              style={{
+                margin: 0,
+                padding: '14px 20px',
+                borderTop: '1px solid var(--line)',
+                background: 'var(--navy-2)',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                zIndex: 10,
+              }}
+            >
+              <button type="button" className="button-secondary" onClick={() => setNewDriverModal(false)} style={{ height: 38 }}>
+                Annuler
+              </button>
               <button
+                type="submit"
+                className="button-primary"
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 7,
+                }}
+              >
+                <Plus size={16} /> Enregistrer le livreur
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Inter-depot Transfer Modal (Bon de Transfert Papier Blanc) */}
+      {transferModal && (
+        <div className="modal-backdrop" onClick={() => setTransferModal(false)}>
+          <div
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 540,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  LOGISTIQUE INTERNE · BON DE TRANSFERT
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Bon de Transfert Inter-Dépôts
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setTransferModal(false)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: '18px 22px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                background: '#ffffff',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 12.5,
+                  color: '#64748b',
+                  margin: 0,
+                  padding: '8px 12px',
+                  background: '#f8fafc',
+                  borderRadius: 6,
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                Mouvement logistique en 2 étapes : Sortie du dépôt émetteur puis confirmation de réception au quai destinataire.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Dépôt Source (Départ)
+                  <select
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  >
+                    <option>Casablanca (DEP-01)</option>
+                    <option>Rabat (DEP-02)</option>
+                    <option>Berrechid (DEP-03)</option>
+                  </select>
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Dépôt Destinataire (Arrivée)
+                  <select
+                    style={{
+                      width: '100%',
+                      height: 38,
+                      padding: '0 10px',
+                      borderRadius: 6,
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      fontSize: 13,
+                    }}
+                  >
+                    <option>Rabat (DEP-02)</option>
+                    <option>Casablanca (DEP-01)</option>
+                    <option>Berrechid (DEP-03)</option>
+                  </select>
+                </label>
+              </div>
+
+              <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                Chauffeur Navette Dépôt → Dépôt (Type 2)
+                <select
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 13,
+                  }}
+                >
+                  {drivers
+                    .filter((d) => d.driver_type === 'depot_to_depot')
+                    .map((d) => (
+                      <option key={d.id}>
+                        {d.name} — {d.vehicle_model} ({d.assigned_city_or_route})
+                      </option>
+                    ))}
+                </select>
+              </label>
+
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  padding: 12,
+                }}
+              >
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#0369a1', marginBottom: 8, textTransform: 'uppercase' }}>
+                  Articles transférés (Lot échantillon) :
+                </div>
+                <div style={{ fontSize: 12.5, color: '#334155', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>50x Perceuse à percussion 850W</span>
+                  <b>Palette P-01</b>
+                </div>
+                <div style={{ fontSize: 12.5, color: '#334155', display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                  <span>100x Disque diamant 230 mm</span>
+                  <b>Carton C-04</b>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 22px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setTransferModal(false)}
+                style={{
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
                 className="button-primary"
                 onClick={() => {
                   setTransferModal(false);
-                  notify('Transfert initié en étape 1 (Sortie enregistrée) !');
+                  notify('Ordre de transfert TRF-0013 créé et assigné au chauffeur navette.');
+                }}
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)',
                 }}
               >
-                Valider le transfert
+                <CheckCircle2 size={16} /> Enregistrer l'Ordre de Transfert
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Cash Closing Modal */}
+      {/* Cash closing modal */}
       {closingModal && (
         <div className="modal-backdrop" onClick={() => setClosingModal(false)}>
-          <div className="record-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-top">
+          <div
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 480,
+              width: '95%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 22px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <span className="eyebrow">FIN DE JOURNÉE</span>
-                <h2>Clôture de caisse du dépôt</h2>
+                <span className="eyebrow" style={{ color: '#0284c7', fontWeight: 700, fontSize: 11 }}>
+                  CLÔTURE JOURNALIÈRE · CAISSE DÉPÔT
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Clôture de Caisse du Dépôt
+                </h2>
               </div>
-              <button className="icon-button" onClick={() => setClosingModal(false)}>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setClosingModal(false)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
                 <X size={16} />
               </button>
             </div>
-            <p className="modal-note">Validation des règlements au comptoir et encaissements du dépôt.</p>
-            <div style={{ background: 'var(--navy-2)', padding: '12px', borderRadius: '8px', margin: '12px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                <span>Montant attendu (Comptoir) :</span>
-                <b>18 450,00 DH</b>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginTop: '6px' }}>
-                <span>Chèques réceptionnés :</span>
-                <b>2 chèques (12 500 DH)</b>
+
+            <div
+              style={{
+                padding: '18px 22px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                background: '#ffffff',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 12.5,
+                  color: '#64748b',
+                  margin: 0,
+                  padding: '8px 12px',
+                  background: '#f8fafc',
+                  borderRadius: 6,
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                Contrôle physique des encaissements chauffeurs avant clôture et remise bancaire.
+              </p>
+
+              <div
+                style={{
+                  background: '#f8fafc',
+                  padding: 14,
+                  borderRadius: 8,
+                  border: '1px solid #e2e8f0',
+                  fontSize: 13,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#64748b' }}>Total espèces dépôt :</span>
+                  <b style={{ color: '#0f172a' }}>42 800 DH</b>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                  <span style={{ color: '#64748b' }}>Total chèques reçus (3 effets) :</span>
+                  <b style={{ color: '#0f172a' }}>68 450 DH</b>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginTop: 10,
+                    paddingTop: 8,
+                    borderTop: '1px solid #e2e8f0',
+                    fontSize: 14,
+                    color: '#0284c7',
+                    fontWeight: 700,
+                  }}
+                >
+                  <span>Total Encaissé Global :</span>
+                  <span>111 250 DH</span>
+                </div>
               </div>
             </div>
-            <label className="field-label">
-              Espèces réellement remises (DH)
-              <input type="number" defaultValue="18450" />
-            </label>
-            <div className="modal-actions">
-              <button className="button-secondary" onClick={() => setClosingModal(false)}>Annuler</button>
+
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 22px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
               <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setClosingModal(false)}
+                style={{
+                  height: 38,
+                  padding: '0 16px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
                 className="button-primary"
                 onClick={() => {
                   setClosingModal(false);
-                  notify('Clôture de caisse du dépôt validée et verrouillée.');
+                  notify('Caisse du dépôt clôturée et horodatée.');
+                }}
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(2, 132, 199, 0.3)',
                 }}
               >
-                Verrouiller la clôture
+                <CheckCircle2 size={16} /> Valider la clôture
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Modal Nouvel Article en Stock avec Photo ── */}
+      {showAddStockModal && (
+        <div className="modal-backdrop" onClick={() => setShowAddStockModal(false)}>
+          <form
+            className="record-modal"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={handleCreateStockItem}
+            style={{
+              maxWidth: 620,
+              width: '95%',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              padding: 0,
+              background: '#ffffff',
+              color: '#0f172a',
+              borderRadius: 12,
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            {/* Modal Top */}
+            <div
+              className="modal-top"
+              style={{
+                padding: '16px 24px',
+                borderBottom: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span className="eyebrow" style={{ color: '#10b981', fontWeight: 700, fontSize: 11 }}>
+                  LOGISTIQUE · NOUVEL ARTICLE
+                </span>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', margin: '2px 0 0' }}>
+                  Ajouter un article au stock
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setShowAddStockModal(false)}
+                style={{ color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div
+              style={{
+                padding: '18px 24px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                background: '#ffffff',
+              }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Référence / SKU *
+                  <input
+                    required
+                    value={stockSku}
+                    onChange={(e) => setStockSku(e.target.value)}
+                    placeholder="Ex. PRD-8900"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, fontWeight: 600 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Désignation de l'article *
+                  <input
+                    required
+                    value={stockName}
+                    onChange={(e) => setStockName(e.target.value)}
+                    placeholder="Ex. Meuleuse d'angle 125mm"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Catégorie
+                  <select
+                    value={stockCategory}
+                    onChange={(e) => setStockCategory(e.target.value)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  >
+                    <option value="Outillage">Outillage</option>
+                    <option value="Plomberie">Plomberie</option>
+                    <option value="Électricité">Électricité</option>
+                    <option value="Énergie">Énergie</option>
+                    <option value="Quincaillerie">Quincaillerie</option>
+                    <option value="Agroalimentaire">Agroalimentaire</option>
+                    <option value="Autre">Autre</option>
+                  </select>
+                </label>
+
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Dépôt de stockage
+                  <select
+                    value={stockWarehouse}
+                    onChange={(e) => setStockWarehouse(e.target.value as any)}
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13 }}
+                  >
+                    <option value="Casablanca (DEP-01)">Casablanca (DEP-01)</option>
+                    <option value="Rabat (DEP-02)">Rabat (DEP-02)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Stock physique *
+                  <input
+                    type="number"
+                    min={0}
+                    required
+                    value={stockPhysical}
+                    onChange={(e) => setStockPhysical(Number(e.target.value))}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, textAlign: 'center' }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Seuil min. alerte
+                  <input
+                    type="number"
+                    min={1}
+                    value={stockMinThreshold}
+                    onChange={(e) => setStockMinThreshold(Number(e.target.value))}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, textAlign: 'center' }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Unité
+                  <input
+                    value={stockUnit}
+                    onChange={(e) => setStockUnit(e.target.value)}
+                    placeholder="Pièce, Carton..."
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Prix unitaire HT (DH)
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={stockUnitPrice}
+                    onChange={(e) => setStockUnitPrice(Number(e.target.value))}
+                    style={{ width: '100%', height: 38, padding: '0 8px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 13, textAlign: 'right', fontWeight: 600 }}
+                  />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  N° de Lot
+                  <input
+                    value={stockLot}
+                    onChange={(e) => setStockLot(e.target.value)}
+                    placeholder="LOT-2026-..."
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  />
+                </label>
+                <label className="field-label" style={{ color: '#334155', fontWeight: 600, fontSize: 12 }}>
+                  Date d'expiration
+                  <input
+                    value={stockExpiry}
+                    onChange={(e) => setStockExpiry(e.target.value)}
+                    placeholder="N/A ou date JJ/MM/AAAA"
+                    style={{ width: '100%', height: 38, padding: '0 10px', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: 12 }}
+                  />
+                </label>
+              </div>
+
+              {/* Photo du produit (File upload / URL / Presets) */}
+              <div style={{ background: '#f8fafc', padding: 14, borderRadius: 8, border: '1px solid #e2e8f0', marginTop: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <label className="field-label" style={{ color: '#1e293b', fontWeight: 700, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                    <ImageIcon size={15} style={{ color: '#10b981' }} /> Photo de l'article en stock
+                  </label>
+                  <label
+                    style={{
+                      background: '#10b981',
+                      color: '#ffffff',
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      padding: '5px 12px',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Upload size={13} /> Parcourir une photo...
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleStockImageUpload}
+                    />
+                  </label>
+                </div>
+
+                <input
+                  value={stockImage}
+                  onChange={(e) => setStockImage(e.target.value)}
+                  placeholder="Ou collez ici une URL directe d'image (https://...)"
+                  style={{
+                    width: '100%',
+                    height: 38,
+                    padding: '0 10px',
+                    borderRadius: 6,
+                    border: '1px solid #cbd5e1',
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    fontSize: 12,
+                  }}
+                />
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                  <span style={{ fontSize: 11, color: '#64748b' }}>Exemples :</span>
+                  {PRESET_STOCK_IMAGES.map((p) => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => setStockImage(p.url)}
+                      style={{
+                        background: stockImage === p.url ? '#dcfce7' : '#ffffff',
+                        border: `1px solid ${stockImage === p.url ? '#10b981' : '#cbd5e1'}`,
+                        color: stockImage === p.url ? '#059669' : '#475569',
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        fontSize: 11,
+                        cursor: 'pointer',
+                        fontWeight: stockImage === p.url ? 700 : 500,
+                      }}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {stockImage && (
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12, background: '#ffffff', padding: 8, borderRadius: 6, border: '1px solid #cbd5e1' }}>
+                    <img
+                      src={stockImage}
+                      alt="Aperçu article"
+                      style={{ width: 56, height: 56, borderRadius: 6, objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#16a34a', fontWeight: 700, fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Check size={13} /> Photo prête pour cet article
+                      </div>
+                      <small style={{ color: '#64748b', fontSize: 11 }}>
+                        {stockImage.startsWith('data:') ? 'Fichier image importé depuis le poste' : stockImage.slice(0, 50) + '...'}
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStockImage('')}
+                      style={{ background: '#fee2e2', border: 'none', color: '#ef4444', borderRadius: 4, padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div
+              className="modal-actions"
+              style={{
+                padding: '12px 24px',
+                borderTop: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                position: 'sticky',
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                margin: 0,
+              }}
+            >
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => setShowAddStockModal(false)}
+                style={{ height: 38, padding: '0 16px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 13 }}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="button-primary"
+                style={{
+                  height: 38,
+                  padding: '0 20px',
+                  background: '#10b981',
+                  borderColor: '#059669',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <Plus size={16} /> Enregistrer l'article en stock
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

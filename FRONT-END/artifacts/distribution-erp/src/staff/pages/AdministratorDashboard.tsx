@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import {
   Building2, ClipboardCheck, Truck, AlertTriangle, Boxes,
   TrendingUp, Users, ArrowRight, CheckCircle2, XCircle,
-  ShoppingBag, ShieldAlert, FileText, Plus, Phone,
+  ShoppingBag, ShieldAlert, FileText, Plus, Phone, Award,
 } from 'lucide-react';
 import {
   api, formatMoney,
@@ -11,6 +11,8 @@ import {
 } from '../api';
 import { useStaffAuth } from '../auth';
 import { AreaChart, BarList } from '../components/Charts';
+import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
+import DepotsMultiCityAnalytics from '../components/DepotsMultiCityAnalytics';
 import '../admin.css';
 
 interface PendingApprovalOrder {
@@ -65,11 +67,84 @@ const PENDING_APPROVALS: PendingApprovalOrder[] = [
   },
 ];
 
+const MOCK_REVENUE: RevenueData = {
+  by_day: [
+    { label: '01 Fév', value: 24500, count: 12 },
+    { label: '05 Fév', value: 38200, count: 18 },
+    { label: '10 Fév', value: 49100, count: 24 },
+    { label: '15 Fév', value: 41200, count: 21 },
+    { label: '20 Fév', value: 58400, count: 29 },
+    { label: '25 Fév', value: 67300, count: 34 },
+    { label: '28 Fév', value: 72900, count: 38 },
+  ],
+  by_month: [
+    { label: 'Sep', value: 890000 },
+    { label: 'Oct', value: 1040000 },
+    { label: 'Nov', value: 1120000 },
+    { label: 'Déc', value: 1290000 },
+    { label: 'Jan', value: 1180000 },
+    { label: 'Fév', value: 1284650 },
+  ],
+  by_warehouse: [
+    { label: 'Casablanca (DEP-01)', value: 584200, count: 84 },
+    { label: 'Rabat (DEP-02)', value: 342100, count: 51 },
+    { label: 'Marrakech (DEP-03)', value: 218900, count: 32 },
+    { label: 'Tanger (DEP-04)', value: 139450, count: 19 },
+  ],
+  by_city: [
+    { label: 'Casablanca & Mohammedia', value: 584200 },
+    { label: 'Rabat - Salé - Kénitra', value: 342100 },
+    { label: 'Marrakech & Safi', value: 218900 },
+    { label: 'Tanger & Tétouan', value: 139450 },
+  ],
+  by_commercial: [
+    { label: 'Amine Tazi', value: 410000 },
+    { label: 'Sara Mansouri', value: 385000 },
+    { label: 'Omar Bensouda', value: 289000 },
+    { label: 'Mehdi Chraibi', value: 200650 },
+  ],
+  top_products: [
+    { label: 'Perceuse à percussion 850W', value: 186000, qty: 148 },
+    { label: 'Pompe immergée 1.5 HP', value: 154000, qty: 40 },
+    { label: 'Huile Végétale 5L', value: 128000, qty: 580 },
+    { label: 'Disque diamant 230 mm', value: 98000, qty: 517 },
+  ],
+  orders_evolution: [
+    { label: 'S1', value: 34 },
+    { label: 'S2', value: 42 },
+    { label: 'S3', value: 51 },
+    { label: 'S4', value: 59 },
+  ],
+};
+
+const MOCK_KPIS: OverviewKpis = {
+  ca_today: 48500,
+  ca_month: 1284650,
+  ca_prev_month: 1139000,
+  ca_month_delta: 12.8,
+  orders_total: 186,
+  orders_today: 14,
+  orders_to_validate: 12,
+  orders_in_delivery: 8,
+  deliveries_in_progress: 5,
+  deliveries_done: 24,
+  payments_total: 846500,
+  payments_today: 32000,
+  receivables: 428560,
+  unpaid_invoices: 11,
+  returns: 3,
+  stock_ruptures: 2,
+  stock_low: 6,
+  customers_count: 142,
+  products_count: 86,
+  warehouses_count: 4,
+};
+
 export default function AdministratorDashboard() {
   const { user, workspace } = useStaffAuth();
   const [, setLocation] = useLocation();
-  const [kpis, setKpis] = useState<OverviewKpis | null>(null);
-  const [revenue, setRevenue] = useState<RevenueData | null>(null);
+  const [kpis, setKpis] = useState<OverviewKpis>(MOCK_KPIS);
+  const [revenue, setRevenue] = useState<RevenueData>(MOCK_REVENUE);
   const [perf, setPerf] = useState<PerformanceData | null>(null);
   const [pendingOrders, setPendingOrders] = useState<PendingApprovalOrder[]>(PENDING_APPROVALS);
   const [toast, setToast] = useState<string | null>(null);
@@ -84,11 +159,13 @@ export default function AdministratorDashboard() {
     Promise.all([api.adminOverview(), api.adminRevenue(), api.adminPerformance()])
       .then(([o, r, p]) => {
         if (!alive) return;
-        setKpis(o.data);
-        setRevenue(r.data);
-        setPerf(p.data);
+        if (o?.data) setKpis(o.data);
+        if (r?.data) setRevenue(r.data);
+        if (p?.data) setPerf(p.data);
       })
-      .catch(() => {});
+      .catch(() => {
+        // Fallback to rich mock stats
+      });
     return () => {
       alive = false;
     };
@@ -120,12 +197,148 @@ export default function AdministratorDashboard() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button className="button-secondary" onClick={() => setLocation(`/${workspace}/customers`)}>
+            Portefeuilles Commerciaux
+          </button>
           <button className="button-secondary" onClick={() => setLocation(`/${workspace}/orders`)}>
-            <ClipboardCheck size={14} /> Toutes les commandes
+            Toutes les commandes
           </button>
           <button className="button-primary" onClick={() => setLocation(`/${workspace}/customers`)}>
-            <Users size={14} /> CRM Clients & Encours
+            CRM Clients &amp; Encours
           </button>
+        </div>
+      </div>
+
+      {/* ── Role Quick Actions Bar (Admin d'Entreprise) ── */}
+      <RoleQuickActionsBar
+        roleTitle={`Administrateur · ${user?.company?.brand_name || user?.company?.name || 'Entreprise'}`}
+        actions={[
+          {
+            id: 'qa-depot',
+            label: '+ Nouveau Dépôt',
+            description: 'Ouvrir ou configurer un dépôt dans votre quota',
+            icon: Building2,
+            primary: true,
+            onClick: () => setLocation(`/${workspace}/warehouses`),
+          },
+          {
+            id: 'qa-user',
+            label: '+ Nouveau Commercial / Équipe',
+            description: 'Créer un utilisateur, commercial ou livreur',
+            icon: Users,
+            primary: true,
+            onClick: () => setLocation(`/${workspace}/users`),
+          },
+          {
+            id: 'qa-cust',
+            label: '+ Nouveau Client',
+            description: 'Créer un compte client et fixer son plafond',
+            icon: Users,
+            onClick: () => setLocation(`/${workspace}/customers`),
+          },
+          {
+            id: 'qa-comms',
+            label: 'Portefeuilles Commerciaux',
+            description: 'Suivre les clients et commissions par commercial',
+            icon: Award,
+            onClick: () => setLocation(`/${workspace}/customers`),
+          },
+          {
+            id: 'qa-ord',
+            label: '+ Nouvelle Commande',
+            description: 'Saisir une nouvelle commande client',
+            icon: ShoppingBag,
+            onClick: () => setLocation(`/${workspace}/orders`),
+          },
+        ]}
+      />
+
+      {/* ── Entreprise & SaaS Subscription Quota Strip (User Request) ── */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+          gap: 12,
+          padding: '14px 18px',
+          background: 'var(--navy-2)',
+          borderRadius: 10,
+          border: '1px solid rgba(2, 132, 199, 0.3)',
+          marginBottom: 16,
+          alignItems: 'center',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 8,
+              background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+              color: '#ffffff',
+              display: 'grid',
+              placeItems: 'center',
+              fontWeight: 800,
+              fontSize: 14,
+              flexShrink: 0,
+            }}
+          >
+            <Building2 size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: 10.5, color: '#38bdf8', fontWeight: 800, textTransform: 'uppercase' }}>
+              Société · Formule {user?.company?.subscription_plan?.toUpperCase() || 'PRO'}
+            </div>
+            <strong style={{ fontSize: 14, color: 'var(--text)' }}>
+              {user?.company?.brand_name || user?.company?.name || 'Hercules Distribution Maroc'}
+            </strong>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
+              ICE: {user?.company?.ice || '002345678000045'} · Siège: {user?.company?.city || 'Casablanca'}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 4 }}>
+            <span style={{ color: 'var(--muted)' }}>Dépôts autorisés :</span>
+            <b style={{ color: '#38bdf8' }}>{user?.company?.warehouses_count ?? 4} / {user?.company?.max_warehouses ?? 5}</b>
+          </div>
+          <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${Math.min(100, (((user?.company?.warehouses_count ?? 4) / (user?.company?.max_warehouses ?? 5)) * 100))}%`,
+                background: '#0284c7',
+              }}
+            />
+          </div>
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 4 }}>
+            <span style={{ color: 'var(--muted)' }}>Commerciaux &amp; Équipe :</span>
+            <b style={{ color: '#a855f7' }}>{user?.company?.users_count ?? 12} / {user?.company?.max_users ?? 20}</b>
+          </div>
+          <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${Math.min(100, (((user?.company?.users_count ?? 12) / (user?.company?.max_users ?? 20)) * 100))}%`,
+                background: '#a855f7',
+              }}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(34, 197, 94, 0.1)', padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+          <div>
+            <span style={{ fontSize: 10, color: '#16a34a', fontWeight: 800, textTransform: 'uppercase' }}>Échéance de la Formule</span>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>
+              Valable jusqu’au {user?.company?.subscription_end_date ?? '31/08/2027'}
+            </div>
+          </div>
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#22c55e', background: 'rgba(34, 197, 94, 0.2)', padding: '2px 6px', borderRadius: 4 }}>
+            {user?.company?.days_remaining ?? 326}j
+          </span>
         </div>
       </div>
 
@@ -318,6 +531,9 @@ export default function AdministratorDashboard() {
         </div>
         <AreaChart data={revenue?.by_day ?? []} />
       </section>
+
+      {/* ── Moroccan Cities & Depots Analytics (User Request) ── */}
+      <DepotsMultiCityAnalytics onNavigateToWarehouse={() => setLocation(`/${workspace}/warehouses`)} />
 
       {/* Operational Modules Navigation */}
       <section className="panel sx-panel">

@@ -1,73 +1,210 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Bell, X, CheckCircle2, AlertTriangle, Clock, Truck,
-  BadgeDollarSign, Boxes, ArrowRight, Check, Trash2,
+  BadgeDollarSign, Boxes, ArrowRight, Check, Trash2, ShieldAlert,
+  Crown, UserCheck, Layers, Sparkles,
 } from 'lucide-react';
 import './notifications.css';
 
 export interface ErpNotification {
   id: string;
-  type: 'alert' | 'operation' | 'financial' | 'delivery';
+  type: 'validation' | 'alert' | 'operation' | 'financial' | 'delivery';
   title: string;
   message: string;
   time: string;
   read: boolean;
   segment: string;
+  priority?: 'critical' | 'high' | 'normal';
+  requiredPermission?: string;
+  requiredRoles?: string[];
 }
 
-const INITIAL_NOTIFICATIONS: ErpNotification[] = [
+export const ALL_SYSTEM_NOTIFICATIONS: ErpNotification[] = [
+  // ── SUPER ADMIN & ADMIN VALIDATION TASKS / ARBITRAGES ──
   {
-    id: 'n-1',
+    id: 'n-task-1',
+    type: 'validation',
+    priority: 'critical',
+    title: 'Arbitrage Super Admin requis · Litige Retour RET-2026-018',
+    message: 'Épicerie Centrale Saïd (3 300 DH). Motif: Huile 5L percée transport. Décision requise : Réintégration stock ou mise au rebut.',
+    time: 'Il y a 5 min',
+    read: false,
+    segment: 'dashboard',
+    requiredPermission: 'returns.manage',
+    requiredRoles: ['superadmin', 'admin'],
+  },
+  {
+    id: 'n-task-2',
+    type: 'validation',
+    priority: 'high',
+    title: 'Dérogation crédit requise · Commande CMD-2408',
+    message: 'Maison du Bricolage (12 450 DH). Plafond crédit 35 000 DH dépassé (encours actuel 38 200 DH). Décision Direction requise.',
+    time: 'Il y a 25 min',
+    read: false,
+    segment: 'orders',
+    requiredPermission: 'orders.validate',
+    requiredRoles: ['superadmin', 'admin'],
+  },
+  {
+    id: 'n-task-3',
+    type: 'validation',
+    priority: 'high',
+    title: 'Visa d’Avoir exceptionnel · AV-2026-004',
+    message: 'Demande d’avoir de 8 450 DH émise par la comptabilité pour Quincaillerie Saada. En attente de visa Super Admin.',
+    time: 'Il y a 40 min',
+    read: false,
+    segment: 'finance',
+    requiredPermission: 'invoices.manage',
+    requiredRoles: ['superadmin', 'admin'],
+  },
+
+  // ── STOCK & ENTREPÔT ALERTS ──
+  {
+    id: 'n-stock-1',
     type: 'alert',
+    priority: 'critical',
     title: 'Alerte stock critique · Huile Végétale 5L',
-    message: 'Le stock au Dépôt DEP-01 Casablanca Central est inférieur au seuil d’alerte (48 bidons restants).',
+    message: 'Le stock au Dépôt DEP-01 Casablanca Central est inférieur au seuil de sécurité (48 bidons restants).',
     time: 'Il y a 12 min',
     read: false,
     segment: 'inventory',
+    requiredPermission: 'stock.view',
   },
   {
-    id: 'n-2',
+    id: 'n-stock-2',
+    type: 'operation',
+    priority: 'normal',
+    title: 'Réception fournisseur attendue au quai 2',
+    message: 'Bon de commande BC-2026-042 (Lesieur Cristal · 178 000 DH) programmé pour déchargement aujourd’hui.',
+    time: 'Il y a 1h 10',
+    read: false,
+    segment: 'purchasing',
+    requiredPermission: 'purchases.view',
+  },
+  {
+    id: 'n-stock-3',
+    type: 'operation',
+    priority: 'normal',
+    title: 'Transfert inter-dépôts en transit · TRF-084',
+    message: 'Navette Casa → Rabat en route (Groupe électrogène + Disques diamant). Quai de déchargement DEP-02 réservé.',
+    time: 'Il y a 2h',
+    read: true,
+    segment: 'inventory',
+    requiredPermission: 'stock.view',
+  },
+
+  // ── FINANCE & COMPTABILITÉ ALERTS ──
+  {
+    id: 'n-fin-1',
     type: 'financial',
+    priority: 'critical',
     title: 'Effet bancaire impayé · CIH Bank',
-    message: 'Chèque CHQ-001298 (14 500 DH) rejeté pour provision insuffisante · Quincaillerie Saada.',
+    message: 'Chèque CHQ-001298 (14 500 DH) rejeté pour provision insuffisante · Quincaillerie Saada. Avis d’impayé généré.',
     time: 'Il y a 45 min',
     read: false,
     segment: 'finance',
+    requiredPermission: 'invoices.view',
+    requiredRoles: ['accounting', 'admin', 'superadmin'],
   },
   {
-    id: 'n-3',
+    id: 'n-fin-2',
+    type: 'financial',
+    priority: 'high',
+    title: 'Facture échue à relancer (J+45)',
+    message: 'Facture FAC-2025-182 (32 100 DH) pour Comptoir Al Amal échue depuis plus de 45 jours. Relance requise.',
+    time: 'Aujourd’hui 08:30',
+    read: false,
+    segment: 'finance',
+    requiredPermission: 'invoices.view',
+    requiredRoles: ['accounting', 'admin', 'superadmin'],
+  },
+  {
+    id: 'n-fin-3',
+    type: 'financial',
+    priority: 'normal',
+    title: 'Bordereau de remise chèques en banque',
+    message: '3 chèques en portefeuille atteignant l’échéance (44 600 DH). Prêts pour télétransmission et remise.',
+    time: 'Hier 16:30',
+    read: true,
+    segment: 'payments',
+    requiredPermission: 'payments.view',
+    requiredRoles: ['accounting', 'admin', 'superadmin'],
+  },
+
+  // ── COMMERCIAL & CRM ALERTS ──
+  {
+    id: 'n-com-1',
+    type: 'operation',
+    priority: 'normal',
+    title: 'Nouvelle commande client · CMD-2407',
+    message: 'Commande de 28 400 DH soumise par Atlas Équipements. En attente de validation commerciale.',
+    time: 'Aujourd’hui 09:30',
+    read: false,
+    segment: 'orders',
+    requiredPermission: 'orders.view',
+  },
+  {
+    id: 'n-com-2',
+    type: 'operation',
+    priority: 'normal',
+    title: 'Visite terrain planifiée aujourd’hui',
+    message: 'Rendez-vous à 14h30 chez Atlas Équipements (Casablanca) pour présentation de la gamme outillage 2026.',
+    time: 'Aujourd’hui 08:00',
+    read: false,
+    segment: 'dashboard',
+    requiredPermission: 'customers.view',
+    requiredRoles: ['commercial', 'admin', 'superadmin'],
+  },
+
+  // ── DISTRIBUTION & LIVRAISON ALERTS ──
+  {
+    id: 'n-del-1',
     type: 'delivery',
+    priority: 'normal',
     title: 'Tournée TRN-2026-08 · Livreur en route',
     message: 'Mehdi Lahlou a validé l’arrêt 1 (Comptoir Al Amal) et se dirige vers BatiPro Maroc.',
     time: 'Il y a 1h 20',
     read: false,
     segment: 'deliveries',
+    requiredPermission: 'deliveries.view',
   },
   {
-    id: 'n-4',
-    type: 'operation',
-    title: 'Nouvelle commande B2B · CMD-2407',
-    message: 'Commande de 28 400 DH soumise par Atlas Équipements. En attente de validation commerciale.',
-    time: 'Aujourd’hui 09:30',
-    read: false,
-    segment: 'orders',
-  },
-  {
-    id: 'n-5',
-    type: 'operation',
-    title: 'Réception fournisseur en transit',
-    message: 'Bon de commande BC-2026-042 (Lesieur Cristal · 178 000 DH) attendu aujourd’hui au quai 2.',
-    time: 'Hier 17:45',
+    id: 'n-del-2',
+    type: 'delivery',
+    priority: 'normal',
+    title: 'Prise de commande terrain réussie',
+    message: 'Livreur pré-vendeur Hamid El Meskini a enregistré une vente directe de 1 249 DH à Derb Sultan.',
+    time: 'Il y a 3h',
     read: true,
-    segment: 'purchasing',
+    segment: 'deliveries',
+    requiredPermission: 'deliveries.view',
+    requiredRoles: ['delivery', 'pre_seller', 'warehouse', 'admin', 'superadmin'],
   },
 ];
+
+export function filterNotificationsByPermissions(
+  items: ErpNotification[],
+  hasPermission: (perm: string) => boolean,
+  userRole?: string,
+  userPermissions: string[] = []
+): ErpNotification[] {
+  const isSuperAdmin = userPermissions.includes('*') || userRole === 'superadmin';
+  return items.filter((n) => {
+    if (isSuperAdmin) return true;
+    if (n.requiredRoles && userRole && n.requiredRoles.includes(userRole)) return true;
+    if (!n.requiredPermission) return true;
+    return hasPermission(n.requiredPermission);
+  });
+}
 
 interface NotificationsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (segment: string) => void;
   onUnreadCountChange?: (count: number) => void;
+  hasPermission?: (perm: string) => boolean;
+  userRole?: string;
+  userPermissions?: string[];
 }
 
 export default function NotificationsDrawer({
@@ -75,27 +212,41 @@ export default function NotificationsDrawer({
   onClose,
   onNavigate,
   onUnreadCountChange,
+  hasPermission = () => true,
+  userRole,
+  userPermissions = [],
 }: NotificationsDrawerProps) {
-  const [notifications, setNotifications] = useState<ErpNotification[]>(INITIAL_NOTIFICATIONS);
-  const [filter, setFilter] = useState<'all' | 'alert' | 'operation'>('all');
+  // Store all notifications
+  const [allNotifications, setAllNotifications] = useState<ErpNotification[]>(ALL_SYSTEM_NOTIFICATIONS);
+  const [filter, setFilter] = useState<'all' | 'validation' | 'alert' | 'operation'>('all');
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // Filter allowed notifications based on user permissions
+  const allowedNotifications = useMemo(() => {
+    return filterNotificationsByPermissions(allNotifications, hasPermission, userRole, userPermissions);
+  }, [allNotifications, hasPermission, userRole, userPermissions]);
+
+  const unreadCount = allowedNotifications.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    if (onUnreadCountChange) {
+      onUnreadCountChange(unreadCount);
+    }
+  }, [unreadCount, onUnreadCountChange]);
 
   function markAsRead(id: string) {
-    const updated = notifications.map((n) => (n.id === id ? { ...n, read: true } : n));
-    setNotifications(updated);
-    if (onUnreadCountChange) onUnreadCountChange(updated.filter((n) => !n.read).length);
+    const updated = allNotifications.map((n) => (n.id === id ? { ...n, read: true } : n));
+    setAllNotifications(updated);
   }
 
   function markAllAsRead() {
-    const updated = notifications.map((n) => ({ ...n, read: true }));
-    setNotifications(updated);
-    if (onUnreadCountChange) onUnreadCountChange(0);
+    const allowedIds = new Set(allowedNotifications.map((n) => n.id));
+    const updated = allNotifications.map((n) => (allowedIds.has(n.id) ? { ...n, read: true } : n));
+    setAllNotifications(updated);
   }
 
   function clearAll() {
-    setNotifications([]);
-    if (onUnreadCountChange) onUnreadCountChange(0);
+    const allowedIds = new Set(allowedNotifications.map((n) => n.id));
+    setAllNotifications((prev) => prev.filter((n) => !allowedIds.has(n.id)));
   }
 
   function handleItemClick(n: ErpNotification) {
@@ -104,12 +255,15 @@ export default function NotificationsDrawer({
     onClose();
   }
 
-  const filtered = notifications.filter((n) => {
+  const filtered = allowedNotifications.filter((n) => {
     if (filter === 'all') return true;
+    if (filter === 'validation') return n.type === 'validation';
     if (filter === 'alert') return n.type === 'alert' || n.type === 'financial';
     if (filter === 'operation') return n.type === 'operation' || n.type === 'delivery';
     return true;
   });
+
+  const validationCount = allowedNotifications.filter((n) => n.type === 'validation').length;
 
   if (!isOpen) return null;
 
@@ -124,8 +278,10 @@ export default function NotificationsDrawer({
               {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
             </div>
             <div>
-              <h3>Notifications & Alertes</h3>
-              <small>{unreadCount} non lue{unreadCount > 1 ? 's' : ''}</small>
+              <h3>Notifications &amp; Alertes</h3>
+              <small>
+                Filtrées selon vos permissions · {unreadCount} non lue{unreadCount > 1 ? 's' : ''}
+              </small>
             </div>
           </div>
           <div className="notif-header-actions">
@@ -146,19 +302,28 @@ export default function NotificationsDrawer({
             className={`notif-tab ${filter === 'all' ? 'active' : ''}`}
             onClick={() => setFilter('all')}
           >
-            Toutes ({notifications.length})
+            Toutes ({allowedNotifications.length})
           </button>
+          {validationCount > 0 && (
+            <button
+              className={`notif-tab ${filter === 'validation' ? 'active' : ''}`}
+              onClick={() => setFilter('validation')}
+              style={{ color: '#0284c7', fontWeight: 700 }}
+            >
+              Validations ({validationCount})
+            </button>
+          )}
           <button
             className={`notif-tab ${filter === 'alert' ? 'active' : ''}`}
             onClick={() => setFilter('alert')}
           >
-            Alertes ({notifications.filter((n) => n.type === 'alert' || n.type === 'financial').length})
+            Alertes ({allowedNotifications.filter((n) => n.type === 'alert' || n.type === 'financial').length})
           </button>
           <button
             className={`notif-tab ${filter === 'operation' ? 'active' : ''}`}
             onClick={() => setFilter('operation')}
           >
-            Opérations ({notifications.filter((n) => n.type === 'operation' || n.type === 'delivery').length})
+            Opérations ({allowedNotifications.filter((n) => n.type === 'operation' || n.type === 'delivery').length})
           </button>
         </div>
 
@@ -168,26 +333,26 @@ export default function NotificationsDrawer({
             <div className="notif-empty">
               <CheckCircle2 size={32} style={{ color: '#22c55e', opacity: 0.8 }} />
               <p>Aucune notification</p>
-              <small>Toutes vos alertes et opérations ont été traitées.</small>
+              <small>Toutes vos alertes et opérations ont été traitées ou sont conformes.</small>
             </div>
           ) : (
             filtered.map((n) => {
-              const Icon =
-                n.type === 'alert'
-                  ? AlertTriangle
-                  : n.type === 'financial'
-                  ? BadgeDollarSign
-                  : n.type === 'delivery'
-                  ? Truck
-                  : Boxes;
-              const color =
-                n.type === 'alert'
-                  ? '#ef4444'
-                  : n.type === 'financial'
-                  ? '#f59e0b'
-                  : n.type === 'delivery'
-                  ? '#38bdf8'
-                  : '#3b82f6';
+              let Icon = Boxes;
+              let color = '#3b82f6';
+              if (n.type === 'validation') {
+                Icon = Crown;
+                color = '#0284c7';
+              } else if (n.type === 'alert') {
+                Icon = AlertTriangle;
+                color = '#ef4444';
+              } else if (n.type === 'financial') {
+                Icon = BadgeDollarSign;
+                color = '#f59e0b';
+              } else if (n.type === 'delivery') {
+                Icon = Truck;
+                color = '#38bdf8';
+              }
+
               return (
                 <div
                   key={n.id}
@@ -202,7 +367,10 @@ export default function NotificationsDrawer({
                   </div>
                   <div className="notif-item-body">
                     <div className="notif-item-head">
-                      <strong className="notif-item-title">{n.title}</strong>
+                      <strong className="notif-item-title">
+                        {n.priority === 'critical' && <span style={{ color: '#ef4444', marginRight: 4 }}>●</span>}
+                        {n.title}
+                      </strong>
                       {!n.read && <span className="notif-item-dot" />}
                     </div>
                     <p className="notif-item-text">{n.message}</p>
@@ -210,9 +378,15 @@ export default function NotificationsDrawer({
                       <span className="notif-item-time">
                         <Clock size={11} /> {n.time}
                       </span>
-                      <span className="notif-item-link">
-                        Accéder <ArrowRight size={11} />
-                      </span>
+                      {n.type === 'validation' ? (
+                        <span className="notif-item-link" style={{ color: '#0284c7', fontWeight: 700 }}>
+                          Traiter la tâche <ArrowRight size={11} />
+                        </span>
+                      ) : (
+                        <span className="notif-item-link">
+                          Accéder <ArrowRight size={11} />
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -222,10 +396,10 @@ export default function NotificationsDrawer({
         </div>
 
         {/* Footer */}
-        {notifications.length > 0 && (
+        {allowedNotifications.length > 0 && (
           <div className="notif-footer">
             <button className="notif-clear-btn" onClick={clearAll}>
-              <Trash2 size={13} /> Effacer toutes les notifications
+              <Trash2 size={13} /> Effacer les notifications
             </button>
           </div>
         )}

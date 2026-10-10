@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import {
   FileCheck, Search, Filter, Plus, CheckCircle2, Truck,
-  Printer, Eye, Calendar, User, Building2, Check,
+  Printer, Eye, Calendar, User, Building2, Check, MapPin, Table as TableIcon,
 } from 'lucide-react';
 import { formatMoney } from '../api';
+import { AnimatedCounter, LivePulse } from '../components/Charts';
+import { RealDeliverySlipsMap } from '../components/RealDeliverySlipsMap';
 
 interface DeliverySlipItem {
   id: number;
@@ -32,6 +34,7 @@ export default function DeliverySlips({ onNavigate }: { onNavigate?: (s: string)
   const [slips, setSlips] = useState<DeliverySlipItem[]>(INITIAL_SLIPS);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'table' | 'map'>('table');
   const [toast, setToast] = useState<string | null>(null);
   const [selectedSlip, setSelectedSlip] = useState<DeliverySlipItem | null>(null);
 
@@ -65,7 +68,48 @@ export default function DeliverySlips({ onNavigate }: { onNavigate?: (s: string)
           <h1>Bons de Livraison (BL)</h1>
           <p>Générez, imprimez et contrôlez les bons d'expédition remis aux chauffeurs avec preuve de dépôt (POD).</p>
         </div>
-        <div className="heading-actions">
+        <div className="heading-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'inline-flex', background: 'var(--navy-2)', padding: 3, borderRadius: 8, border: '1px solid var(--line)' }}>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              style={{
+                background: viewMode === 'table' ? '#0284c7' : 'transparent',
+                color: '#ffffff',
+                border: 'none',
+                padding: '5px 12px',
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <TableIcon size={14} /> Vue Tableau
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('map')}
+              style={{
+                background: viewMode === 'map' ? '#0284c7' : 'transparent',
+                color: '#ffffff',
+                border: 'none',
+                padding: '5px 12px',
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <MapPin size={14} color="#38bdf8" /> Vue Carte GPS
+            </button>
+          </div>
+
           <button className="button-secondary" onClick={() => window.print()}>
             <Printer size={15} /> Imprimer registre
           </button>
@@ -75,21 +119,35 @@ export default function DeliverySlips({ onNavigate }: { onNavigate?: (s: string)
       <div className="summary-strip">
         <div className="summary-box">
           <span>Bons Émis</span>
-          <strong className="blue">{slips.length} BL</strong>
+          <strong className="blue"><AnimatedCounter value={slips.length} /> BL</strong>
         </div>
         <div className="summary-box">
           <span>En Cours de Tournée</span>
-          <strong className="amber">{slips.filter((s) => s.status === 'En tournée' || s.status === 'Chargé').length} BL</strong>
+          <strong className="amber"><AnimatedCounter value={slips.filter((s) => s.status === 'En tournée' || s.status === 'Chargé').length} /> BL</strong>
         </div>
         <div className="summary-box">
           <span>Livrés & Signés (POD)</span>
-          <strong className="green">{slips.filter((s) => s.pod_signed).length} signés</strong>
+          <strong className="green"><AnimatedCounter value={slips.filter((s) => s.pod_signed).length} /> signés</strong>
         </div>
         <div className="summary-box">
           <span>Valeur Marchandise en Transit</span>
           <strong className="neutral">{formatMoney(slips.filter((s) => s.status === 'En tournée').reduce((a, s) => a + s.total_ttc, 0))}</strong>
         </div>
       </div>
+
+      {/* Map View Mode */}
+      {viewMode === 'map' && (
+        <section className="panel" style={{ padding: 16, marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <LivePulse color="#0284c7" label="TRAÇABILITÉ BL EN TEMPS RÉEL" />
+              <h2 style={{ fontSize: 15, fontWeight: 800, margin: 0 }}>Répartition Géographique des Bons d'Expédition</h2>
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>Cliquez sur une livraison pour inspecter ou signer le POD</span>
+          </div>
+          <RealDeliverySlipsMap slips={filtered} onSign={handleSign} />
+        </section>
+      )}
 
       <section className="panel list-panel">
         <div className="list-panel-heading">

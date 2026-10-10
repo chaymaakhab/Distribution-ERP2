@@ -27,7 +27,7 @@ export function StatusBadge({ status, label }: { status: string; label: string }
 
 export default function Home({ user }: { user: CustomerUser }) {
   const [, setLocation] = useLocation();
-  const { add, totalHt, count } = useCart();
+  const { add, subtotalHt: totalHt, count } = useCart();
   const { t } = useI18n();
   const [products, setProducts] = useState<Product[] | null>(null);
   const [orders, setOrders] = useState<OrderSummary[] | null>(null);

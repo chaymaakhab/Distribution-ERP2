@@ -7,11 +7,12 @@ import {
   Plus, ShoppingBag, Store, Check, CreditCard,
 } from 'lucide-react';
 import { formatMoney } from '../api';
-import { DonutChart, MultiSegmentProgress } from '../components/Charts';
+import { DonutChart, MultiSegmentProgress, AnimatedCounter, LivePulse } from '../components/Charts';
+import { RealDeliveryRouteMap } from '../components/RealDeliveryRouteMap';
 import DeliverySlipDocumentModal, { type BLLineItem } from '../components/DeliverySlipDocumentModal';
 import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
 
-interface DeliveryStop {
+export interface DeliveryStop {
   id: number;
   order_ref: string;
   client: string;
@@ -28,6 +29,8 @@ interface DeliveryStop {
   cheque_bank?: string;
   receiver_name?: string;
   signature?: string;
+  lat?: number;
+  lng?: number;
 }
 
 const INITIAL_STOPS: DeliveryStop[] = [
@@ -621,7 +624,7 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
             </div>
           </div>
           <div className="metric-number">
-            {deliveredCount} / {stops.length} <small>arrêts</small>
+            <AnimatedCounter value={deliveredCount} /> / {stops.length} <small>arrêts</small>
           </div>
           <div className="metric-foot">
             <span>Reste à livrer : {stops.filter((s) => s.status !== 'delivered').length}</span>
@@ -635,7 +638,7 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
               <DollarSign size={16} />
             </div>
           </div>
-          <div className="metric-number">{formatMoney(totalExpectedCash)} <small>DH</small></div>
+          <div className="metric-number"><AnimatedCounter value={Math.round(totalExpectedCash)} formatFn={(v) => formatMoney(v)} /> <small>DH</small></div>
           <div className="metric-foot">
             <span className="metric-change change-up">{cashPct}% du total tournée</span>
           </div>
@@ -664,7 +667,7 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
             </div>
           </div>
           <div className="metric-number">
-            {stops.filter((s) => s.signature).length} <small>signatures</small>
+            <AnimatedCounter value={stops.filter((s) => s.signature).length} /> <small>signatures</small>
           </div>
           <div className="metric-foot">
             <span>Horodatage et preuve de livraison</span>
@@ -730,6 +733,28 @@ export default function DeliveryDashboard({ onNavigate }: { onNavigate?: (segmen
             </span>
           </div>
         </div>
+      </div>
+
+      {/* ── CARTE RÉELLE DE LA TOURNÉE & SUIVI GPS EN DIRECT ── */}
+      <div style={{ marginTop: '16px', background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '12px', padding: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <LivePulse color="#0284c7" label="GPS FLOTTE EN DIRECT" />
+            <h3 style={{ fontSize: '15px', fontWeight: 800, margin: 0, color: 'var(--text)' }}>
+              Carte Réelle de la Tournée & Suivi Chauffeur en Temps Réel
+            </h3>
+          </div>
+          <span style={{ fontSize: '11.5px', color: 'var(--muted)' }}>
+            Départ Hub Ain Sebaâ · {stops.length} étapes programmées · Traçabilité par satellite
+          </span>
+        </div>
+        <RealDeliveryRouteMap
+          stops={stops}
+          selectedStopId={activeStop?.id}
+          onSelectStop={(s) => setActiveStop(s)}
+          onStartDelivery={startDelivery}
+          onOpenValidation={openValidation}
+        />
       </div>
 
       {/* Ordered Stops List with Interactive Filter Tabs */}

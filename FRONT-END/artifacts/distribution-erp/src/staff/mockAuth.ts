@@ -82,7 +82,7 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
 };
 
 export const ROLE_HOMES: Record<string, string> = {
-  superadmin: '/admin/dashboard',
+  superadmin: '/superadmin',
   admin: '/administrator/dashboard',
   commercial: '/sales/dashboard',
   warehouse: '/warehouse/dashboard',

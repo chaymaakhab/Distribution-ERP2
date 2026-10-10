@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Distribution ERP frontend",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"FRONT-END\\artifacts\\distribution-erp",
+				"run",
+				"dev"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

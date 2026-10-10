@@ -219,6 +219,12 @@ export default function PreparationDashboard() {
     );
   }
 
+  function handleReportShort(id: number) {
+    setItems((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, status: 'short', prepared_qty: Math.max(0, it.requested_qty - 1) } : it)),
+    );
+  }
+
   const allComplete = items.every((it) => it.prepared_qty > 0);
   const totalRequested = items.reduce((a, b) => a + b.requested_qty, 0);
   const totalPrepared = items.reduce((a, b) => a + b.prepared_qty, 0);

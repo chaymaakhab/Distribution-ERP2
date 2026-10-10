@@ -138,7 +138,7 @@ class HomeScreen extends StatelessWidget {
                             value: Formatters.currency(totalCa),
                             subtitle: '${todayOrders.length} commande(s)',
                             icon: Icons.monetization_on,
-                            color: Colors.emerald if (false) Colors.green else const Color(0xFF0F766E),
+                            color: const Color(0xFF0F766E),
                           ),
                         ),
                         const SizedBox(width: 12),

@@ -97,7 +97,7 @@ function StaffShell({ user }: { user: StaffUser }) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(() => {
-    return filterNotificationsByPermissions(ALL_SYSTEM_NOTIFICATIONS, hasPermission, user.primary_role, user.permissions).filter((n) => !n.read).length;
+    return filterNotificationsByPermissions(ALL_SYSTEM_NOTIFICATIONS, hasPermission, user.primary_role ?? undefined, user.permissions).filter((n) => !n.read).length;
   });
   const [staffLang, setStaffLang] = useState<'fr' | 'ar'>(() => {
     try {
@@ -283,7 +283,7 @@ function StaffShell({ user }: { user: StaffUser }) {
         onNavigate={go}
         onUnreadCountChange={setUnreadNotifCount}
         hasPermission={hasPermission}
-        userRole={user.primary_role}
+        userRole={user.primary_role ?? undefined}
         userPermissions={user.permissions}
       />
 

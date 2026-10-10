@@ -130,13 +130,21 @@ export default function SegmentedTopNavbar({
   return (
     <header className="topbar sx-segmented-navbar" style={{ padding: '0 14px', height: '62px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'var(--navy-1)', borderBottom: '1px solid var(--line)' }}>
       {/* ── SEGMENT 1 : Société Active & Sélecteur SaaS Multi-Entreprise ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+      <div className="sx-navbar-company" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         <button className="mobile-trigger icon-button" onClick={onOpenMobileNav} aria-label="Ouvrir le menu">
           <Menu size={19} />
         </button>
+        <button
+          className="icon-button sx-mobile-search-trigger"
+          onClick={onOpenSearchModal}
+          aria-label="Rechercher"
+          title="Ouvrir la recherche"
+        >
+          <Search size={17} />
+        </button>
 
         {/* Company Badge with Dropdown for Super Admin */}
-        <div style={{ position: 'relative' }} ref={companyMenuRef}>
+        <div className="sx-navbar-company-picker" style={{ position: 'relative' }} ref={companyMenuRef}>
           <div
             onClick={() => isSuperAdmin && setCompanyMenuOpen(!companyMenuOpen)}
             style={{
@@ -168,7 +176,7 @@ export default function SegmentedTopNavbar({
             >
               {currentCompany.code.slice(0, 3)}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="sx-company-details" style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <b style={{ fontSize: 12, color: 'var(--text)', maxWidth: 170, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {currentCompany.brand_name || currentCompany.name}
@@ -299,7 +307,7 @@ export default function SegmentedTopNavbar({
           border: '1px solid var(--line)',
           fontSize: 12,
         }}
-        className="hide-mobile"
+        className="hide-mobile sx-navbar-breadcrumb"
       >
         {activeSegment !== 'dashboard' && (
           <button
@@ -339,7 +347,7 @@ export default function SegmentedTopNavbar({
       </div>
 
       {/* ── SEGMENT 3 : Recherche Globale Instantanée (Ctrl + K) ── */}
-      <div style={{ flex: 1, maxWidth: 360 }} ref={searchBoxRef}>
+      <div className="sx-navbar-search" style={{ flex: 1, maxWidth: 360 }} ref={searchBoxRef}>
         <div className="topbar-search-input-field" style={{ height: 34, padding: '0 10px' }}>
           <Search size={14} style={{ color: '#38bdf8', flex: 'none' }} />
           <input
@@ -447,7 +455,7 @@ export default function SegmentedTopNavbar({
           cursor: 'pointer',
           flexShrink: 0,
         }}
-        className="hide-mobile"
+        className="hide-mobile sx-navbar-plan"
         title="Détails de la formule de la société"
       >
         <span
@@ -470,7 +478,7 @@ export default function SegmentedTopNavbar({
       </div>
 
       {/* ── SEGMENT 5 : Alertes, Notifications & Contrôles Système ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+      <div className="sx-navbar-controls" style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
         {/* Notifications Bell */}
         <button
           className="icon-button sx-bell"
@@ -482,6 +490,32 @@ export default function SegmentedTopNavbar({
           <Bell size={16} />
           {unreadCount > 0 && <span className="sx-bell-badge">{unreadCount}</span>}
         </button>
+
+        {/* Direct Link to SaaS Master Space */}
+        {isSuperAdmin && (
+          <a
+            href="/superadmin"
+            className="sx-saas-master-pill"
+            title="Accéder à l'espace autonome Super Admin SaaS (Vente de Packs & Abonnements)"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '5px 9px',
+              borderRadius: 7,
+              background: 'rgba(245, 158, 11, 0.15)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              color: '#f59e0b',
+              fontSize: 11.5,
+              fontWeight: 700,
+              textDecoration: 'none',
+              height: 32,
+            }}
+          >
+            <Crown size={13} />
+            <span className="hide-mobile">SaaS Master</span>
+          </a>
+        )}
 
         {/* Multi-role Switcher */}
         {user.roles.length > 1 && (
@@ -534,7 +568,7 @@ export default function SegmentedTopNavbar({
         </button>
 
         {/* User Identity & Logout */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 2 }}>
+        <div className="sx-navbar-user" style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 2 }}>
           <div
             style={{
               width: 32,

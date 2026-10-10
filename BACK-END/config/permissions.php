@@ -58,7 +58,7 @@ return [
     'roles' => [
         'superadmin' => [
             'name' => 'SuperAdmin',
-            'home' => '/admin/dashboard',
+            'home' => '/superadmin',
             'permissions' => ['*'],
         ],
 

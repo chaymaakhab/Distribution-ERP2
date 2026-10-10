@@ -38,17 +38,17 @@ const ROLE_BLUE = '#0284c7';
 export const ALL_ROLES: RoleDef[] = [
   {
     id: 'superadmin',
-    name: 'Super Admin',
+    name: 'Super Admin SaaS',
     shortName: 'Super Admin',
     category: 'staff',
-    badge: 'Accès Intégral',
-    user_name: 'Super Admin',
+    badge: 'Gestion Abonnements SaaS',
+    user_name: 'Super Admin SaaS',
     email: 'superadmin@hercules-erp.ma',
     password: 'password',
-    home: '/admin/dashboard',
+    home: '/superadmin',
     icon: Crown,
-    color: ROLE_BLUE,
-    scope: 'Supervision multi-dépôts, audit global, gestion des rôles et configuration.',
+    color: '#f59e0b',
+    scope: 'Espace autonome Super Admin : Vente des packs, suivi des abonnements à échéance (<30j, expirés), gestion des entreprises clientes et quotas.',
     role_code: 'superadmin',
   },
   {
@@ -186,10 +186,18 @@ export default function UnifiedLogin({
   const [, setLocation] = useLocation();
   const { toggleTheme, isLight } = useTheme();
 
-  const [portalMode, setPortalMode] = useState<'staff' | 'customer'>(defaultTab);
-  const [selectedRoleId, setSelectedRoleId] = useState<string>(defaultTab === 'customer' ? 'client' : 'superadmin');
-  const [identifier, setIdentifier] = useState(defaultTab === 'customer' ? 'contact@atlas-equipements.ma' : 'superadmin@hercules-erp.ma');
-  const [password, setPassword] = useState(defaultTab === 'customer' ? 'client1234' : 'password');
+  const [portalMode, setPortalMode] = useState<'saas' | 'staff' | 'customer'>(
+    defaultTab === 'customer' ? 'customer' : 'saas'
+  );
+  const [selectedRoleId, setSelectedRoleId] = useState<string>(
+    defaultTab === 'customer' ? 'client' : 'superadmin'
+  );
+  const [identifier, setIdentifier] = useState(
+    defaultTab === 'customer' ? 'contact@atlas-equipements.ma' : 'superadmin@hercules-erp.ma'
+  );
+  const [password, setPassword] = useState(
+    defaultTab === 'customer' ? 'client1234' : 'password'
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -226,29 +234,38 @@ export default function UnifiedLogin({
   });
 
   const activeRole = ALL_ROLES.find((r) => r.id === selectedRoleId) || ALL_ROLES[0];
-  const staffRoles = ALL_ROLES.filter((r) => r.category === 'staff');
+  const staffRoles = ALL_ROLES.filter((r) => r.category === 'staff' && r.id !== 'superadmin');
 
   function handleSelectRole(role: RoleDef, autoLogin = false) {
     setSelectedRoleId(role.id);
-    setPortalMode(role.category);
+    if (role.id === 'superadmin') {
+      setPortalMode('saas');
+    } else {
+      setPortalMode(role.category);
+    }
     setIdentifier(role.email);
     setPassword(role.password);
 
     if (autoLogin) {
-      executeLogin(role.email, role.password, role.category);
+      executeLogin(role.email, role.password, role.id === 'superadmin' ? 'saas' : role.category);
     }
   }
 
-  function handleSwitchPortal(mode: 'staff' | 'customer') {
+  function handleSwitchPortal(mode: 'saas' | 'staff' | 'customer') {
     setPortalMode(mode);
     setError(null);
-    if (mode === 'customer') {
+    if (mode === 'saas') {
+      const saRole = ALL_ROLES.find((r) => r.id === 'superadmin')!;
+      setSelectedRoleId('superadmin');
+      setIdentifier(saRole.email);
+      setPassword(saRole.password);
+    } else if (mode === 'customer') {
       const clientRole = ALL_ROLES.find((r) => r.id === 'client')!;
       setSelectedRoleId(clientRole.id);
       setIdentifier(clientRole.email);
       setPassword(clientRole.password);
     } else {
-      const defaultStaff = ALL_ROLES[0];
+      const defaultStaff = ALL_ROLES.find((r) => r.id === 'admin') || ALL_ROLES[1];
       setSelectedRoleId(defaultStaff.id);
       setIdentifier(defaultStaff.email);
       setPassword(defaultStaff.password);
@@ -258,10 +275,11 @@ export default function UnifiedLogin({
   async function executeLogin(
     loginId: string,
     loginPass: string,
-    mode: 'staff' | 'customer'
+    mode: 'saas' | 'staff' | 'customer'
   ) {
     setError(null);
     setLoading(true);
+    const cleanId = loginId.trim();
 
     try {
       if (mode === 'customer') {
@@ -296,27 +314,30 @@ export default function UnifiedLogin({
         let user: StaffUser;
         try {
           if (onStaffLogin) {
-            user = await onStaffLogin(loginId.trim(), loginPass, remember);
+            user = await onStaffLogin(cleanId, loginPass, remember);
           } else {
-            const res = await staffApi.login(loginId.trim(), loginPass);
+            const res = await staffApi.login(cleanId, loginPass);
             setStaffSession(res.token, res.user, remember);
             user = res.user;
           }
         } catch {
-          const clean = loginId.trim();
-          const stored = findStaffUserByEmail(clean);
+          const stored = findStaffUserByEmail(cleanId);
           if (stored) {
             user = staffItemToSessionUser(stored);
           } else {
             const targetRole =
-              ALL_ROLES.find((r) => r.email === clean || r.id === selectedRoleId) ||
+              ALL_ROLES.find((r) => r.email === cleanId || r.id === selectedRoleId) ||
               ALL_ROLES[0];
-            user = createMockStaffUser(targetRole.role_code, clean);
+            user = createMockStaffUser(targetRole.role_code, cleanId);
           }
           setStaffSession('mock-token-' + (user.primary_role || 'staff'), user, remember);
         }
         if (onSuccess) onSuccess();
-        setLocation(user.home || '/admin/dashboard');
+        if (mode === 'saas' || user.primary_role === 'superadmin' || cleanId === 'superadmin@hercules-erp.ma' || selectedRoleId === 'superadmin') {
+          setLocation('/superadmin');
+        } else {
+          setLocation(user.home || '/admin/dashboard');
+        }
         return;
       }
     } catch (err: any) {
@@ -403,14 +424,22 @@ export default function UnifiedLogin({
       <div className="unified-login-container">
         <div className="login-card">
           {/* Segmented Switcher */}
-          <div className="portal-tabs">
+          <div className="portal-tabs" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+            <button
+              type="button"
+              className={`portal-tab ${portalMode === 'saas' ? 'active saas-tab' : ''}`}
+              onClick={() => handleSwitchPortal('saas')}
+            >
+              <Crown size={14} />
+              <span>Super Admin SaaS</span>
+            </button>
             <button
               type="button"
               className={`portal-tab ${portalMode === 'staff' ? 'active' : ''}`}
               onClick={() => handleSwitchPortal('staff')}
             >
               <Building2 size={14} />
-              <span>Équipe ERP (7 Rôles)</span>
+              <span>Équipe ERP</span>
             </button>
             <button
               type="button"
@@ -418,9 +447,46 @@ export default function UnifiedLogin({
               onClick={() => handleSwitchPortal('customer')}
             >
               <Store size={14} />
-              <span>Espace Client B2B</span>
+              <span>Client B2B</span>
             </button>
           </div>
+
+          {/* Super Admin SaaS Dedicated Information */}
+          {portalMode === 'saas' && (
+            <div className="role-active-banner saas-active-banner">
+              <div className="role-active-top">
+                <span className="role-name" style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Crown size={15} /> Super Admin · SaaS Master
+                </span>
+                <span className="role-scope-badge" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.4)' }}>
+                  Espace Dédié Autonome
+                </span>
+              </div>
+              <p className="role-scope-desc">
+                Surveillance exclusive des abonnements à échéance (&lt;30j, expirés), gestion des entreprises clientes, activation de comptes et vente des Packs SaaS (Starter, Pro, Enterprise).
+              </p>
+              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                <a
+                  href="/superadmin"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    color: '#f59e0b',
+                    textDecoration: 'none',
+                    padding: '4px 8px',
+                    borderRadius: 5,
+                    background: 'rgba(245, 158, 11, 0.1)',
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                  }}
+                >
+                  Ouvrir directement le portail /superadmin ↗
+                </a>
+              </div>
+            </div>
+          )}
 
           {/* Role quick switcher (Staff mode) */}
           {portalMode === 'staff' && (
@@ -869,6 +935,19 @@ export default function UnifiedLogin({
                     </>
                   )}
                 </button>
+
+                {portalMode === 'saas' && (
+                  <button
+                    type="button"
+                    className="quick-test-btn"
+                    onClick={() => executeLogin('superadmin@hercules-erp.ma', 'password', 'saas')}
+                    disabled={loading}
+                    style={{ background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.4)', color: '#f59e0b' }}
+                  >
+                    <Crown size={13} />
+                    <span>Connexion 1-Clic Super Admin SaaS 👑</span>
+                  </button>
+                )}
 
                 {portalMode === 'staff' && (
                   <button

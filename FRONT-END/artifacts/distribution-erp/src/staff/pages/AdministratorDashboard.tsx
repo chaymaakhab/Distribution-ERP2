@@ -211,7 +211,7 @@ export default function AdministratorDashboard() {
 
       {/* ── Role Quick Actions Bar (Admin d'Entreprise) ── */}
       <RoleQuickActionsBar
-        roleTitle={`Administrateur · ${user.company?.brand_name || user.company?.name || 'Entreprise'}`}
+        roleTitle={`Administrateur · ${user?.company?.brand_name || user?.company?.name || 'Entreprise'}`}
         actions={[
           {
             id: 'qa-depot',
@@ -286,13 +286,13 @@ export default function AdministratorDashboard() {
           </div>
           <div>
             <div style={{ fontSize: 10.5, color: '#38bdf8', fontWeight: 800, textTransform: 'uppercase' }}>
-              Société · Formule {user.company?.subscription_plan?.toUpperCase() || 'PRO'}
+              Société · Formule {user?.company?.subscription_plan?.toUpperCase() || 'PRO'}
             </div>
             <strong style={{ fontSize: 14, color: 'var(--text)' }}>
-              {user.company?.brand_name || user.company?.name || 'Hercules Distribution Maroc'}
+              {user?.company?.brand_name || user?.company?.name || 'Hercules Distribution Maroc'}
             </strong>
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
-              ICE: {user.company?.ice || '002345678000045'} · Siège: {user.company?.city || 'Casablanca'}
+              ICE: {user?.company?.ice || '002345678000045'} · Siège: {user?.company?.city || 'Casablanca'}
             </div>
           </div>
         </div>
@@ -300,13 +300,13 @@ export default function AdministratorDashboard() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 4 }}>
             <span style={{ color: 'var(--muted)' }}>Dépôts autorisés :</span>
-            <b style={{ color: '#38bdf8' }}>{user.company?.warehouses_count ?? 4} / {user.company?.max_warehouses ?? 5}</b>
+            <b style={{ color: '#38bdf8' }}>{user?.company?.warehouses_count ?? 4} / {user?.company?.max_warehouses ?? 5}</b>
           </div>
           <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
             <div
               style={{
                 height: '100%',
-                width: `${Math.min(100, (((user.company?.warehouses_count ?? 4) / (user.company?.max_warehouses ?? 5)) * 100))}%`,
+                width: `${Math.min(100, (((user?.company?.warehouses_count ?? 4) / (user?.company?.max_warehouses ?? 5)) * 100))}%`,
                 background: '#0284c7',
               }}
             />
@@ -316,13 +316,13 @@ export default function AdministratorDashboard() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, marginBottom: 4 }}>
             <span style={{ color: 'var(--muted)' }}>Commerciaux &amp; Équipe :</span>
-            <b style={{ color: '#a855f7' }}>{user.company?.users_count ?? 12} / {user.company?.max_users ?? 20}</b>
+            <b style={{ color: '#a855f7' }}>{user?.company?.users_count ?? 12} / {user?.company?.max_users ?? 20}</b>
           </div>
           <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
             <div
               style={{
                 height: '100%',
-                width: `${Math.min(100, (((user.company?.users_count ?? 12) / (user.company?.max_users ?? 20)) * 100))}%`,
+                width: `${Math.min(100, (((user?.company?.users_count ?? 12) / (user?.company?.max_users ?? 20)) * 100))}%`,
                 background: '#a855f7',
               }}
             />
@@ -333,11 +333,11 @@ export default function AdministratorDashboard() {
           <div>
             <span style={{ fontSize: 10, color: '#16a34a', fontWeight: 800, textTransform: 'uppercase' }}>Échéance de la Formule</span>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e' }}>
-              Valable jusqu’au {user.company?.subscription_end_date ?? '31/08/2027'}
+              Valable jusqu’au {user?.company?.subscription_end_date ?? '31/08/2027'}
             </div>
           </div>
           <span style={{ fontSize: 11, fontWeight: 800, color: '#22c55e', background: 'rgba(34, 197, 94, 0.2)', padding: '2px 6px', borderRadius: 4 }}>
-            {user.company?.days_remaining ?? 326}j
+            {user?.company?.days_remaining ?? 326}j
           </span>
         </div>
       </div>

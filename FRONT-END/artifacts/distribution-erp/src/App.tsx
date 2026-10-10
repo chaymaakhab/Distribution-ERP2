@@ -7,6 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import CustomerApp from '@/customer/CustomerApp';
 import StaffApp from '@/staff/StaffApp';
+import SuperAdminSaaSApp from '@/superadmin/SuperAdminSaaSApp';
 import UnifiedLogin from '@/components/UnifiedLogin';
 import { useTheme } from '@/lib/theme';
 import { Route, Switch, useLocation, Router as WouterRouter, Link } from 'wouter';
@@ -15,7 +16,7 @@ import {
   Boxes, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp,
   ClipboardList, Clock3, CreditCard, Download, FileCheck2, FileText, Filter, Gauge, LayoutDashboard,
   MapPin, Menu, Package, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Truck,
-  Users, Warehouse, X, Sun, Moon, UserCheck, LogIn, Store,
+  Users, Warehouse, X, Sun, Moon, UserCheck, LogIn, Store, Crown,
 } from 'lucide-react';
 import './erp.css';
 
@@ -106,6 +107,7 @@ const modules = [
   { id: '/finance', label: 'Finance', icon: BadgeDollarSign },
   { id: '/reports', label: 'Rapports', icon: BarChart3 },
   { id: '/settings', label: 'Paramètres', icon: Settings },
+  { id: '/superadmin', label: 'Super Admin SaaS', icon: Crown },
   { id: '/customer/home', label: 'Espace Client B2B', icon: Store },
 ];
 const titles: Record<string, { title: string; kicker: string; description: string; action: string }> = {
@@ -388,6 +390,8 @@ function Router() {
 }
 function AppShellRouter() {
   return <Switch>
+    <Route path="/superadmin" component={SuperAdminSaaSApp} />
+    <Route path="/superadmin/:rest*" component={SuperAdminSaaSApp} />
     <Route path="/customer" component={CustomerApp} />
     <Route path="/customer/:rest*" component={CustomerApp} />
     <Route path="/login" component={StaffApp} />

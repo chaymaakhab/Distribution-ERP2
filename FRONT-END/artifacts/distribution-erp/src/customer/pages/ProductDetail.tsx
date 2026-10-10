@@ -84,7 +84,7 @@ export default function ProductDetail({ code }: { code: string }) {
         <ChevronRight size={13} />
         <Link href="/customer/catalog">Catalogue Grossiste</Link>
         <ChevronRight size={13} />
-        <Link href={`/customer/catalog?cat=${encodeURIComponent(product.category)}`}>
+        <Link href={`/customer/catalog?cat=${encodeURIComponent(product.category || '')}`}>
           {product.category}
         </Link>
         <ChevronRight size={13} />

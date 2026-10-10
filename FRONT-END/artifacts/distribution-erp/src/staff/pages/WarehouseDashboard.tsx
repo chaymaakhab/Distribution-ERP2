@@ -7,7 +7,8 @@ import {
   Upload, Image as ImageIcon, Users,
 } from 'lucide-react';
 import { api, formatMoney } from '../api';
-import { DonutChart, MultiSegmentProgress } from '../components/Charts';
+import { DonutChart, MultiSegmentProgress, AnimatedCounter, LivePulse } from '../components/Charts';
+import { RealLogisticsFleetMap } from '../components/RealLogisticsFleetMap';
 import RoleQuickActionsBar from '../components/RoleQuickActionsBar';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -274,7 +275,7 @@ const MOVEMENTS = [
 ];
 
 interface WarehouseDashboardProps {
-  initialTab?: 'stocks' | 'drivers' | 'movements';
+  initialTab?: 'stocks' | 'drivers' | 'movements' | 'fleet_map';
   onNavigate?: (segment: string) => void;
 }
 
@@ -282,7 +283,7 @@ export default function WarehouseDashboard({
   initialTab = 'stocks',
   onNavigate,
 }: WarehouseDashboardProps = {}) {
-  const [activeTab, setActiveTab] = useState<'stocks' | 'drivers' | 'movements'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'stocks' | 'drivers' | 'movements' | 'fleet_map'>(initialTab);
 
   useEffect(() => {
     if (initialTab) {
@@ -675,6 +676,13 @@ export default function WarehouseDashboard({
         >
           <ArrowLeftRight size={14} style={{ display: 'inline', marginRight: 6 }} />
           Mouvements & Transferts
+        </button>
+        <button
+          className={`table-tab ${activeTab === 'fleet_map' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('fleet_map')}
+        >
+          <Navigation size={14} style={{ display: 'inline', marginRight: 6, color: '#10b981' }} />
+          Carte Live Dépôts & Flotte (GPS)
         </button>
       </div>
 
@@ -1079,6 +1087,22 @@ export default function WarehouseDashboard({
             </div>
           </div>
 
+          {/* ── CARTE LIVE FLOTTE & DÉPÔTS EN DIRECT ── */}
+          <div style={{ marginTop: '16px', marginBottom: '16px', background: 'var(--navy-2)', border: '1px solid var(--line)', borderRadius: '10px', padding: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <LivePulse color="#0284c7" label="TÉLÉMÉTRIE LIVE GPS" />
+                <h3 style={{ fontSize: '15px', fontWeight: 800, margin: 0, color: 'var(--text)' }}>
+                  Supervision Géographique de la Flotte & Dépôts au Maroc
+                </h3>
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                {drivers.length} chauffeurs déployés · Liaisons inter-dépôts Casa - Rabat - Tanger - Fès
+              </span>
+            </div>
+            <RealLogisticsFleetMap drivers={drivers} />
+          </div>
+
           {/* Drivers Filter & Search Panel */}
           <section className="panel list-panel" style={{ marginTop: '14px' }}>
             <div className="list-panel-heading">
@@ -1373,6 +1397,53 @@ export default function WarehouseDashboard({
               ))}
             </tbody>
           </table>
+        </section>
+      )}
+
+      {/* ════════════════════ TAB 4: CARTE LIVE FLOTTE & DÉPÔTS ════════════════════ */}
+      {activeTab === 'fleet_map' && (
+        <section className="panel" style={{ padding: '16px', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <LivePulse color="#10b981" label="GPS ACTIF" />
+              <div>
+                <span className="eyebrow">CARTOGRAPHIE OPÉRATIONNELLE</span>
+                <h2 style={{ fontSize: '17px', fontWeight: 800, margin: '2px 0 0' }}>
+                  Supervision Géographique en Temps Réel — Réseau des Dépôts & Flotte
+                </h2>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="button-primary"
+                style={{ fontSize: 12, height: 32, background: '#0284c7' }}
+                onClick={() => setNewDriverModal(true)}
+              >
+                <Plus size={14} /> + Affecter un Livreur
+              </button>
+            </div>
+          </div>
+
+          <RealLogisticsFleetMap drivers={drivers} />
+
+          {/* Quick Stats Strip under Map */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginTop: '16px' }}>
+            <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>DÉPÔTS OPÉRATIONNELS</small>
+              <b style={{ color: '#10b981', fontSize: '18px' }}>7 Sites Logistiques</b>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>Couverture nationale (Casa, Rabat, Tanger, Fès, Marrakech, Agadir, Oujda)</span>
+            </div>
+            <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>VÉHICULES EN MISSION</small>
+              <b style={{ color: '#38bdf8', fontSize: '18px' }}><AnimatedCounter value={onMissionCount} /> Camions & Fourgons</b>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>En tournée ou transfert inter-dépôts</span>
+            </div>
+            <div style={{ background: 'var(--navy-2)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <small style={{ color: 'var(--muted)', fontSize: '11px', display: 'block', fontWeight: 600 }}>CHAUFFEURS DISPONIBLES</small>
+              <b style={{ color: '#f59e0b', fontSize: '18px' }}><AnimatedCounter value={drivers.filter(d => d.status === 'disponible').length} /> En réserve</b>
+              <span style={{ fontSize: '11px', color: 'var(--muted)', display: 'block', marginTop: 2 }}>Prêts pour nouvelles missions</span>
+            </div>
+          </div>
         </section>
       )}
 

@@ -414,11 +414,11 @@ export default function ClientsCrm() {
       : (assignedComm?.name || 'Non affecté');
 
     const effectiveCommercialRef = isUserCommercial
-      ? (currentStaffUser?.commercial_code || `COM-${currentStaffUser?.id || '001'}`)
+      ? ((currentStaffUser as any)?.commercial_code || `COM-${currentStaffUser?.id || '001'}`)
       : (assignedComm?.commercial_code || (assignedComm?.id ? `COM-${assignedComm.id}` : undefined));
 
     const effectiveCommissionRate = isUserCommercial
-      ? Number(currentStaffUser?.commission_rate ?? 5.0)
+      ? Number((currentStaffUser as any)?.commission_rate ?? 5.0)
       : Number(formCommissionRate || assignedComm?.commission_rate || 5.0);
 
     const nextCode = `CLT-${String(clients.length + 1).padStart(3, '0')}`;
@@ -1231,8 +1231,8 @@ export default function ClientsCrm() {
                     </div>
                     <div style={{ marginTop: 4, display: 'flex', gap: 12, fontSize: 11.5 }}>
                       <span>Commercial : <b>{currentStaffUser?.name}</b></span>
-                      <span>Réf : <b>{currentStaffUser?.commercial_code || `COM-${currentStaffUser?.id || '001'}`}</b></span>
-                      <span>Commission : <b>{currentStaffUser?.commission_rate ?? 5}%</b></span>
+                      <span>Réf : <b>{(currentStaffUser as any)?.commercial_code || `COM-${currentStaffUser?.id || '001'}`}</b></span>
+                      <span>Commission : <b>{(currentStaffUser as any)?.commission_rate ?? 5}%</b></span>
                     </div>
                   </div>
                 ) : (
